@@ -86,9 +86,6 @@ int main( int ArgCn, char *ArgVc[] ) {
     // Set the default config Filepath...
     char* configFilePath = IGMPPROXY_CONFIG_FILEPATH;
 
-    // Display version 
-    fputs( Version, stderr );
-
     // Parse the commandline options and setup basic settings..
     int i = 1;
     while (i < ArgCn) {
