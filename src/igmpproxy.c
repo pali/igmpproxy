@@ -39,13 +39,12 @@
 #include "defs.h"
 
 #include "version.h"
-#include "build.h"
 
 
 
 // Constants
 static const char Version[] = 
-"igmpproxy, Version " VERSION ", Build" BUILD "\n"
+"igmpproxy, Version " VERSION "\n"
 "Copyright 2005 by Johnny Egeland <johnny@rlo.org>\n"
 "Distributed under the GNU GENERAL PUBLIC LICENSE, Version 2 - check GPL.txt\n"
 "\n";
@@ -80,7 +79,7 @@ int         upStreamVif;
 *   on commandline. The number of commandline arguments, and a
 *   pointer to the arguments are recieved on the line...
 */    
-int main( int ArgCn, const char *ArgVc[] ) {
+int main( int ArgCn, char *ArgVc[] ) {
 
     int debugMode = 0;
 
@@ -119,7 +118,7 @@ int main( int ArgCn, const char *ArgVc[] ) {
                     configFilePath = ArgVc[i+1];
                     i++;
                 } else {
-                    log(LOG_ERR, 0, "Missing config file path after -c option.");
+                    my_log(LOG_ERR, 0, "Missing config file path after -c option.");
                 }
                 break;
             }
@@ -134,19 +133,19 @@ int main( int ArgCn, const char *ArgVc[] ) {
     }
 
     // Write debug notice with file path...
-    IF_DEBUG log(LOG_DEBUG, 0, "Searching for config file at '%s'" , configFilePath);
+    IF_DEBUG my_log(LOG_DEBUG, 0, "Searching for config file at '%s'" , configFilePath);
 
     do {
 
         // Loads the config file...
         if( ! loadConfig( configFilePath ) ) {
-            log(LOG_ERR, 0, "Unable to load config file...");
+            my_log(LOG_ERR, 0, "Unable to load config file...");
             break;
         }
     
         // Initializes the deamon.
         if ( !igmpProxyInit() ) {
-            log(LOG_ERR, 0, "Unable to initialize IGMPproxy.");
+            my_log(LOG_ERR, 0, "Unable to initialize IGMPproxy.");
             break;
         }
     
@@ -154,7 +153,7 @@ int main( int ArgCn, const char *ArgVc[] ) {
         // If not in debug mode, fork and detatch from terminal.
         if ( ! debugMode ) {
     
-            IF_DEBUG log( LOG_DEBUG, 0, "Starting daemon mode.");
+            IF_DEBUG my_log( LOG_DEBUG, 0, "Starting daemon mode.");
     
             // Only daemon goes past this line...
             if (fork()) exit(0);
@@ -164,7 +163,7 @@ int main( int ArgCn, const char *ArgVc[] ) {
                  || open( "/dev/null", 0 ) != 0 || dup2( 0, 1 ) < 0 || dup2( 0, 2 ) < 0
                  || setpgrp() < 0
                ) {
-                log( LOG_ERR, errno, "failed to detach deamon" );
+                my_log( LOG_ERR, errno, "failed to detach deamon" );
             }
         }
         
@@ -177,7 +176,7 @@ int main( int ArgCn, const char *ArgVc[] ) {
     } while ( FALSE );
 
     // Inform that we are exiting.
-    log(LOG_INFO, 0, "Shutdown complete....");
+    my_log(LOG_INFO, 0, "Shutdown complete....");
 
     exit(0);
 }
@@ -206,8 +205,8 @@ int igmpProxyInit() {
 
     switch ( Err = enableMRouter() ) {
     case 0: break;
-    case EADDRINUSE: log( LOG_ERR, EADDRINUSE, "MC-Router API already in use" ); break;
-    default: log( LOG_ERR, Err, "MRT_INIT failed" );
+    case EADDRINUSE: my_log( LOG_ERR, EADDRINUSE, "MC-Router API already in use" ); break;
+    default: my_log( LOG_ERR, Err, "MRT_INIT failed" );
     }
 
     /* create VIFs for all IP, non-loop interfaces
@@ -225,7 +224,7 @@ int igmpProxyInit() {
                     if(upStreamVif == -1) {
                         upStreamVif = Ix;
                     } else {
-                        log(LOG_ERR, 0, "Vif #%d was already upstream. Cannot set VIF #%d as upstream as well.",
+                        my_log(LOG_ERR, 0, "Vif #%d was already upstream. Cannot set VIF #%d as upstream as well.",
                             upStreamVif, Ix);
                     }
                 }
@@ -237,7 +236,7 @@ int igmpProxyInit() {
 
         // If there is only one VIF, or no defined upstream VIF, we send an error.
         if(vifcount < 2 || upStreamVif < 0) {
-            log(LOG_ERR, 0, "There must be at least 2 Vif's where one is upstream.");
+            my_log(LOG_ERR, 0, "There must be at least 2 Vif's where one is upstream.");
         }
     }  
     
@@ -257,7 +256,7 @@ int igmpProxyInit() {
 */
 void igmpProxyCleanUp() {
 
-    log( LOG_DEBUG, 0, "clean handler called" );
+    my_log( LOG_DEBUG, 0, "clean handler called" );
     
     free_all_callouts();    // No more timeouts.
     clearAllRoutes();       // Remove all routes.
@@ -295,7 +294,7 @@ void igmpProxyRun() {
         if (sighandled) {
             if (sighandled & GOT_SIGINT) {
                 sighandled &= ~GOT_SIGINT;
-                log(LOG_NOTICE, 0, "Got a interupt signal. Exiting.");
+                my_log(LOG_NOTICE, 0, "Got a interupt signal. Exiting.");
                 break;
             }
         }
@@ -320,7 +319,7 @@ void igmpProxyRun() {
 
         // log and ignore failures
         if( Rt < 0 ) {
-            log( LOG_WARNING, errno, "select() failure" );
+            my_log( LOG_WARNING, errno, "select() failure" );
             continue;
         }
         else if( Rt > 0 ) {
@@ -331,7 +330,7 @@ void igmpProxyRun() {
                 recvlen = recvfrom(MRouterFD, recv_buf, RECV_BUF_SIZE,
                                    0, NULL, &dummy);
                 if (recvlen < 0) {
-                    if (errno != EINTR) log(LOG_ERR, errno, "recvfrom");
+                    if (errno != EINTR) my_log(LOG_ERR, errno, "recvfrom");
                     continue;
                 }
                 

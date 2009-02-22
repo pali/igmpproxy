@@ -126,7 +126,7 @@ extern char LogLastMsg[ 128 ];    // last logged message
 
 #define	    IF_DEBUG	if(Log2Stderr & LOG_DEBUG)
 
-void log( int Serverity, int Errno, const char *FmtSt, ... );
+void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 
 /* ifvc.c
  */

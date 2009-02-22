@@ -53,7 +53,7 @@ char LogLastMsg[ 128 ];
 ** is logged to 'stderr'.
 **          
 */
-void log( int Serverity, int Errno, const char *FmtSt, ... )
+void my_log( int Serverity, int Errno, const char *FmtSt, ... )
 {
   const char ServVc[][ 5 ] = { "EMER", "ALER", "CRIT", "ERRO", 
 			       "Warn", "Note", "Info", "Debu" };

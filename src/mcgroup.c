@@ -50,7 +50,7 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32 mcastadd
     
     {
         char FmtBu[ 32 ];
-        log( LOG_NOTICE, 0, "%sMcGroup: %s on %s", CmdSt, 
+        my_log( LOG_NOTICE, 0, "%sMcGroup: %s on %s", CmdSt, 
             inetFmt( mcastaddr, s1 ), IfDp ? IfDp->Name : "<any>" );
     }
     
@@ -58,7 +58,7 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32 mcastadd
           Cmd == 'j' ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP, 
           (void *)&CtlReq, sizeof( CtlReq ) ) ) 
     {
-        log( LOG_WARNING, errno, "MRT_%s_MEMBERSHIP failed", Cmd == 'j' ? "ADD" : "DROP" );
+        my_log( LOG_WARNING, errno, "MRT_%s_MEMBERSHIP failed", Cmd == 'j' ? "ADD" : "DROP" );
         return 1;
     }
     

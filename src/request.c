@@ -58,7 +58,7 @@ void acceptGroupReport(uint32 src, uint32 group, uint8 type) {
 
     // Sanitycheck the group adress...
     if(!IN_MULTICAST( ntohl(group) )) {
-        log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group.",
+        my_log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group.",
             inetFmt(group, s1));
         return;
     }
@@ -66,20 +66,20 @@ void acceptGroupReport(uint32 src, uint32 group, uint8 type) {
     // Find the interface on which the report was recieved.
     sourceVif = getIfByAddress( src );
     if(sourceVif == NULL) {
-        log(LOG_WARNING, 0, "No interfaces found for source %s",
+        my_log(LOG_WARNING, 0, "No interfaces found for source %s",
             inetFmt(src,s1));
         return;
     }
 
     if(sourceVif->InAdr.s_addr == src) {
-        log(LOG_NOTICE, 0, "The IGMP message was from myself. Ignoring.");
+        my_log(LOG_NOTICE, 0, "The IGMP message was from myself. Ignoring.");
         return;
     }
 
     // We have a IF so check that it's an downstream IF.
     if(sourceVif->state == IF_STATE_DOWNSTREAM) {
 
-        IF_DEBUG log(LOG_DEBUG, 0, "Should insert group %s (from: %s) to route table. Vif Ix : %d",
+        IF_DEBUG my_log(LOG_DEBUG, 0, "Should insert group %s (from: %s) to route table. Vif Ix : %d",
             inetFmt(group,s1), inetFmt(src,s2), sourceVif->index);
 
         // The membership report was OK... Insert it into the route table..
@@ -88,7 +88,7 @@ void acceptGroupReport(uint32 src, uint32 group, uint8 type) {
 
     } else {
         // Log the state of the interface the report was recieved on.
-        log(LOG_INFO, 0, "Mebership report was recieved on %s. Ignoring.",
+        my_log(LOG_INFO, 0, "Mebership report was recieved on %s. Ignoring.",
             sourceVif->state==IF_STATE_UPSTREAM?"the upstream interface":"a disabled interface");
     }
 
@@ -100,12 +100,12 @@ void acceptGroupReport(uint32 src, uint32 group, uint8 type) {
 void acceptLeaveMessage(uint32 src, uint32 group) {
     struct IfDesc   *sourceVif;
     
-    IF_DEBUG log(LOG_DEBUG, 0, "Got leave message from %s to %s. Starting last member detection.",
+    IF_DEBUG my_log(LOG_DEBUG, 0, "Got leave message from %s to %s. Starting last member detection.",
                  inetFmt(src, s1), inetFmt(group, s2));
 
     // Sanitycheck the group adress...
     if(!IN_MULTICAST( ntohl(group) )) {
-        log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group.",
+        my_log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group.",
             inetFmt(group, s1));
         return;
     }
@@ -113,7 +113,7 @@ void acceptLeaveMessage(uint32 src, uint32 group) {
     // Find the interface on which the report was recieved.
     sourceVif = getIfByAddress( src );
     if(sourceVif == NULL) {
-        log(LOG_WARNING, 0, "No interfaces found for source %s",
+        my_log(LOG_WARNING, 0, "No interfaces found for source %s",
             inetFmt(src,s1));
         return;
     }
@@ -136,7 +136,7 @@ void acceptLeaveMessage(uint32 src, uint32 group) {
 
     } else {
         // just ignore the leave request...
-        IF_DEBUG log(LOG_DEBUG, 0, "The found if for %s was not downstream. Ignoring leave request.");
+        IF_DEBUG my_log(LOG_DEBUG, 0, "The found if for %s was not downstream. Ignoring leave request.");
     }
 }
 
@@ -165,7 +165,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
              conf->lastMemberQueryInterval * IGMP_TIMER_SCALE, 
              gvDesc->group, 0);
 
-    IF_DEBUG log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
+    IF_DEBUG my_log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
         inetFmt(gvDesc->vifAddr,s1), inetFmt(gvDesc->group,s2),
         conf->lastMemberQueryInterval);
 
@@ -192,7 +192,7 @@ void sendGeneralMembershipQuery() {
                          IGMP_MEMBERSHIP_QUERY,
                          conf->queryResponseInterval * IGMP_TIMER_SCALE, 0, 0);
                 
-                IF_DEBUG log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
+                IF_DEBUG my_log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
                     inetFmt(Dp->InAdr.s_addr,s1), inetFmt(allhosts_group,s2),
                     conf->queryResponseInterval);
             }

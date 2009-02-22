@@ -48,7 +48,7 @@ void buildIfVc() {
     int Sock;
 
     if ( (Sock = socket( AF_INET, SOCK_DGRAM, 0 )) < 0 )
-        log( LOG_ERR, errno, "RAW socket open" );
+        my_log( LOG_ERR, errno, "RAW socket open" );
 
     /* get If vector
      */
@@ -59,7 +59,7 @@ void buildIfVc() {
         IoCtlReq.ifc_len = sizeof( IfVc );
 
         if ( ioctl( Sock, SIOCGIFCONF, &IoCtlReq ) < 0 )
-            log( LOG_ERR, errno, "ioctl SIOCGIFCONF" );
+            my_log( LOG_ERR, errno, "ioctl SIOCGIFCONF" );
 
         IfEp = (void *)((char *)IfVc + IoCtlReq.ifc_len);
     }
@@ -101,15 +101,15 @@ void buildIfVc() {
 
             // Get the subnet mask...
             if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0)
-                log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
+                my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
             mask = ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr;
             subnet = addr & mask;
 
             // Get the physical index of the Interface
             if (ioctl(Sock, SIOCGIFINDEX, &IfReq ) < 0)
-                log(LOG_ERR, errno, "ioctl SIOCGIFINDEX for %s", IfReq.ifr_name);
+                my_log(LOG_ERR, errno, "ioctl SIOCGIFINDEX for %s", IfReq.ifr_name);
             
-            log(LOG_DEBUG, 0, "Physical Index value of IF '%s' is %d",
+            my_log(LOG_DEBUG, 0, "Physical Index value of IF '%s' is %d",
                 IfDescEp->Name, IfReq.ifr_ifindex);
 
 
@@ -123,13 +123,13 @@ void buildIfVc() {
             ** ipipx 0x00C1 -> NoArp, Running, Up
             */
             if ( ioctl( Sock, SIOCGIFFLAGS, &IfReq ) < 0 )
-                log( LOG_ERR, errno, "ioctl SIOCGIFFLAGS" );
+                my_log( LOG_ERR, errno, "ioctl SIOCGIFFLAGS" );
 
             IfDescEp->Flags = IfReq.ifr_flags;
 
             // Insert the verified subnet as an allowed net...
             IfDescEp->allowednets = (struct SubnetList *)malloc(sizeof(struct SubnetList));
-            if(IfDescEp->allowednets == NULL) log(LOG_ERR, 0, "Out of memory !");
+            if(IfDescEp->allowednets == NULL) my_log(LOG_ERR, 0, "Out of memory !");
             
             // Create the network address for the IF..
             IfDescEp->allowednets->next = NULL;
@@ -144,7 +144,7 @@ void buildIfVc() {
             
 
             // Debug log the result...
-            IF_DEBUG log( LOG_DEBUG, 0, "buildIfVc: Interface %s Addr: %s, Flags: 0x%04x, Network: %s",
+            IF_DEBUG my_log( LOG_DEBUG, 0, "buildIfVc: Interface %s Addr: %s, Flags: 0x%04x, Network: %s",
                  IfDescEp->Name,
                  fmtInAdr( FmtBu, IfDescEp->InAdr ),
                  IfDescEp->Flags,
@@ -241,7 +241,7 @@ int isAdressValidForIf( struct IfDesc* intrface, uint32 ipaddr ) {
     for(currsubnet = intrface->allowednets; currsubnet != NULL; currsubnet = currsubnet->next) {
 
         /*
-        IF_DEBUG log(LOG_DEBUG, 0, "Testing %s for subnet %s, mask %s: Result net: %s",
+        IF_DEBUG my_log(LOG_DEBUG, 0, "Testing %s for subnet %s, mask %s: Result net: %s",
             inetFmt(ipaddr, s1),
             inetFmt(currsubnet->subnet_addr, s2),
             inetFmt(currsubnet->subnet_mask, s3),

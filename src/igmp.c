@@ -106,7 +106,7 @@ void acceptIgmp(int recvlen) {
     int ipdatalen, iphdrlen, igmpdatalen;
 
     if (recvlen < sizeof(struct ip)) {
-        log(LOG_WARNING, 0,
+        my_log(LOG_WARNING, 0,
             "received packet too short (%u bytes) for IP header", recvlen);
         return;
     }
@@ -115,7 +115,7 @@ void acceptIgmp(int recvlen) {
     src       = ip->ip_src.s_addr;
     dst       = ip->ip_dst.s_addr;
 
-    //IF_DEBUG log(LOG_DEBUG, 0, "Got a IGMP request to process...");
+    //IF_DEBUG my_log(LOG_DEBUG, 0, "Got a IGMP request to process...");
 
     /* 
      * this is most likely a message from the kernel indicating that
@@ -124,7 +124,7 @@ void acceptIgmp(int recvlen) {
      */
     if (ip->ip_p == 0) {
         if (src == 0 || dst == 0) {
-            log(LOG_WARNING, 0, "kernel request not accurate");
+            my_log(LOG_WARNING, 0, "kernel request not accurate");
         }
         else {
             struct IfDesc *checkVIF;
@@ -132,22 +132,22 @@ void acceptIgmp(int recvlen) {
             // Check if the source address matches a valid address on upstream vif.
             checkVIF = getIfByIx( upStreamVif );
             if(checkVIF == 0) {
-                log(LOG_ERR, 0, "Upstream VIF was null.");
+                my_log(LOG_ERR, 0, "Upstream VIF was null.");
                 return;
             } 
             else if(src == checkVIF->InAdr.s_addr) {
-                log(LOG_NOTICE, 0, "Route activation request from %s for %s is from myself. Ignoring.",
+                my_log(LOG_NOTICE, 0, "Route activation request from %s for %s is from myself. Ignoring.",
                     inetFmt(src, s1), inetFmt(dst, s2));
                 return;
             }
             else if(!isAdressValidForIf(checkVIF, src)) {
-                log(LOG_WARNING, 0, "The source address %s for group %s, is not in any valid net for upstream VIF.",
+                my_log(LOG_WARNING, 0, "The source address %s for group %s, is not in any valid net for upstream VIF.",
                     inetFmt(src, s1), inetFmt(dst, s2));
                 return;
             }
             
             // Activate the route.
-            IF_DEBUG log(LOG_DEBUG, 0, "Route activate request from %s to %s",
+            IF_DEBUG my_log(LOG_DEBUG, 0, "Route activate request from %s to %s",
                          inetFmt(src,s1), inetFmt(dst,s2));
             activateRoute(dst, src);
             
@@ -160,7 +160,7 @@ void acceptIgmp(int recvlen) {
     ipdatalen = ntohs(ip->ip_len) - iphdrlen;
 
     if (iphdrlen + ipdatalen != recvlen) {
-        log(LOG_WARNING, 0,
+        my_log(LOG_WARNING, 0,
             "received packet from %s shorter (%u bytes) than hdr+data length (%u+%u)",
             inetFmt(src, s1), recvlen, iphdrlen, ipdatalen);
         return;
@@ -170,13 +170,13 @@ void acceptIgmp(int recvlen) {
     group       = igmp->igmp_group.s_addr;
     igmpdatalen = ipdatalen - IGMP_MINLEN;
     if (igmpdatalen < 0) {
-        log(LOG_WARNING, 0,
+        my_log(LOG_WARNING, 0,
             "received IP data field too short (%u bytes) for IGMP, from %s",
             ipdatalen, inetFmt(src, s1));
         return;
     }
 
-    log(LOG_NOTICE, 0, "RECV %s from %-15s to %s",
+    my_log(LOG_NOTICE, 0, "RECV %s from %-15s to %s",
         igmpPacketKind(igmp->igmp_type, igmp->igmp_code),
         inetFmt(src, s1), inetFmt(dst, s2) );
 
@@ -198,7 +198,7 @@ void acceptIgmp(int recvlen) {
     */
 
     default:
-        log(LOG_INFO, 0,
+        my_log(LOG_INFO, 0,
             "ignoring unknown IGMP message type %x from %s to %s",
             igmp->igmp_type, inetFmt(src, s1),
             inetFmt(dst, s2));
@@ -267,9 +267,9 @@ void sendIgmp(uint32 src, uint32 dst, int type, int code, uint32 group, int data
                MIN_IP_HEADER_LEN + IGMP_MINLEN + datalen, 0,
                (struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
         if (errno == ENETDOWN)
-            log(LOG_ERR, errno, "Sender VIF was down.");
+            my_log(LOG_ERR, errno, "Sender VIF was down.");
         else
-            log(LOG_INFO, errno,
+            my_log(LOG_INFO, errno,
                 "sendto to %s on %s",
                 inetFmt(dst, s1), inetFmt(src, s2));
     }
@@ -282,7 +282,7 @@ void sendIgmp(uint32 src, uint32 dst, int type, int code, uint32 group, int data
         k_set_if(INADDR_ANY);
     }
 
-    IF_DEBUG log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
+    IF_DEBUG my_log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
         igmpPacketKind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
         inetFmt(src, s1), inetFmt(dst, s2));
 }

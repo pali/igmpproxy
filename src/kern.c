@@ -64,12 +64,12 @@ void k_set_rcvbuf(int bufsize, int minsize) {
             }
         }
         if (bufsize < minsize) {
-            log(LOG_ERR, 0, "OS-allowed buffer size %u < app min %u",
+            my_log(LOG_ERR, 0, "OS-allowed buffer size %u < app min %u",
                 bufsize, minsize);
             /*NOTREACHED*/
         }
     }
-    IF_DEBUG log(LOG_DEBUG, 0, "Got %d byte buffer size in %d iterations", bufsize, iter);
+    IF_DEBUG my_log(LOG_DEBUG, 0, "Got %d byte buffer size in %d iterations", bufsize, iter);
 }
 
 
@@ -77,7 +77,7 @@ void k_hdr_include(int bool) {
 #ifdef IP_HDRINCL
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_HDRINCL,
                    (char *)&bool, sizeof(bool)) < 0)
-        log(LOG_ERR, errno, "setsockopt IP_HDRINCL %u", bool);
+        my_log(LOG_ERR, errno, "setsockopt IP_HDRINCL %u", bool);
 #endif
 }
 
@@ -89,7 +89,7 @@ void k_set_ttl(int t) {
     ttl = t;
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_MULTICAST_TTL,
                    (char *)&ttl, sizeof(ttl)) < 0)
-        log(LOG_ERR, errno, "setsockopt IP_MULTICAST_TTL %u", ttl);
+        my_log(LOG_ERR, errno, "setsockopt IP_MULTICAST_TTL %u", ttl);
 #endif
     curttl = t;
 }
@@ -101,7 +101,7 @@ void k_set_loop(int l) {
     loop = l;
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_MULTICAST_LOOP,
                    (char *)&loop, sizeof(loop)) < 0)
-        log(LOG_ERR, errno, "setsockopt IP_MULTICAST_LOOP %u", loop);
+        my_log(LOG_ERR, errno, "setsockopt IP_MULTICAST_LOOP %u", loop);
 }
 
 void k_set_if(uint32 ifa) {
@@ -110,7 +110,7 @@ void k_set_if(uint32 ifa) {
     adr.s_addr = ifa;
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_MULTICAST_IF,
                    (char *)&adr, sizeof(adr)) < 0)
-        log(LOG_ERR, errno, "setsockopt IP_MULTICAST_IF %s",
+        my_log(LOG_ERR, errno, "setsockopt IP_MULTICAST_IF %s",
             inetFmt(ifa, s1));
 }
 
@@ -123,7 +123,7 @@ void k_join(uint32 grp, uint32 ifa) {
 
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                    (char *)&mreq, sizeof(mreq)) < 0)
-        log(LOG_WARNING, errno, "can't join group %s on interface %s",
+        my_log(LOG_WARNING, errno, "can't join group %s on interface %s",
             inetFmt(grp, s1), inetFmt(ifa, s2));
 }
 
@@ -136,7 +136,7 @@ void k_leave(uint32 grp, uint32 ifa) {
 
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_DROP_MEMBERSHIP,
                    (char *)&mreq, sizeof(mreq)) < 0)
-        log(LOG_WARNING, errno, "can't leave group %s on interface %s",
+        my_log(LOG_WARNING, errno, "can't leave group %s on interface %s",
             inetFmt(grp, s1), inetFmt(ifa, s2));
 }
 */
