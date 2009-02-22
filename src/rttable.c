@@ -642,7 +642,9 @@ void logRouteTable(char *header) {
         struct RouteTable*  croute = routing_table;
         unsigned            rcount = 0;
     
-        my_log(LOG_DEBUG, 0, "\nCurrent routing table (%s);\n-----------------------------------------------------\n", header);
+        my_log(LOG_DEBUG, 0, "");
+        my_log(LOG_DEBUG, 0, "Current routing table (%s):", header);
+        my_log(LOG_DEBUG, 0, "-----------------------------------------------------");
         if(croute==NULL) {
             my_log(LOG_DEBUG, 0, "No routes in table...");
         } else {
@@ -664,6 +666,6 @@ void logRouteTable(char *header) {
             } while ( croute != NULL );
         }
     
-        my_log(LOG_DEBUG, 0, "\n-----------------------------------------------------\n");
+        my_log(LOG_DEBUG, 0, "-----------------------------------------------------");
     }
 }

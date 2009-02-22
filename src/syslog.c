@@ -55,12 +55,6 @@ char LogLastMsg[ 128 ];
 */
 void my_log( int Serverity, int Errno, const char *FmtSt, ... )
 {
-  const char ServVc[][ 5 ] = { "EMER", "ALER", "CRIT", "ERRO", 
-			       "Warn", "Note", "Info", "Debu" };
-
-  const char *ServPt = Serverity < 0 || Serverity >= VCMC( ServVc ) ? 
-                       "!unknown serverity!" : ServVc[ Serverity ];
- 
   const char *ErrSt = (Errno <= 0) ? NULL : (const char *)strerror( Errno ); 
 
   {
@@ -68,8 +62,7 @@ void my_log( int Serverity, int Errno, const char *FmtSt, ... )
     unsigned Ln;
 
     va_start( ArgPt, FmtSt );
-    Ln  = snprintf( LogLastMsg, sizeof( LogLastMsg ), "%s: ", ServPt );
-    Ln += vsnprintf( LogLastMsg + Ln, sizeof( LogLastMsg ) - Ln, FmtSt, ArgPt );
+    Ln = vsnprintf( LogLastMsg, sizeof( LogLastMsg ), FmtSt, ArgPt );
     if( ErrSt )
       snprintf( LogLastMsg + Ln, sizeof( LogLastMsg ) - Ln, "; Errno(%d): %s", Errno, ErrSt );
        
