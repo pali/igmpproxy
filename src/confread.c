@@ -42,7 +42,7 @@
 *
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
 
 #define     READ_BUFFER_SIZE    512   // Inputbuffer size...
         

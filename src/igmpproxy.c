@@ -36,7 +36,7 @@
 *   February 2005 - Johnny Egeland
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
 
 #include "version.h"
 

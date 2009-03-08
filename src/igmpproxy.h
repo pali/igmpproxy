@@ -31,7 +31,7 @@
 **
 */
 /**
-*   defs.h - Header file for common includes.
+*   igmpproxy.h - Header file for common includes.
 */
 
 #include <errno.h>

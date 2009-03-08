@@ -31,7 +31,7 @@
 **
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
 #include <linux/sockios.h>
 
 struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;

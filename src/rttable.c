@@ -37,7 +37,7 @@
 *     recieved request.
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
     
 /**
 *   Routing table structure definition. Double linked list...

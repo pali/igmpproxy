@@ -31,7 +31,7 @@
 **
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
 
 /*
  * Exported variables.

@@ -35,7 +35,7 @@
 *              file, and functions to configure the daemon.              
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
                                       
 // Structure to keep configuration for VIFs...    
 struct vifconfig {

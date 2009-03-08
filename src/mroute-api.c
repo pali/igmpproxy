@@ -38,7 +38,7 @@
 
 
 #define USE_LINUX_IN_H
-#include "defs.h"
+#include "igmpproxy.h"
 
 // MAX_MC_VIFS from mclab.h must have same value as MAXVIFS from mroute.h
 #if MAX_MC_VIFS != MAXVIFS

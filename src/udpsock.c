@@ -35,7 +35,7 @@
 *
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
 
 /**
 *  Creates and connects a simple UDP socket to the target 

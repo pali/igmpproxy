@@ -35,7 +35,7 @@
 *            appropriately...
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
  
 // Globals                  
 uint32     allhosts_group;          /* All hosts addr in net order */

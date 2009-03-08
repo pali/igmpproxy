@@ -32,7 +32,7 @@
 */
 
 
-#include "defs.h"
+#include "igmpproxy.h"
 
 int curttl = 0;
 

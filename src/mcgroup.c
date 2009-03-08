@@ -35,7 +35,7 @@
 *
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
        
 
 /**

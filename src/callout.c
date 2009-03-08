@@ -32,7 +32,7 @@
 */
 
 
-#include "defs.h"
+#include "igmpproxy.h"
 
 /* the code below implements a callout queue */
 static int id = 0;

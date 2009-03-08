@@ -31,7 +31,7 @@
 **
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
 
 int  Log2Stderr = LOG_WARNING;
 

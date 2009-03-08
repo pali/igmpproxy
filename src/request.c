@@ -37,7 +37,7 @@
 *
 */
 
-#include "defs.h"
+#include "igmpproxy.h"
 
 // Prototypes...
 void sendGroupSpecificMemberQuery(void *argument);  
