@@ -45,15 +45,15 @@
 struct RouteTable {
     struct RouteTable   *nextroute;     // Pointer to the next group in line.
     struct RouteTable   *prevroute;     // Pointer to the previous group in line.
-    uint32              group;          // The group to route
-    uint32              originAddr;     // The origin adress (only set on activated routes)
-    uint32              vifBits;        // Bits representing recieving VIFs.
+    uint32_t              group;          // The group to route
+    uint32_t              originAddr;     // The origin adress (only set on activated routes)
+    uint32_t              vifBits;        // Bits representing recieving VIFs.
 
     // Keeps the upstream membership state...
     short               upstrState;     // Upstream membership state.
 
     // These parameters contain aging details.
-    uint32              ageVifBits;     // Bits representing aging VIFs.
+    uint32_t              ageVifBits;     // Bits representing aging VIFs.
     int                 ageValue;       // Downcounter for death.          
     int                 ageActivity;    // Records any acitivity that notes there are still listeners.
 };
@@ -65,6 +65,7 @@ static struct RouteTable   *routing_table;
 // Prototypes
 void logRouteTable(char *header);
 int  internAgeRoute(struct RouteTable*  croute);
+int internUpdateKernelRoute(struct RouteTable *route, int activate);
 
 // Socket for sending join or leave requests.
 int mcGroupSock = 0;
@@ -91,7 +92,7 @@ void initRouteTable() {
     routing_table = NULL;
 
     // Join the all routers group on downstream vifs...
-    for ( Ix = 0; Dp = getIfByIx( Ix ); Ix++ ) {
+    for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
         // If this is a downstream vif, we should join the All routers group...
         if( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) && Dp->state == IF_STATE_DOWNSTREAM) {
             IF_DEBUG my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
@@ -191,7 +192,7 @@ void clearAllRoutes() {
 *   Private access function to find a route from a given 
 *   Route Descriptor.
 */
-struct RouteTable *findRoute(uint32 group) {
+struct RouteTable *findRoute(uint32_t group) {
     struct RouteTable*  croute;
 
     for(croute = routing_table; croute; croute = croute->nextroute) {
@@ -208,11 +209,10 @@ struct RouteTable *findRoute(uint32 group) {
 *   If the route already exists, the existing route 
 *   is updated...
 */
-int insertRoute(uint32 group, int ifx) {
+int insertRoute(uint32_t group, int ifx) {
     
     struct Config *conf = getCommonConfig();
     struct RouteTable*  croute;
-    int result = 1;
 
     // Sanitycheck the group adress...
     if( ! IN_MULTICAST( ntohl(group) )) {
@@ -351,7 +351,7 @@ int insertRoute(uint32 group, int ifx) {
 *   activated, it's reinstalled in the kernel. If
 *   the route is activated, no originAddr is needed.
 */
-int activateRoute(uint32 group, uint32 originAddr) {
+int activateRoute(uint32_t group, uint32_t originAddr) {
     struct RouteTable*  croute;
     int result = 0;
 
@@ -419,7 +419,7 @@ void ageActiveRoutes() {
 *   Should be called when a leave message is recieved, to
 *   mark a route for the last member probe state.
 */
-void setRouteLastMemberMode(uint32 group) {
+void setRouteLastMemberMode(uint32_t group) {
     struct Config       *conf = getCommonConfig();
     struct RouteTable   *croute;
 
@@ -442,8 +442,7 @@ void setRouteLastMemberMode(uint32 group) {
 *   Ages groups in the last member check state. If the
 *   route is not found, or not in this state, 0 is returned.
 */
-int lastMemberGroupAge(uint32 group) {
-    struct Config       *conf = getCommonConfig();
+int lastMemberGroupAge(uint32_t group) {
     struct RouteTable   *croute;
 
     croute = findRoute(group);
@@ -605,7 +604,7 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate) {
         IF_DEBUG my_log(LOG_DEBUG, 0, "Vif bits : 0x%08x", route->vifBits);
 
         // Set the TTL's for the route descriptor...
-        for ( Ix = 0; Dp = getIfByIx( Ix ); Ix++ ) {
+        for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
             if(Dp->state == IF_STATE_UPSTREAM) {
                 //IF_DEBUG my_log(LOG_DEBUG, 0, "Identified VIF #%d as upstream.", Dp->index);
                 mrDesc.InVif = Dp->index;

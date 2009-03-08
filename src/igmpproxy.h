@@ -34,30 +34,33 @@
 *   igmpproxy.h - Header file for common includes.
 */
 
+#define _XOPEN_SOURCE 600
+#define _BSD_SOURCE
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <syslog.h>
 #include <signal.h>
+#include <unistd.h>
+#include <string.h>
+#include <fcntl.h>
+#include <stdbool.h>
 
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 
 #include <net/if.h>
 
-// The multicats API needs linux spesific headers !!!                  
-#ifdef USE_LINUX_IN_H
-    #include <linux/in.h>
-    #include <linux/mroute.h>
-#else
-    #include <netinet/in.h>
-    #include <netinet/ip.h>
-    #include <netinet/igmp.h>
-    #include <arpa/inet.h>
-#endif
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/igmp.h>
+#include <arpa/inet.h>
 
+#include "config.h"
 
 // The default path for the config file...
 #define     IGMPPROXY_CONFIG_FILEPATH     "/etc/igmpproxy.conf"
@@ -84,16 +87,6 @@
 #define BIT_CLR(X,n)     ((X) &= ~(1 << (n)))
 #define BIT_TST(X,n)     ((X) & 1 << (n))
 
-
-// Useful defs...
-#define FALSE		0
-#define TRUE		1
-
-typedef void (*cfunc_t)   (void *);
-
-typedef u_int8_t   uint8;
-typedef u_int16_t  uint16;
-typedef u_int32_t  uint32;
 
 //#################################################################################
 //  Globals
@@ -155,13 +148,13 @@ void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 
 // Linked list of networks... 
 struct SubnetList {
-    uint32              subnet_addr;
-    uint32              subnet_mask;
+    uint32_t              subnet_addr;
+    uint32_t              subnet_mask;
     struct SubnetList*  next;
 };
 
 struct IfDesc {
-    char                Name[ sizeof( ((struct ifreq *)NULL)->ifr_name ) ];
+    char                Name[IF_NAMESIZE];
     struct in_addr      InAdr;          /* == 0 for non IP interfaces */            
     short               Flags;
     short               state;
@@ -195,14 +188,15 @@ extern int upStreamVif;
 void buildIfVc( void );
 struct IfDesc *getIfByName( const char *IfName );
 struct IfDesc *getIfByIx( unsigned Ix );
-struct IfDesc *getIfByAddress( uint32 Ix );
+struct IfDesc *getIfByAddress( uint32_t Ix );
+int isAdressValidForIf(struct IfDesc* intrface, uint32_t ipaddr);
 
 /* mroute-api.c
  */
 struct MRouteDesc {
     struct in_addr  OriginAdr, McAdr;
     short           InVif;
-    uint8           TtlVc[ MAX_MC_VIFS ];
+    uint8_t           TtlVc[ MAX_MC_VIFS ];
 };
 
 // IGMP socket as interface for the mrouted API
@@ -224,64 +218,66 @@ struct Config *getCommonConfig();
 
 /* igmp.c
 */
-extern uint32 allhosts_group;
-extern uint32 allrouters_group;
+extern uint32_t allhosts_group;
+extern uint32_t allrouters_group;
 void initIgmp(void);
 void acceptIgmp(int);
-void sendIgmp (uint32, uint32, int, int, uint32,int);
+void sendIgmp (uint32_t, uint32_t, int, int, uint32_t,int);
 
 /* lib.c
  */
 char   *fmtInAdr( char *St, struct in_addr InAdr );
-char   *inetFmt(uint32 addr, char *s);
-char   *inetFmts(uint32 addr, uint32 mask, char *s);
-int     inetCksum(u_short *addr, u_int len);
+char   *inetFmt(uint32_t addr, char *s);
+char   *inetFmts(uint32_t addr, uint32_t mask, char *s);
+uint16_t inetChksum(uint16_t *addr, int len);
 
 /* kern.c
  */
 void k_set_rcvbuf(int bufsize, int minsize);
-void k_hdr_include(int bool);
+void k_hdr_include(int hdrincl);
 void k_set_ttl(int t);
 void k_set_loop(int l);
-void k_set_if(uint32 ifa);
+void k_set_if(uint32_t ifa);
 /*
-void k_join(uint32 grp, uint32 ifa);
-void k_leave(uint32 grp, uint32 ifa);
+void k_join(uint32_t grp, uint32_t ifa);
+void k_leave(uint32_t grp, uint32_t ifa);
 */
 
 /* udpsock.c
  */
-int openUdpSocket( uint32 PeerInAdr, uint16 PeerPort );
+int openUdpSocket( uint32_t PeerInAdr, uint16_t PeerPort );
 
 /* mcgroup.c
  */
-int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32 mcastaddr );
-int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32 mcastaddr );
+int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
+int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
 
 
 /* rttable.c
  */
 void initRouteTable();
 void clearAllRoutes();
-int insertRoute(uint32 group, int ifx);
-int activateRoute(uint32 group, uint32 originAddr);
+int insertRoute(uint32_t group, int ifx);
+int activateRoute(uint32_t group, uint32_t originAddr);
 void ageActiveRoutes();
-void setRouteLastMemberMode(uint32 group);
-int lastMemberGroupAge(uint32 group);
+void setRouteLastMemberMode(uint32_t group);
+int lastMemberGroupAge(uint32_t group);
 
 /* request.c
  */
-void acceptGroupReport(uint32 src, uint32 group, uint8 type);
-void acceptLeaveMessage(uint32 src, uint32 group);
+void acceptGroupReport(uint32_t src, uint32_t group, uint8_t type);
+void acceptLeaveMessage(uint32_t src, uint32_t group);
 void sendGeneralMembershipQuery();
 
 /* callout.c 
 */
+typedef void (*timer_f)(void *);
+
 void callout_init();
 void free_all_callouts();
 void age_callout_queue(int);
 int timer_nextTimer();
-int timer_setTimer(int, cfunc_t, void *);
+int timer_setTimer(int, timer_f, void *);
 int timer_clearTimer(int);
 int timer_leftTimer(int);
 

@@ -38,10 +38,6 @@
 
 #include "igmpproxy.h"
 
-#include "version.h"
-
-
-
 // Constants
 static const char Version[] = 
 "igmpproxy, Version " VERSION "\n"
@@ -170,7 +166,7 @@ int main( int ArgCn, char *ArgVc[] ) {
         // Clean up
         igmpProxyCleanUp();
 
-    } while ( FALSE );
+    } while ( false );
 
     // Inform that we are exiting.
     my_log(LOG_INFO, 0, "Shutdown complete....");
@@ -214,7 +210,7 @@ int igmpProxyInit() {
         int     vifcount = 0;
         upStreamVif = -1;
 
-        for ( Ix = 0; Dp = getIfByIx( Ix ); Ix++ ) {
+        for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
 
             if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
                 if(Dp->state == IF_STATE_UPSTREAM) {
@@ -271,7 +267,7 @@ void igmpProxyRun() {
     register int recvlen;
     int     MaxFD, Rt, secs;
     fd_set  ReadFDS;
-    int     dummy = 0;
+    socklen_t dummy = 0;
     struct  timeval  curtime, lasttime, difftime, tv; 
     // The timeout is a pointer in order to set it to NULL if nessecary.
     struct  timeval  *timeout = &tv;

@@ -68,10 +68,9 @@ void buildIfVc() {
      */
     {
         struct ifreq  *IfPt;
-        struct IfDesc *IfDp;
 
         // Temp keepers of interface params...
-        uint32 addr, subnet, mask;
+        uint32_t addr, subnet, mask;
 
         for ( IfPt = IfVc; IfPt < IfEp; IfPt++ ) {
             struct ifreq IfReq;
@@ -191,7 +190,7 @@ struct IfDesc *getIfByIx( unsigned Ix ) {
 *   the supplied IP adress. The IP must match a interfaces
 *   subnet, or any configured allowed subnet on a interface.
 */
-struct IfDesc *getIfByAddress( uint32 ipaddr ) {
+struct IfDesc *getIfByAddress( uint32_t ipaddr ) {
 
     struct IfDesc       *Dp;
     struct SubnetList   *currsubnet;
@@ -231,7 +230,7 @@ struct IfDesc *getIfByVifIndex( unsigned vifindex ) {
 *   Function that checks if a given ipaddress is a valid
 *   address for the supplied VIF.
 */
-int isAdressValidForIf( struct IfDesc* intrface, uint32 ipaddr ) {
+int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr ) {
     struct SubnetList   *currsubnet;
     
     if(intrface == NULL) {

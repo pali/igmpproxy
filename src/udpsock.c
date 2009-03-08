@@ -45,7 +45,7 @@
 *   @param PeerPort  - The port to connect to
 *           
 */
-int openUdpSocket( uint32 PeerInAdr, uint16 PeerPort ) {
+int openUdpSocket( uint32_t PeerInAdr, uint16_t PeerPort ) {
     int Sock;
     struct sockaddr_in SockAdr;
     

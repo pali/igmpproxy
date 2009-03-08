@@ -37,8 +37,9 @@
 */
 
 
-#define USE_LINUX_IN_H
 #include "igmpproxy.h"
+#include <linux/in.h>
+#include <linux/mroute.h>
 
 // MAX_MC_VIFS from mclab.h must have same value as MAXVIFS from mroute.h
 #if MAX_MC_VIFS != MAXVIFS
@@ -157,6 +158,7 @@ void addVIF( struct IfDesc *IfDp )
 int addMRoute( struct MRouteDesc *Dp )
 {
     struct mfcctl CtlReq;
+    int rc;
 
     CtlReq.mfcc_origin    = Dp->OriginAdr;
     CtlReq.mfcc_mcastgrp  = Dp->McAdr;
@@ -164,10 +166,6 @@ int addMRoute( struct MRouteDesc *Dp )
 
     /* copy the TTL vector
      */
-    if (    sizeof( CtlReq.mfcc_ttls ) != sizeof( Dp->TtlVc ) 
-            || VCMC( CtlReq.mfcc_ttls ) != VCMC( Dp->TtlVc )
-       )
-        my_log( LOG_ERR, 0, "data types doesn't match in " __FILE__ ", source adaption needed !" );
 
     memcpy( CtlReq.mfcc_ttls, Dp->TtlVc, sizeof( CtlReq.mfcc_ttls ) );
 
@@ -181,9 +179,12 @@ int addMRoute( struct MRouteDesc *Dp )
            );
     }
 
-    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_ADD_MFC,
-                     (void *)&CtlReq, sizeof( CtlReq ) ) )
+    rc = setsockopt( MRouterFD, IPPROTO_IP, MRT_ADD_MFC,
+		    (void *)&CtlReq, sizeof( CtlReq ) );
+    if (rc)
         my_log( LOG_WARNING, errno, "MRT_ADD_MFC" );
+
+    return rc;
 }
 
 /*
@@ -195,6 +196,7 @@ int addMRoute( struct MRouteDesc *Dp )
 int delMRoute( struct MRouteDesc *Dp )
 {
     struct mfcctl CtlReq;
+    int rc;
 
     CtlReq.mfcc_origin    = Dp->OriginAdr;
     CtlReq.mfcc_mcastgrp  = Dp->McAdr;
@@ -214,9 +216,12 @@ int delMRoute( struct MRouteDesc *Dp )
            );
     }
 
-    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_MFC,
-                     (void *)&CtlReq, sizeof( CtlReq ) ) )
+    rc = setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_MFC,
+		    (void *)&CtlReq, sizeof( CtlReq ) );
+    if (rc)
         my_log( LOG_WARNING, errno, "MRT_DEL_MFC" );
+
+    return rc;
 }
 
 /*

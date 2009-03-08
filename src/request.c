@@ -43,8 +43,8 @@
 void sendGroupSpecificMemberQuery(void *argument);  
     
 typedef struct {
-    uint32      group;
-    uint32      vifAddr;
+    uint32_t      group;
+    uint32_t      vifAddr;
     short       started;
 } GroupVifDesc;
 
@@ -53,7 +53,7 @@ typedef struct {
 *   Handles incoming membership reports, and
 *   appends them to the routing table.
 */
-void acceptGroupReport(uint32 src, uint32 group, uint8 type) {
+void acceptGroupReport(uint32_t src, uint32_t group, uint8_t type) {
     struct IfDesc  *sourceVif;
 
     // Sanitycheck the group adress...
@@ -97,7 +97,7 @@ void acceptGroupReport(uint32 src, uint32 group, uint8 type) {
 /**
 *   Recieves and handles a group leave message.
 */
-void acceptLeaveMessage(uint32 src, uint32 group) {
+void acceptLeaveMessage(uint32_t src, uint32_t group) {
     struct IfDesc   *sourceVif;
     
     IF_DEBUG my_log(LOG_DEBUG, 0, "Got leave message from %s to %s. Starting last member detection.",
@@ -184,7 +184,7 @@ void sendGeneralMembershipQuery() {
     int             Ix;
 
     // Loop through all downstream vifs...
-    for ( Ix = 0; Dp = getIfByIx( Ix ); Ix++ ) {
+    for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
         if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
             if(Dp->state == IF_STATE_DOWNSTREAM) {
                 // Send the membership query...

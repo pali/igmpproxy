@@ -73,11 +73,11 @@ void k_set_rcvbuf(int bufsize, int minsize) {
 }
 
 
-void k_hdr_include(int bool) {
+void k_hdr_include(int hdrincl) {
 #ifdef IP_HDRINCL
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_HDRINCL,
-                   (char *)&bool, sizeof(bool)) < 0)
-        my_log(LOG_ERR, errno, "setsockopt IP_HDRINCL %u", bool);
+                   (char *)&hdrincl, sizeof(hdrincl)) < 0)
+        my_log(LOG_ERR, errno, "setsockopt IP_HDRINCL %u", hdrincl);
 #endif
 }
 
@@ -104,7 +104,7 @@ void k_set_loop(int l) {
         my_log(LOG_ERR, errno, "setsockopt IP_MULTICAST_LOOP %u", loop);
 }
 
-void k_set_if(uint32 ifa) {
+void k_set_if(uint32_t ifa) {
     struct in_addr adr;
 
     adr.s_addr = ifa;
@@ -115,7 +115,7 @@ void k_set_if(uint32 ifa) {
 }
 
 /*
-void k_join(uint32 grp, uint32 ifa) {
+void k_join(uint32_t grp, uint32_t ifa) {
     struct ip_mreq mreq;
 
     mreq.imr_multiaddr.s_addr = grp;
@@ -128,7 +128,7 @@ void k_join(uint32 grp, uint32 ifa) {
 }
 
 
-void k_leave(uint32 grp, uint32 ifa) {
+void k_leave(uint32_t grp, uint32_t ifa) {
     struct ip_mreq mreq;
 
     mreq.imr_multiaddr.s_addr = grp;

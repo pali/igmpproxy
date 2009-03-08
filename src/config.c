@@ -177,7 +177,7 @@ void configureVifs() {
     }
 
     // Loop through all VIFs...
-    for ( Ix = 0; Dp = getIfByIx( Ix ); Ix++ ) {
+    for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
         if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
 
             // Now try to find a matching config...
@@ -224,7 +224,7 @@ struct vifconfig *parsePhyintToken() {
 
     // Sanitycheck the name...
     if(token == NULL) return NULL;
-    if(strlen(token) >= sizeof( ((struct ifreq *)NULL)->ifr_name) ) return NULL;
+    if(strlen(token) >= IF_NAMESIZE) return NULL;
     IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Config for interface %s.", token);
 
     // Allocate memory for configuration...
@@ -255,8 +255,6 @@ struct vifconfig *parsePhyintToken() {
     while(token != NULL) {
         if(strcmp("altnet", token)==0) {
             // Altnet...
-            struct in_addr  networkAddr;
-
             token = nextConfigToken();
             IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Got altnet token %s.",token);
 
@@ -329,8 +327,8 @@ struct vifconfig *parsePhyintToken() {
 struct SubnetList *parseSubnetAddress(char *addrstr) {
     struct SubnetList *tmpSubnet;
     char        *tmpStr;
-    uint32      addr = 0x00000000;
-    uint32      mask = 0xFFFFFFFF;
+    uint32_t      addr = 0x00000000;
+    uint32_t      mask = 0xFFFFFFFF;
 
     // First get the network part of the address...
     tmpStr = strtok(addrstr, "/");

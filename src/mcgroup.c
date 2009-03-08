@@ -41,7 +41,7 @@
 /**
 *   Common function for joining or leaving a MCast group.
 */
-static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32 mcastaddr ) {
+static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr ) {
     struct ip_mreq CtlReq;
     const char *CmdSt = Cmd == 'j' ? "join" : "leave";
     
@@ -49,7 +49,6 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32 mcastadd
     CtlReq.imr_interface.s_addr = IfDp->InAdr.s_addr;
     
     {
-        char FmtBu[ 32 ];
         my_log( LOG_NOTICE, 0, "%sMcGroup: %s on %s", CmdSt, 
             inetFmt( mcastaddr, s1 ), IfDp ? IfDp->Name : "<any>" );
     }
@@ -72,7 +71,7 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32 mcastadd
 *          
 *   @return 0 if the function succeeds, 1 if parameters are wrong or the join fails
 */
-int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32 mcastaddr ) {
+int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr ) {
     return joinleave( 'j', UdpSock, IfDp, mcastaddr );
 }
 
@@ -81,6 +80,6 @@ int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32 mcastaddr ) {
 *          
 *   @return 0 if the function succeeds, 1 if parameters are wrong or the join fails
 */
-int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32 mcastaddr ) {
+int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr ) {
     return joinleave( 'l', UdpSock, IfDp, mcastaddr );
 }

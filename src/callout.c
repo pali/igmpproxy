@@ -41,7 +41,7 @@ static struct timeOutQueue  *queue = 0; /* pointer to the beginning of timeout q
 struct timeOutQueue {
     struct timeOutQueue    *next;   // Next event in queue
     int                     id;  
-    cfunc_t                 func;   // function to call
+    timer_f                 func;   // function to call
     void                    *data;  // Data for function
     int                     time;   // Time offset for next event
 };
@@ -116,7 +116,7 @@ int timer_nextTimer() {
  *  @param action - The function to call on timeout.
  *  @param data - Pointer to the function data to supply...
  */
-int timer_setTimer(int delay, cfunc_t action, void *data) {
+int timer_setTimer(int delay, timer_f action, void *data) {
     struct     timeOutQueue  *ptr, *node, *prev;
     int i = 0;
 
