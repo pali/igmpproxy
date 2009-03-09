@@ -45,6 +45,7 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcasta
     struct ip_mreq CtlReq;
     const char *CmdSt = Cmd == 'j' ? "join" : "leave";
     
+    memset(&CtlReq, 0, sizeof(CtlReq));
     CtlReq.imr_multiaddr.s_addr = mcastaddr;
     CtlReq.imr_interface.s_addr = IfDp->InAdr.s_addr;
     

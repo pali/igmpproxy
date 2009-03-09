@@ -32,7 +32,6 @@
 */
 
 #include "igmpproxy.h"
-#include <linux/sockios.h>
 
 struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
 
@@ -67,14 +66,24 @@ void buildIfVc() {
     /* loop over interfaces and copy interface info to IfDescVc
      */
     {
-        struct ifreq  *IfPt;
+        struct ifreq  *IfPt, *IfNext;
 
         // Temp keepers of interface params...
         uint32_t addr, subnet, mask;
 
-        for ( IfPt = IfVc; IfPt < IfEp; IfPt++ ) {
+        for ( IfPt = IfVc; IfPt < IfEp; IfPt = IfNext ) {
             struct ifreq IfReq;
             char FmtBu[ 32 ];
+
+	    IfNext = (struct ifreq *)((char *)&IfPt->ifr_addr +
+#ifdef __FreeBSD__
+				    IfPt->ifr_addr.sa_len
+#else
+				    sizeof(struct sockaddr_in)
+#endif
+		    );
+	    if (IfNext < IfPt + 1)
+		    IfNext = IfPt + 1;
 
             strncpy( IfDescEp->Name, IfPt->ifr_name, sizeof( IfDescEp->Name ) );
 
@@ -103,14 +112,6 @@ void buildIfVc() {
                 my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
             mask = ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr;
             subnet = addr & mask;
-
-            // Get the physical index of the Interface
-            if (ioctl(Sock, SIOCGIFINDEX, &IfReq ) < 0)
-                my_log(LOG_ERR, errno, "ioctl SIOCGIFINDEX for %s", IfReq.ifr_name);
-            
-            my_log(LOG_DEBUG, 0, "Physical Index value of IF '%s' is %d",
-                IfDescEp->Name, IfReq.ifr_ifindex);
-
 
             /* get if flags
             **

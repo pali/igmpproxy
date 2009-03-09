@@ -241,7 +241,7 @@ struct vifconfig *parsePhyintToken() {
     tmpPtr->allowednets = NULL;
 
     // Make a copy of the token to store the IF name
-    tmpPtr->name = (char *)malloc( sizeof(char) * strlen(token) );
+    tmpPtr->name = (char *)malloc( strlen(token) + 1 );
     if(tmpPtr->name == NULL) {
         my_log(LOG_ERR, 0, "Out of memory.");
     }

@@ -34,9 +34,6 @@
 *   igmpproxy.h - Header file for common includes.
 */
 
-#define _XOPEN_SOURCE 600
-#define _BSD_SOURCE
-
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -54,11 +51,28 @@
 #include <sys/ioctl.h>
 
 #include <net/if.h>
-
 #include <netinet/in.h>
+#include <arpa/inet.h>
+
+#if defined __linux__
+
+#include <linux/in.h>
+#include <linux/mroute.h>
+#include <linux/sockios.h>
+
+#elif defined __FreeBSD__
+
+#include <net/route.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip_mroute.h>
+#include <sys/sockio.h>
+
+#else
+#error "Only Linux and FreeBSD are supported"
+#endif
+
 #include <netinet/ip.h>
 #include <netinet/igmp.h>
-#include <arpa/inet.h>
 
 #include "config.h"
 

@@ -38,8 +38,6 @@
 
 
 #include "igmpproxy.h"
-#include <linux/in.h>
-#include <linux/mroute.h>
 
 // MAX_MC_VIFS from mclab.h must have same value as MAXVIFS from mroute.h
 #if MAX_MC_VIFS != MAXVIFS

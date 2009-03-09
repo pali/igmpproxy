@@ -49,16 +49,16 @@ int openUdpSocket( uint32_t PeerInAdr, uint16_t PeerPort ) {
     int Sock;
     struct sockaddr_in SockAdr;
     
-    if( (Sock = socket( AF_INET, SOCK_DGRAM, 0 )) < 0 )
+    if( (Sock = socket( AF_INET, SOCK_RAW, IPPROTO_IGMP )) < 0 )
         my_log( LOG_ERR, errno, "UDP socket open" );
     
+    memset( &SockAdr, 0, sizeof( SockAdr ) );
     SockAdr.sin_family      = AF_INET;
-    SockAdr.sin_port        = PeerPort;
-    SockAdr.sin_addr.s_addr = PeerInAdr;
-    memset( &SockAdr.sin_zero, 0, sizeof( SockAdr.sin_zero ) );
+    SockAdr.sin_port        = htons(PeerPort);
+    SockAdr.sin_addr.s_addr = htonl(PeerInAdr);
     
-    if( connect( Sock, (struct sockaddr *)&SockAdr, sizeof( SockAdr ) ) )
-        my_log( LOG_ERR, errno, "UDP socket connect" );
+    if( bind( Sock, (struct sockaddr *)&SockAdr, sizeof( SockAdr ) ) )
+        my_log( LOG_ERR, errno, "UDP socket bind" );
     
     return Sock;
 }

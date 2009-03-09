@@ -154,7 +154,7 @@ int main( int ArgCn, char *ArgVc[] ) {
             // Detach deamon from terminal
             if ( close( 0 ) < 0 || close( 1 ) < 0 || close( 2 ) < 0 
                  || open( "/dev/null", 0 ) != 0 || dup2( 0, 1 ) < 0 || dup2( 0, 2 ) < 0
-                 || setpgrp() < 0
+                 || setsid() < 0
                ) {
                 my_log( LOG_ERR, errno, "failed to detach deamon" );
             }
