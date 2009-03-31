@@ -76,21 +76,34 @@ void free_all_callouts(void) {
  */
 void age_callout_queue(int elapsed_time) {
     struct timeOutQueue *ptr;
+    struct timeOutQueue *_queue = NULL;
+    struct timeOutQueue *last = NULL;
     int i = 0;
 
-    for (ptr = queue; ptr; ptr = queue, i++) {
+    for (ptr = queue; ptr; ptr = ptr->next) {
         if (ptr->time > elapsed_time) {
             ptr->time -= elapsed_time;
-            return;
+            break;
         } else {
             elapsed_time -= ptr->time;
-            queue = queue->next;
-            my_log(LOG_DEBUG, 0, "About to call timeout %d (#%d)", ptr->id, i);
+            if (_queue == NULL)
+                _queue = ptr;
+            last = ptr;
+         }
+    }
 
-            if (ptr->func)
-                ptr->func(ptr->data);
-            free(ptr);
-        }
+    queue = ptr;
+    if (last) {
+        last->next = NULL;
+    }
+
+    /* process existing events */
+    for (ptr = _queue; ptr; ptr = _queue, i++) {
+        _queue = _queue->next;
+        my_log(LOG_DEBUG, 0, "About to call timeout %d (#%d)", ptr->id, i);
+        if (ptr->func)
+             ptr->func(ptr->data);
+        free(ptr);
     }
 }
 
