@@ -3,14 +3,13 @@
 .\" .I  - green or kursive (on HTML)
 .\" .TP - paragraph ? (header line, followed by indented lines)
 .\"
-.TH igmpproxy 8 "May, 2005"
+.TH igmpproxy 8 "April, 2009" "igmpproxy 0.1"
 .SH NAME
 igmpproxy \- Multicast router utilizing IGMP forwarding
 
 .SH SYNOPSIS
-.B igmpproxy [-d] [-c
+.B igmpproxy [-h] [-d] [-v [-v]]
 .I config-file
-.B ]
 
 
 .SH DESCRIPTION
@@ -37,14 +36,15 @@ kernel.
 
 
 .SH OPTIONS
+.IP -h
+Display help.
+.IP -v
+Verbose logging. Set logging level to INFO instead of WARNING used by default. 
+.IP -vv
+More verbose logging. Set logging level to DEBUG.
 .IP -d
-Run on console only, and output ALL log messages to STDOUT.
-.IP -c 
-.I config-file
-Use the specified
-.I config-file
-instead of the default file
-.IR /etc/igmpproxy.conf .
+Output log messages to STDERR instead of to
+.BR syslog (3).
 
 
 .SH LIMITS
@@ -70,10 +70,12 @@ use IGMPv2 on eth0 (provided this is the upstream interface).
 
 
 .SH SEE ALSO
-igmpproxy.conf(5), mrouted, pimd, smcroute
+.BR igmpproxy.conf (5),
+.BR mrouted,
+.BR pimd,
+.BR smcroute
 
-.SH BUGS (known)
-* Currently none (but there probably will be :-/ )
+.SH BUGS
+Currently none (but there probably will be :-/ )
 .SH AUTHOR
-Johnny Egeland <johnny@rlo.org>
-
+Originally written by Johnny Egeland <johnny@rlo.org>.

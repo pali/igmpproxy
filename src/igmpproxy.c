@@ -46,11 +46,11 @@ static const char Version[] =
 "\n";
 
 static const char Usage[] = 
-"usage: igmpproxy [-h] [-d] [-c <configfile>]\n"
+"usage: igmpproxy [-h] [-d] [-v [-v]] <configfile>\n"
 "\n" 
 "   -h   Display this help screen\n"
-"   -c   Specify a location for the config file (default is '/etc/igmpproxy.conf').\n"
-"   -d   Run in debug mode. Does not fork deamon, and output all logmessages on stderr.\n"
+"   -d   Run in debug mode. Output all messages on stderr\n"
+"   -v   Be verbose. Give twice to see even debug messages.\n"
 "\n"
 ;
 
@@ -79,51 +79,41 @@ int main( int ArgCn, char *ArgVc[] ) {
 
     int debugMode = 0;
 
-    // Set the default config Filepath...
-    char* configFilePath = IGMPPROXY_CONFIG_FILEPATH;
-
     // Parse the commandline options and setup basic settings..
-    int i = 1;
-    while (i < ArgCn) {
-
-        if ( strlen(ArgVc[i]) > 1 && ArgVc[i][0] == '-') {
-
-            switch ( ArgVc[i][1] ) {
-            case 'h':
-                fputs( Usage, stderr );
-                exit( 0 );
-
-            case 'd':
-                Log2Stderr = LOG_DEBUG;
-                /*
-            case 'v':
-                // Enable debug mode...
-                if (Log2Stderr < LOG_INFO) {
-                    Log2Stderr = LOG_INFO;
-                }
-                */
-                debugMode = 1;
-                break;
-
-            case 'c':
-                // Get new filepath...
-                if (i + 1 < ArgCn && ArgVc[i+1][0] != '-') {
-                    configFilePath = ArgVc[i+1];
-                    i++;
-                } else {
-                    my_log(LOG_ERR, 0, "Missing config file path after -c option.");
-                }
-                break;
-            }
+    for (int c; (c = getopt(ArgCn, ArgVc, "vd")) != -1;) {
+        switch (c) {
+        case 'd':
+            Log2Stderr = true;
+            break;
+        case 'v':
+            if (LogLevel == LOG_INFO)
+                LogLevel = LOG_DEBUG;
+            else
+                LogLevel = LOG_INFO;
+            break;
+        case 'h':
+            fputs(Usage, stderr);
+            exit(0);
+            break;
+        default:
+            exit(1);
+            break;
         }
-        i++;
     }
+
+    if (optind != ArgCn - 1) {
+	fputs("You must specify the configuration file.\n", stderr);
+	exit(1);
+    }
+    char *configFilePath = ArgVc[optind];
 
     // Chech that we are root
     if (geteuid() != 0) {
-    	fprintf(stderr, "igmpproxy: must be root\n");
-    	exit(1);
+       fprintf(stderr, "igmpproxy: must be root\n");
+       exit(1);
     }
+
+    openlog("igmpproxy", LOG_PID, LOG_USER);
 
     // Write debug notice with file path...
     IF_DEBUG my_log(LOG_DEBUG, 0, "Searching for config file at '%s'" , configFilePath);
@@ -143,21 +133,11 @@ int main( int ArgCn, char *ArgVc[] ) {
         }
     
     
-        // If not in debug mode, fork and detatch from terminal.
+        // If not in debug mode, close the standard streams.
         if ( ! debugMode ) {
-    
-            IF_DEBUG my_log( LOG_DEBUG, 0, "Starting daemon mode.");
-    
-            // Only daemon goes past this line...
-            if (fork()) exit(0);
-    
-            // Detach deamon from terminal
-            if ( close( 0 ) < 0 || close( 1 ) < 0 || close( 2 ) < 0 
-                 || open( "/dev/null", 0 ) != 0 || dup2( 0, 1 ) < 0 || dup2( 0, 2 ) < 0
-                 || setsid() < 0
-               ) {
-                my_log( LOG_ERR, errno, "failed to detach deamon" );
-            }
+            close(STDIN_FILENO);
+            close(STDOUT_FILENO);
+            close(STDERR_FILENO);
         }
         
         // Go to the main loop.

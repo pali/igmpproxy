@@ -33,54 +33,30 @@
 
 #include "igmpproxy.h"
 
-int  Log2Stderr = LOG_WARNING;
+int LogLevel = LOG_WARNING;
+bool Log2Stderr = false;
 
-int  LogLastServerity;
-int  LogLastErrno;
-char LogLastMsg[ 128 ];
-
-/*
-** Writes the message 'FmtSt' with the parameters '...' to syslog.
-** 'Serverity' is used for the syslog entry. For an 'Errno' value 
-** other then 0, the correponding error string is appended to the
-** message.
-**
-** For a 'Serverity' more important then 'LOG_WARNING' the message is 
-** also logged to 'stderr' and the program is finished with a call to 
-** 'exit()'.
-**
-** If the 'Serverity' is more important then 'Log2Stderr' the message
-** is logged to 'stderr'.
-**          
-*/
-void my_log( int Serverity, int Errno, const char *FmtSt, ... )
+void my_log( int Severity, int Errno, const char *FmtSt, ... )
 {
-  const char *ErrSt = (Errno <= 0) ? NULL : (const char *)strerror( Errno ); 
+    char LogMsg[ 128 ];
 
-  {
     va_list ArgPt;
     unsigned Ln;
-
     va_start( ArgPt, FmtSt );
-    Ln = vsnprintf( LogLastMsg, sizeof( LogLastMsg ), FmtSt, ArgPt );
-    if( ErrSt )
-      snprintf( LogLastMsg + Ln, sizeof( LogLastMsg ) - Ln, "; Errno(%d): %s", Errno, ErrSt );
-       
+    Ln = vsnprintf( LogMsg, sizeof( LogMsg ), FmtSt, ArgPt );
+    if( Errno > 0 )
+        snprintf( LogMsg + Ln, sizeof( LogMsg ) - Ln,
+                "; Errno(%d): %s", Errno, strerror(Errno) );
     va_end( ArgPt );
-  }
 
+    if (Severity <= LogLevel) {
+        if (Log2Stderr)
+            fprintf(stderr, "%s\n", LogMsg);
+        else {
+            syslog(Severity, "%s", LogMsg);
+	}
+    }
 
-  // update our global Last... variables
-  LogLastServerity = Serverity;
-  LogLastErrno = Errno;
-
-  // control logging to stderr
-  if(Serverity < LOG_WARNING || Serverity <= Log2Stderr )
-    fprintf( stderr, "%s\n", LogLastMsg );
-
-  // always to syslog
-  syslog( Serverity, "%s", LogLastMsg );
-
-  if( Serverity <= LOG_ERR )
-    exit( -1 );
+    if( Severity <= LOG_ERR )
+        exit( -1 );
 }

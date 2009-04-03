@@ -76,8 +76,6 @@
 
 #include "config.h"
 
-// The default path for the config file...
-#define     IGMPPROXY_CONFIG_FILEPATH     "/etc/igmpproxy.conf"
 #define     ENABLE_DEBUG    1
 
 /*
@@ -126,12 +124,10 @@ extern char		s4[];
 
 /* syslog.c
  */
-extern int  Log2Stderr;           // Log threshold for stderr, LOG_WARNING .... LOG_DEBUG 
-extern int  LogLastServerity;     // last logged serverity
-extern int  LogLastErrno;         // last logged errno value
-extern char LogLastMsg[ 128 ];    // last logged message
+extern bool Log2Stderr;           // Log to stderr instead of to syslog
+extern int  LogLevel;             // Log threshold, LOG_WARNING .... LOG_DEBUG 
 
-#define	    IF_DEBUG	if(Log2Stderr & LOG_DEBUG)
+#define	    IF_DEBUG	if(true)
 
 void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 
