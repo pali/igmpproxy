@@ -80,7 +80,7 @@ int main( int ArgCn, char *ArgVc[] ) {
     int debugMode = 0;
 
     // Parse the commandline options and setup basic settings..
-    for (int c; (c = getopt(ArgCn, ArgVc, "vd")) != -1;) {
+    for (int c; (c = getopt(ArgCn, ArgVc, "vdh")) != -1;) {
         switch (c) {
         case 'd':
             Log2Stderr = true;
