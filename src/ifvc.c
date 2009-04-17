@@ -76,7 +76,7 @@ void buildIfVc() {
             char FmtBu[ 32 ];
 
 	    IfNext = (struct ifreq *)((char *)&IfPt->ifr_addr +
-#ifdef __FreeBSD__
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 				    IfPt->ifr_addr.sa_len
 #else
 				    sizeof(struct sockaddr_in)
