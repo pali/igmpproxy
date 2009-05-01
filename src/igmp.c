@@ -157,11 +157,7 @@ void acceptIgmp(int recvlen) {
     }
 
     iphdrlen  = ip->ip_hl << 2;
-#ifdef __linux__
-    ipdatalen = ntohs(ip->ip_len) - iphdrlen;
-#else
-    ipdatalen = ip->ip_len;
-#endif
+    ipdatalen = ip_data_len(ip);
 
     if (iphdrlen + ipdatalen != recvlen) {
         my_log(LOG_WARNING, 0,
@@ -223,10 +219,7 @@ void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, i
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
     ip->ip_dst.s_addr       = dst;
-    ip->ip_len              = MIN_IP_HEADER_LEN + IGMP_MINLEN + datalen;
-#ifdef __linux__
-    ip->ip_len              = htons(ip->ip_len);
-#endif
+    ip_set_len(ip, MIN_IP_HEADER_LEN + IGMP_MINLEN + datalen);
 
     if (IN_MULTICAST(ntohl(dst))) {
         ip->ip_ttl = curttl;
@@ -265,7 +258,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
 
     bzero(&sdst, sizeof(sdst));
     sdst.sin_family = AF_INET;
-#ifdef __FreeBSD__
+#ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
     sdst.sin_len = sizeof(sdst);
 #endif
     sdst.sin_addr.s_addr = dst;

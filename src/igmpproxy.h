@@ -54,26 +54,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#if defined __linux__
-
-#include <linux/in.h>
-#include <linux/mroute.h>
-#include <linux/sockios.h>
-
-#elif defined __FreeBSD__
-
-#include <net/route.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip_mroute.h>
-#include <sys/sockio.h>
-
-#else
-#error "Only Linux and FreeBSD are supported"
-#endif
-
-#include <netinet/ip.h>
-#include <netinet/igmp.h>
-
+#include "os.h"
 #include "config.h"
 
 #define     ENABLE_DEBUG    1

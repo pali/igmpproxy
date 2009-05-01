@@ -74,11 +74,9 @@ void k_set_rcvbuf(int bufsize, int minsize) {
 
 
 void k_hdr_include(int hdrincl) {
-#ifdef IP_HDRINCL
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_HDRINCL,
                    (char *)&hdrincl, sizeof(hdrincl)) < 0)
         my_log(LOG_ERR, errno, "setsockopt IP_HDRINCL %u", hdrincl);
-#endif
 }
 
 
