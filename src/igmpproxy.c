@@ -77,8 +77,6 @@ int         upStreamVif;
 */    
 int main( int ArgCn, char *ArgVc[] ) {
 
-    int debugMode = 0;
-
     // Parse the commandline options and setup basic settings..
     for (int c; (c = getopt(ArgCn, ArgVc, "vdh")) != -1;) {
         switch (c) {
@@ -131,15 +129,7 @@ int main( int ArgCn, char *ArgVc[] ) {
             my_log(LOG_ERR, 0, "Unable to initialize IGMPproxy.");
             break;
         }
-    
-    
-        // If not in debug mode, close the standard streams.
-        if ( ! debugMode ) {
-            close(STDIN_FILENO);
-            close(STDOUT_FILENO);
-            close(STDERR_FILENO);
-        }
-        
+
         // Go to the main loop.
         igmpProxyRun();
     
