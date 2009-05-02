@@ -9,6 +9,7 @@ AC_CANONICAL_HOST
 case $host_os in
 	linux*) os=linux;;
 	freebsd*) os=freebsd;;
+	netbsd*) os=netbsd;;
 	*) AC_MSG_ERROR([OS $host_os is not supported]);;
 esac
 AC_CONFIG_LINKS([src/os.h:src/os-${os}.h])

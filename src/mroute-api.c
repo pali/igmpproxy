@@ -173,7 +173,7 @@ int addMRoute( struct MRouteDesc *Dp )
         my_log( LOG_NOTICE, 0, "Adding MFC: %s -> %s, InpVIf: %d", 
              fmtInAdr( FmtBuO, CtlReq.mfcc_origin ), 
              fmtInAdr( FmtBuM, CtlReq.mfcc_mcastgrp ),
-             CtlReq.mfcc_parent == ALL_VIFS ? -1 : CtlReq.mfcc_parent
+             (int)CtlReq.mfcc_parent
            );
     }
 
@@ -210,7 +210,7 @@ int delMRoute( struct MRouteDesc *Dp )
         my_log( LOG_NOTICE, 0, "Removing MFC: %s -> %s, InpVIf: %d", 
              fmtInAdr( FmtBuO, CtlReq.mfcc_origin ), 
              fmtInAdr( FmtBuM, CtlReq.mfcc_mcastgrp ),
-             CtlReq.mfcc_parent == ALL_VIFS ? -1 : CtlReq.mfcc_parent
+             (int)CtlReq.mfcc_parent
            );
     }
 
