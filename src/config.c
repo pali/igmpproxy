@@ -241,11 +241,10 @@ struct vifconfig *parsePhyintToken() {
     tmpPtr->allowednets = NULL;
 
     // Make a copy of the token to store the IF name
-    tmpPtr->name = (char *)malloc( strlen(token) + 1 );
+    tmpPtr->name = strdup( token );
     if(tmpPtr->name == NULL) {
         my_log(LOG_ERR, 0, "Out of memory.");
     }
-    strcpy(tmpPtr->name, token);
 
     // Set the altnet pointer to the allowednets pointer.
     anetPtr = &tmpPtr->allowednets;
