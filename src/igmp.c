@@ -190,12 +190,8 @@ void acceptIgmp(int recvlen) {
         acceptLeaveMessage(src, group);
         return;
     
-        /*
     case IGMP_MEMBERSHIP_QUERY:
-        //accept_membership_query(src, dst, group, igmp->igmp_code);
         return;
-
-    */
 
     default:
         my_log(LOG_INFO, 0,
