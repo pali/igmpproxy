@@ -69,7 +69,7 @@ void k_set_rcvbuf(int bufsize, int minsize) {
             /*NOTREACHED*/
         }
     }
-    IF_DEBUG my_log(LOG_DEBUG, 0, "Got %d byte buffer size in %d iterations", bufsize, iter);
+    my_log(LOG_DEBUG, 0, "Got %d byte buffer size in %d iterations", bufsize, iter);
 }
 
 

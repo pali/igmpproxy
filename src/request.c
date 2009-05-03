@@ -79,7 +79,7 @@ void acceptGroupReport(uint32_t src, uint32_t group, uint8_t type) {
     // We have a IF so check that it's an downstream IF.
     if(sourceVif->state == IF_STATE_DOWNSTREAM) {
 
-        IF_DEBUG my_log(LOG_DEBUG, 0, "Should insert group %s (from: %s) to route table. Vif Ix : %d",
+        my_log(LOG_DEBUG, 0, "Should insert group %s (from: %s) to route table. Vif Ix : %d",
             inetFmt(group,s1), inetFmt(src,s2), sourceVif->index);
 
         // The membership report was OK... Insert it into the route table..
@@ -100,8 +100,9 @@ void acceptGroupReport(uint32_t src, uint32_t group, uint8_t type) {
 void acceptLeaveMessage(uint32_t src, uint32_t group) {
     struct IfDesc   *sourceVif;
     
-    IF_DEBUG my_log(LOG_DEBUG, 0, "Got leave message from %s to %s. Starting last member detection.",
-                 inetFmt(src, s1), inetFmt(group, s2));
+    my_log(LOG_DEBUG, 0,
+	    "Got leave message from %s to %s. Starting last member detection.",
+	    inetFmt(src, s1), inetFmt(group, s2));
 
     // Sanitycheck the group adress...
     if(!IN_MULTICAST( ntohl(group) )) {
@@ -136,7 +137,7 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
 
     } else {
         // just ignore the leave request...
-        IF_DEBUG my_log(LOG_DEBUG, 0, "The found if for %s was not downstream. Ignoring leave request.");
+        my_log(LOG_DEBUG, 0, "The found if for %s was not downstream. Ignoring leave request.");
     }
 }
 
@@ -165,7 +166,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
              conf->lastMemberQueryInterval * IGMP_TIMER_SCALE, 
              gvDesc->group, 0);
 
-    IF_DEBUG my_log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
+    my_log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
         inetFmt(gvDesc->vifAddr,s1), inetFmt(gvDesc->group,s2),
         conf->lastMemberQueryInterval);
 
@@ -192,9 +193,11 @@ void sendGeneralMembershipQuery() {
                          IGMP_MEMBERSHIP_QUERY,
                          conf->queryResponseInterval * IGMP_TIMER_SCALE, 0, 0);
                 
-                IF_DEBUG my_log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
-                    inetFmt(Dp->InAdr.s_addr,s1), inetFmt(allhosts_group,s2),
-                    conf->queryResponseInterval);
+                my_log(LOG_DEBUG, 0,
+			"Sent membership query from %s to %s. Delay: %d",
+			inetFmt(Dp->InAdr.s_addr,s1),
+			inetFmt(allhosts_group,s2),
+			conf->queryResponseInterval);
             }
         }
     }

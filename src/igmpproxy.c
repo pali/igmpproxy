@@ -114,7 +114,7 @@ int main( int ArgCn, char *ArgVc[] ) {
     openlog("igmpproxy", LOG_PID, LOG_USER);
 
     // Write debug notice with file path...
-    IF_DEBUG my_log(LOG_DEBUG, 0, "Searching for config file at '%s'" , configFilePath);
+    my_log(LOG_DEBUG, 0, "Searching for config file at '%s'" , configFilePath);
 
     do {
 

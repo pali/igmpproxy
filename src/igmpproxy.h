@@ -58,8 +58,6 @@
 #include "os.h"
 #include "config.h"
 
-#define     ENABLE_DEBUG    1
-
 /*
  * Limit on length of route data
  */
@@ -106,8 +104,6 @@ extern char		s4[];
  */
 extern bool Log2Stderr;           // Log to stderr instead of to syslog
 extern int  LogLevel;             // Log threshold, LOG_WARNING .... LOG_DEBUG 
-
-#define	    IF_DEBUG	if(true)
 
 void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 

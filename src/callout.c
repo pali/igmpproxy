@@ -85,7 +85,7 @@ void age_callout_queue(int elapsed_time) {
         } else {
             elapsed_time -= ptr->time;
             queue = queue->next;
-            IF_DEBUG my_log(LOG_DEBUG, 0, "About to call timeout %d (#%d)", ptr->id, i);
+            my_log(LOG_DEBUG, 0, "About to call timeout %d (#%d)", ptr->id, i);
 
             if (ptr->func)
                 ptr->func(ptr->data);
@@ -153,12 +153,10 @@ int timer_setTimer(int delay, timer_f action, void *data) {
                     prev->next = node;
                 }
                 ptr->time -= node->time;
-                IF_DEBUG {
-                    my_log(LOG_DEBUG, 0, "Created timeout %d (#%d) - delay %d secs", 
-                        node->id, i, node->time);
-
-                    debugQueue();
-                }
+		my_log(LOG_DEBUG, 0,
+			"Created timeout %d (#%d) - delay %d secs",
+			node->id, i, node->time);
+		debugQueue();
                 return node->id;
             } else {
                 // Continur to check nodes.
@@ -170,12 +168,9 @@ int timer_setTimer(int delay, timer_f action, void *data) {
         }
         prev->next = node;
     }
-    IF_DEBUG {
-        my_log(LOG_DEBUG, 0, "Created timeout %d (#%d) - delay %d secs", 
+    my_log(LOG_DEBUG, 0, "Created timeout %d (#%d) - delay %d secs", 
             node->id, i, node->time);
-        
-        debugQueue();
-    }
+    debugQueue();
 
     return node->id;
 }
@@ -216,7 +211,7 @@ int timer_clearTimer(int  timer_id) {
      * gets bumped up
      */
 
-    IF_DEBUG debugQueue();
+    debugQueue();
     while (ptr) {
         if (ptr->id == timer_id) {
             /* got the right node */
@@ -233,9 +228,9 @@ int timer_clearTimer(int  timer_id) {
 
             if (ptr->data)
                 free(ptr->data);
-            IF_DEBUG my_log(LOG_DEBUG, 0, "deleted timer %d (#%d)", ptr->id, i);
+            my_log(LOG_DEBUG, 0, "deleted timer %d (#%d)", ptr->id, i);
             free(ptr);
-            IF_DEBUG debugQueue();
+            debugQueue();
             return 1;
         }
         prev = ptr;
@@ -243,10 +238,8 @@ int timer_clearTimer(int  timer_id) {
         i++;
     }
     // If we get here, the timer was not deleted.
-    IF_DEBUG {
-        my_log(LOG_DEBUG, 0, "failed to delete timer %d (#%d)", timer_id, i);
-        debugQueue();
-    }
+    my_log(LOG_DEBUG, 0, "failed to delete timer %d (#%d)", timer_id, i);
+    debugQueue();
     return 0;
 }
 
@@ -256,10 +249,7 @@ int timer_clearTimer(int  timer_id) {
 static void debugQueue() {
     struct timeOutQueue  *ptr;
 
-    IF_DEBUG {
-        for (ptr = queue; ptr; ptr = ptr->next) {
+    for (ptr = queue; ptr; ptr = ptr->next) {
             my_log(LOG_DEBUG, 0, "(Id:%d, Time:%d) ", ptr->id, ptr->time);
-        }
     }
 }
-

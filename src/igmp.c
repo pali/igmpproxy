@@ -115,8 +115,6 @@ void acceptIgmp(int recvlen) {
     src       = ip->ip_src.s_addr;
     dst       = ip->ip_dst.s_addr;
 
-    //IF_DEBUG my_log(LOG_DEBUG, 0, "Got a IGMP request to process...");
-
     /* 
      * this is most likely a message from the kernel indicating that
      * a new src grp pair message has arrived and so, it would be 
@@ -147,8 +145,8 @@ void acceptIgmp(int recvlen) {
             }
             
             // Activate the route.
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Route activate request from %s to %s",
-                         inetFmt(src,s1), inetFmt(dst,s2));
+            my_log(LOG_DEBUG, 0, "Route activate request from %s to %s",
+		    inetFmt(src,s1), inetFmt(dst,s2));
             activateRoute(dst, src);
             
 
@@ -277,8 +275,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
         k_set_if(INADDR_ANY);
     }
 
-    IF_DEBUG my_log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
-        igmpPacketKind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
-        inetFmt(src, s1), inetFmt(dst, s2));
+    my_log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
+	    igmpPacketKind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
+	    inetFmt(src, s1), inetFmt(dst, s2));
 }
-

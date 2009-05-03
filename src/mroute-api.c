@@ -132,13 +132,11 @@ void addVIF( struct IfDesc *IfDp )
          VifCtl.vifc_vifi, VifCtl.vifc_flags,  VifCtl.vifc_lcl_addr.s_addr, VifDp->IfDp->Name,
          VifCtl.vifc_threshold, VifCtl.vifc_rate_limit);
 
-    IF_DEBUG {
-        struct SubnetList *currSubnet;
-        for(currSubnet = IfDp->allowednets; currSubnet; currSubnet = currSubnet->next) {
-            my_log(LOG_DEBUG, 0, "        Network for [%s] : %s",
-                IfDp->Name,
-                inetFmts(currSubnet->subnet_addr, currSubnet->subnet_mask, s1));
-        }
+    struct SubnetList *currSubnet;
+    for(currSubnet = IfDp->allowednets; currSubnet; currSubnet = currSubnet->next) {
+	my_log(LOG_DEBUG, 0, "        Network for [%s] : %s",
+	    IfDp->Name,
+	    inetFmts(currSubnet->subnet_addr, currSubnet->subnet_mask, s1));
     }
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_ADD_VIF, 

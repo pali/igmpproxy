@@ -118,7 +118,7 @@ int loadConfig(char *configFile) {
         // Check token...
         if(strcmp("phyint", token)==0) {
             // Got a phyint token... Call phyint parser
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Config: Got a phyint token.");
+            my_log(LOG_DEBUG, 0, "Config: Got a phyint token.");
             tmpPtr = parsePhyintToken();
             if(tmpPtr == NULL) {
                 // Unparsable token... Exit...
@@ -127,12 +127,12 @@ int loadConfig(char *configFile) {
                 return 0;
             } else {
 
-                IF_DEBUG my_log(LOG_DEBUG, 0, "IF name : %s", tmpPtr->name);
-                IF_DEBUG my_log(LOG_DEBUG, 0, "Next ptr : %x", tmpPtr->next);
-                IF_DEBUG my_log(LOG_DEBUG, 0, "Ratelimit : %d", tmpPtr->ratelimit);
-                IF_DEBUG my_log(LOG_DEBUG, 0, "Threshold : %d", tmpPtr->threshold);
-                IF_DEBUG my_log(LOG_DEBUG, 0, "State : %d", tmpPtr->state);
-                IF_DEBUG my_log(LOG_DEBUG, 0, "Allowednet ptr : %x", tmpPtr->allowednets);
+                my_log(LOG_DEBUG, 0, "IF name : %s", tmpPtr->name);
+                my_log(LOG_DEBUG, 0, "Next ptr : %x", tmpPtr->next);
+                my_log(LOG_DEBUG, 0, "Ratelimit : %d", tmpPtr->ratelimit);
+                my_log(LOG_DEBUG, 0, "Threshold : %d", tmpPtr->threshold);
+                my_log(LOG_DEBUG, 0, "State : %d", tmpPtr->state);
+                my_log(LOG_DEBUG, 0, "Allowednet ptr : %x", tmpPtr->allowednets);
 
                 // Insert config, and move temppointer to next location...
                 *currPtr = tmpPtr;
@@ -141,7 +141,7 @@ int loadConfig(char *configFile) {
         } 
         else if(strcmp("quickleave", token)==0) {
             // Got a quickleave token....
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Config: Quick leave mode enabled.");
+            my_log(LOG_DEBUG, 0, "Config: Quick leave mode enabled.");
             commonConfig.fastUpstreamLeave = 1;
             
             // Read next token...
@@ -187,7 +187,7 @@ void configureVifs() {
                 if(strcmp(Dp->Name, confPtr->name)==0) {
                     struct SubnetList *vifLast;
 
-                    IF_DEBUG my_log(LOG_DEBUG, 0, "Found config for %s", Dp->Name);
+                    my_log(LOG_DEBUG, 0, "Found config for %s", Dp->Name);
 
 
                     // Set the VIF state 
@@ -225,7 +225,7 @@ struct vifconfig *parsePhyintToken() {
     // Sanitycheck the name...
     if(token == NULL) return NULL;
     if(strlen(token) >= IF_NAMESIZE) return NULL;
-    IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Config for interface %s.", token);
+    my_log(LOG_DEBUG, 0, "Config: IF: Config for interface %s.", token);
 
     // Allocate memory for configuration...
     tmpPtr = (struct vifconfig*)malloc(sizeof(struct vifconfig));
@@ -255,7 +255,7 @@ struct vifconfig *parsePhyintToken() {
         if(strcmp("altnet", token)==0) {
             // Altnet...
             token = nextConfigToken();
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Got altnet token %s.",token);
+            my_log(LOG_DEBUG, 0, "Config: IF: Got altnet token %s.",token);
 
             *anetPtr = parseSubnetAddress(token);
             if(*anetPtr == NULL) {
@@ -268,23 +268,23 @@ struct vifconfig *parsePhyintToken() {
         }
         else if(strcmp("upstream", token)==0) {
             // Upstream
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Got upstream token.");
+            my_log(LOG_DEBUG, 0, "Config: IF: Got upstream token.");
             tmpPtr->state = IF_STATE_UPSTREAM;
         }
         else if(strcmp("downstream", token)==0) {
             // Downstream
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Got downstream token.");
+            my_log(LOG_DEBUG, 0, "Config: IF: Got downstream token.");
             tmpPtr->state = IF_STATE_DOWNSTREAM;
         }
         else if(strcmp("disabled", token)==0) {
             // Disabled
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Got disabled token.");
+            my_log(LOG_DEBUG, 0, "Config: IF: Got disabled token.");
             tmpPtr->state = IF_STATE_DISABLED;
         }
         else if(strcmp("ratelimit", token)==0) {
             // Ratelimit
             token = nextConfigToken();
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Got ratelimit token '%s'.", token);
+            my_log(LOG_DEBUG, 0, "Config: IF: Got ratelimit token '%s'.", token);
             tmpPtr->ratelimit = atoi( token );
             if(tmpPtr->ratelimit < 0) {
                 my_log(LOG_WARNING, 0, "Ratelimit must be 0 or more.");
@@ -295,7 +295,7 @@ struct vifconfig *parsePhyintToken() {
         else if(strcmp("threshold", token)==0) {
             // Threshold
             token = nextConfigToken();
-            IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Got threshold token '%s'.", token);
+            my_log(LOG_DEBUG, 0, "Config: IF: Got threshold token '%s'.", token);
             tmpPtr->threshold = atoi( token );
             if(tmpPtr->threshold <= 0 || tmpPtr->threshold > 255) {
                 my_log(LOG_WARNING, 0, "Threshold must be between 1 and 255.");
@@ -354,9 +354,8 @@ struct SubnetList *parseSubnetAddress(char *addrstr) {
     tmpSubnet->subnet_mask = ntohl(mask);
     tmpSubnet->next = NULL;
 
-    IF_DEBUG my_log(LOG_DEBUG, 0, "Config: IF: Altnet: Parsed altnet to %s.",
-                 inetFmts(tmpSubnet->subnet_addr, tmpSubnet->subnet_mask,s1));
+    my_log(LOG_DEBUG, 0, "Config: IF: Altnet: Parsed altnet to %s.",
+	    inetFmts(tmpSubnet->subnet_addr, tmpSubnet->subnet_mask,s1));
 
     return tmpSubnet;
 }
-

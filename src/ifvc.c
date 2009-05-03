@@ -144,7 +144,7 @@ void buildIfVc() {
             
 
             // Debug log the result...
-            IF_DEBUG my_log( LOG_DEBUG, 0, "buildIfVc: Interface %s Addr: %s, Flags: 0x%04x, Network: %s",
+            my_log( LOG_DEBUG, 0, "buildIfVc: Interface %s Addr: %s, Flags: 0x%04x, Network: %s",
                  IfDescEp->Name,
                  fmtInAdr( FmtBu, IfDescEp->InAdr ),
                  IfDescEp->Flags,
@@ -239,16 +239,6 @@ int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr ) {
     }
     // Loop through all registered allowed nets of the VIF...
     for(currsubnet = intrface->allowednets; currsubnet != NULL; currsubnet = currsubnet->next) {
-
-        /*
-        IF_DEBUG my_log(LOG_DEBUG, 0, "Testing %s for subnet %s, mask %s: Result net: %s",
-            inetFmt(ipaddr, s1),
-            inetFmt(currsubnet->subnet_addr, s2),
-            inetFmt(currsubnet->subnet_mask, s3),
-            inetFmt((ipaddr & currsubnet->subnet_mask), s4)
-            );
-            */
-
         // Check if the ip falls in under the subnet....
         if((ipaddr & currsubnet->subnet_mask) == currsubnet->subnet_addr) {
             return 1;
