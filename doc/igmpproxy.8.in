@@ -3,7 +3,7 @@
 .\" .I  - green or kursive (on HTML)
 .\" .TP - paragraph ? (header line, followed by indented lines)
 .\"
-.TH igmpproxy 8 "April, 2009" "igmpproxy 0.1"
+.TH igmpproxy 8 "" "@PACKAGE_STRING@"
 .SH NAME
 igmpproxy \- Multicast router utilizing IGMP forwarding
 

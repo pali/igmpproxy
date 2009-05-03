@@ -19,5 +19,5 @@ AC_CHECK_MEMBERS([struct sockaddr.sa_len], [], [], [[#include <sys/types.h>
 #include <sys/socket.h>]])
 AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], [], [], [[#include <sys/types.h>
 #include <netinet/in.h>]])
-AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile doc/igmpproxy.8 doc/igmpproxy.conf.5])
 AC_OUTPUT

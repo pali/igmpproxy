@@ -1,1 +1,1 @@
-dist_man_MANS = igmpproxy.8 igmpproxy.conf.5
+man_MANS = igmpproxy.8 igmpproxy.conf.5

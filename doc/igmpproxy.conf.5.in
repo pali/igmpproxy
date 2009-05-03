@@ -3,7 +3,7 @@
 .\" .I  - green or kursive (on HTML)
 .\" .TP - paragraph ? (header line, followed by indented lines)
 .\"
-.TH igmpproxy.conf 5 "April, 2009" "igmpproxy 0.1"
+.TH igmpproxy.conf 5 "" "@PACKAGE_STRING@"
 .SH NAME
 igmpproxy.conf \- Configuration file for
 .BR igmpproxy (8)
