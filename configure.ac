@@ -10,11 +10,14 @@ case $host_os in
 	linux*) os=linux;;
 	freebsd*) os=freebsd;;
 	netbsd*) os=netbsd;;
+	openbsd*) os=openbsd;;
 	*) AC_MSG_ERROR([OS $host_os is not supported]);;
 esac
 AC_CONFIG_LINKS([src/os.h:src/os-${os}.h])
 
-AC_CHECK_MEMBERS([struct sockaddr.sa_len], [], [], [[#include <sys/socket.h>]])
-AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], [], [], [[#include <netinet/in.h>]])
+AC_CHECK_MEMBERS([struct sockaddr.sa_len], [], [], [[#include <sys/types.h>
+#include <sys/socket.h>]])
+AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], [], [], [[#include <sys/types.h>
+#include <netinet/in.h>]])
 AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile])
 AC_OUTPUT

@@ -49,6 +49,7 @@
 #include <sys/un.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -69,8 +70,6 @@
 #define MAX_MC_VIFS    32     // !!! check this const in the specific includes
 
 // Useful macros..          
-#define MIN( a, b ) ((a) < (b) ? (a) : (b))
-#define MAX( a, b ) ((a) < (b) ? (b) : (a))
 #define VCMC( Vc )  (sizeof( Vc ) / sizeof( (Vc)[ 0 ] ))
 #define VCEP( Vc )  (&(Vc)[ VCMC( Vc ) ])
 
