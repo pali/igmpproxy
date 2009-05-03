@@ -38,20 +38,14 @@
 
 #include "igmpproxy.h"
 
-// Constants
-static const char Version[] = 
-"igmpproxy, Version " VERSION "\n"
-"Copyright 2005 by Johnny Egeland <johnny@rlo.org>\n"
-"Distributed under the GNU GENERAL PUBLIC LICENSE, Version 2 - check GPL.txt\n"
-"\n";
-
 static const char Usage[] = 
-"usage: igmpproxy [-h] [-d] [-v [-v]] <configfile>\n"
+"Usage: igmpproxy [-h] [-d] [-v [-v]] <configfile>\n"
 "\n" 
 "   -h   Display this help screen\n"
 "   -d   Run in debug mode. Output all messages on stderr\n"
 "   -v   Be verbose. Give twice to see even debug messages.\n"
 "\n"
+PACKAGE_STRING "\n"
 ;
 
 // Local function Prototypes
