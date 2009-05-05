@@ -1,6 +1,6 @@
-#include <linux/in.h>
+#define _LINUX_IN_H
+#include <linux/types.h>
 #include <linux/mroute.h>
-#include <linux/sockios.h>
 #include <netinet/ip.h>
 #include <netinet/igmp.h>
 
