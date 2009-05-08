@@ -137,7 +137,7 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
 
     } else {
         // just ignore the leave request...
-        my_log(LOG_DEBUG, 0, "The found if for %s was not downstream. Ignoring leave request.");
+        my_log(LOG_DEBUG, 0, "The found if for %s was not downstream. Ignoring leave request.", inetFmt(src, s1));
     }
 }
 
