@@ -11,6 +11,7 @@ igmpproxy_SOURCES = \
 	lib.c \
 	mcgroup.c \
 	mroute-api.c \
+	os-dragonfly.h \
 	os-freebsd.h \
 	os-linux.h \
 	os-netbsd.h \
