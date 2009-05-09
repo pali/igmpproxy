@@ -59,7 +59,7 @@ void initIgmp() {
     k_set_loop(false);      /* disable multicast loopback     */
 
     ip         = (struct ip *)send_buf;
-    bzero(ip, sizeof(struct ip));
+    memset(ip, 0, sizeof(struct ip));
     /*
      * Fields zeroed that aren't filled in later:
      * - IP ID (let the kernel fill it in)
@@ -250,7 +250,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
         }
     }
 
-    bzero(&sdst, sizeof(sdst));
+    memset(&sdst, 0, sizeof(sdst));
     sdst.sin_family = AF_INET;
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
     sdst.sin_len = sizeof(sdst);
