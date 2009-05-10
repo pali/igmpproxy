@@ -26,10 +26,10 @@ AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], [], [], [[
 ]])
 
 AC_CONFIG_FILES([
-	Makefile \
-	doc/Makefile \
-	src/Makefile \
-	doc/igmpproxy.8 \
+	Makefile
+	doc/Makefile
+	src/Makefile
+	doc/igmpproxy.8
 	doc/igmpproxy.conf.5
 ])
 AC_OUTPUT
