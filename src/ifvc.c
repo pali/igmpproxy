@@ -195,17 +195,20 @@ struct IfDesc *getIfByAddress( uint32_t ipaddr ) {
 
     struct IfDesc       *Dp;
     struct SubnetList   *currsubnet;
+    struct IfDesc       *res = NULL;
+    uint32_t            last_subnet_mask = 0;
 
     for ( Dp = IfDescVc; Dp < IfDescEp; Dp++ ) {
         // Loop through all registered allowed nets of the VIF...
         for(currsubnet = Dp->allowednets; currsubnet != NULL; currsubnet = currsubnet->next) {
             // Check if the ip falls in under the subnet....
-            if((ipaddr & currsubnet->subnet_mask) == currsubnet->subnet_addr) {
-                return Dp;
+            if(currsubnet->subnet_mask > last_subnet_mask && (ipaddr & currsubnet->subnet_mask) == currsubnet->subnet_addr) {
+                res = Dp;
+                last_subnet_mask = currsubnet->subnet_mask;
             }
         }
     }
-    return NULL;
+    return res;
 }
 
 
