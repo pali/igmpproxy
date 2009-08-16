@@ -188,7 +188,10 @@ char *nextConfigToken() {
             }
             // If the readsize is less than buffersize, we assume EOF.
             if(readSize < READ_BUFFER_SIZE && bufPtr == readSize) {
-                return NULL;
+                if (tokenPtr > 0)
+                    finished = 1;
+                else
+                    return NULL;
             }
         }
         if(tokenPtr>0) {
