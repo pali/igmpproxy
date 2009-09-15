@@ -71,8 +71,10 @@ int         upStreamVif[MAX_UPS_VIFS];
 */    
 int main( int ArgCn, char *ArgVc[] ) {
 
+    int c;
+
     // Parse the commandline options and setup basic settings..
-    for (int c; (c = getopt(ArgCn, ArgVc, "vdh")) != -1;) {
+    while ((c = getopt(ArgCn, ArgVc, "vdh")) != -1) {
         switch (c) {
         case 'd':
             Log2Stderr = true;
