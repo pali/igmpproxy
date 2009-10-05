@@ -106,6 +106,8 @@ void buildIfVc() {
             addr = IfDescEp->InAdr.s_addr;
 
             memcpy( IfReq.ifr_name, IfDescEp->Name, sizeof( IfReq.ifr_name ) );
+            IfReq.ifr_addr.sa_family = AF_INET;
+            ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr = addr;
 
             // Get the subnet mask...
             if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0)
