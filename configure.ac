@@ -11,6 +11,7 @@ case $host_os in
 	freebsd*) os=freebsd;;
 	netbsd*) os=netbsd;;
 	openbsd*) os=openbsd;;
+	nto*) os=qnxnto;;
 	dragonfly*) os=dragonfly;;
 	*) AC_MSG_ERROR([OS $host_os is not supported]);;
 esac
@@ -24,6 +25,8 @@ AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], [], [], [[
 #include <sys/types.h>
 #include <netinet/in.h>
 ]])
+
+AC_SEARCH_LIBS(socket, socket)
 
 AC_CONFIG_FILES([
 	Makefile
