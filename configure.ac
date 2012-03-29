@@ -28,6 +28,8 @@ AC_CHECK_MEMBERS([struct sockaddr_in.sin_len], [], [], [[
 
 AC_SEARCH_LIBS(socket, socket)
 
+AC_SEARCH_LIBS([clock_gettime],[rt])
+
 AC_CONFIG_FILES([
 	Makefile
 	doc/Makefile
