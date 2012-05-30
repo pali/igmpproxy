@@ -53,7 +53,7 @@ typedef struct {
 *   Handles incoming membership reports, and
 *   appends them to the routing table.
 */
-void acceptGroupReport(uint32_t src, uint32_t group, uint8_t type) {
+void acceptGroupReport(uint32_t src, uint32_t group) {
     struct IfDesc  *sourceVif;
 
     // Sanitycheck the group adress...
@@ -210,7 +210,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
 /**
 *   Sends a general membership query on downstream VIFs
 */
-void sendGeneralMembershipQuery() {
+void sendGeneralMembershipQuery(void) {
     struct  Config  *conf = getCommonConfig();
     struct  IfDesc  *Dp;
     int             Ix;
@@ -234,18 +234,18 @@ void sendGeneralMembershipQuery() {
     }
 
     // Install timer for aging active routes.
-    timer_setTimer(conf->queryResponseInterval, ageActiveRoutes, NULL);
+    timer_setTimer(conf->queryResponseInterval, (timer_f)ageActiveRoutes, NULL);
 
     // Install timer for next general query...
     if(conf->startupQueryCount>0) {
         // Use quick timer...
-        timer_setTimer(conf->startupQueryInterval, sendGeneralMembershipQuery, NULL);
+        timer_setTimer(conf->startupQueryInterval, (timer_f)sendGeneralMembershipQuery, NULL);
         // Decrease startup counter...
         conf->startupQueryCount--;
     } 
     else {
         // Use slow timer...
-        timer_setTimer(conf->queryInterval, sendGeneralMembershipQuery, NULL);
+        timer_setTimer(conf->queryInterval, (timer_f)sendGeneralMembershipQuery, NULL);
     }
 
 

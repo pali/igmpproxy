@@ -61,14 +61,14 @@ struct vifconfig*   vifconf;
 static struct Config commonConfig;
 
 // Prototypes...
-struct vifconfig *parsePhyintToken();
+struct vifconfig *parsePhyintToken(void);
 struct SubnetList *parseSubnetAddress(char *addrstr);
 
 
 /**
 *   Initializes common config..
 */
-void initCommonConfig() {
+static void initCommonConfig(void) {
     commonConfig.robustnessValue = DEFAULT_ROBUSTNESS;
     commonConfig.queryInterval = INTERVAL_QUERY;
     commonConfig.queryResponseInterval = INTERVAL_QUERY_RESPONSE;
@@ -89,7 +89,7 @@ void initCommonConfig() {
 /**
 *   Returns a pointer to the common config...
 */
-struct Config *getCommonConfig() {
+struct Config *getCommonConfig(void) {
     return &commonConfig;
 }
 
@@ -169,7 +169,7 @@ int loadConfig(char *configFile) {
 /**
 *   Appends extra VIF configuration from config file.
 */
-void configureVifs() {
+void configureVifs(void) {
     unsigned Ix;
     struct IfDesc *Dp;
     struct vifconfig *confPtr;
@@ -218,7 +218,7 @@ void configureVifs() {
 /**
 *   Internal function to parse phyint config
 */
-struct vifconfig *parsePhyintToken() {
+struct vifconfig *parsePhyintToken(void) {
     struct vifconfig  *tmpPtr;
     struct SubnetList **anetPtr, **agrpPtr;
     char *token;

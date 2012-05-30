@@ -63,7 +63,7 @@ struct RouteTable {
 static struct RouteTable   *routing_table;
 
 // Prototypes
-void logRouteTable(char *header);
+void logRouteTable(const char *header);
 int  internAgeRoute(struct RouteTable*  croute);
 int internUpdateKernelRoute(struct RouteTable *route, int activate);
 
@@ -74,7 +74,7 @@ int mcGroupSock = 0;
 /**
 *   Function for retrieving the Multicast Group socket.
 */
-int getMcGroupSock() {
+static int getMcGroupSock(void) {
     if( ! mcGroupSock ) {
         mcGroupSock = openUdpSocket( INADDR_ANY, 0 );;
     }
@@ -84,7 +84,7 @@ int getMcGroupSock() {
 /**
 *   Initializes the routing table.
 */
-void initRouteTable() {
+void initRouteTable(void) {
     unsigned Ix;
     struct IfDesc *Dp;
 
@@ -108,7 +108,7 @@ void initRouteTable() {
 *   Internal function to send join or leave requests for
 *   a specified route upstream...
 */
-void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
+static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
     struct IfDesc*      upstrIf;
     
     // Get the upstream VIF...
@@ -170,7 +170,7 @@ void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
 /**
 *   Clear all routes from routing table, and alerts Leaves upstream.
 */
-void clearAllRoutes() {
+void clearAllRoutes(void) {
     struct RouteTable   *croute, *remainroute;
 
     // Loop through all routes...
@@ -203,7 +203,7 @@ void clearAllRoutes() {
 *   Private access function to find a route from a given 
 *   Route Descriptor.
 */
-struct RouteTable *findRoute(uint32_t group) {
+static struct RouteTable *findRoute(uint32_t group) {
     struct RouteTable*  croute;
 
     for(croute = routing_table; croute; croute = croute->nextroute) {
@@ -407,7 +407,7 @@ int activateRoute(uint32_t group, uint32_t originAddr) {
 *   This function loops through all routes, and updates the age 
 *   of any active routes.
 */
-void ageActiveRoutes() {
+void ageActiveRoutes(void) {
     struct RouteTable   *croute, *nroute;
     
     my_log(LOG_DEBUG, 0, "Aging routes in table.");
@@ -494,7 +494,7 @@ int lastMemberGroupAge(uint32_t group) {
 *   Remove a specified route. Returns 1 on success,
 *   and 0 if route was not found.
 */
-int removeRoute(struct RouteTable*  croute) {
+static int removeRoute(struct RouteTable*  croute) {
     struct Config       *conf = getCommonConfig();
     int result = 1;
     
@@ -669,7 +669,7 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate) {
 *   Debug function that writes the routing table entries
 *   to the log.
 */
-void logRouteTable(char *header) {
+void logRouteTable(const char *header) {
         struct RouteTable*  croute = routing_table;
         unsigned            rcount = 0;
     

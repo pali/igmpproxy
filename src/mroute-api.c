@@ -64,7 +64,7 @@ static struct VifDesc {
 ** returns: - 0 if the functions succeeds     
 **          - the errno value for non-fatal failure condition
 */
-int enableMRouter()
+int enableMRouter(void)
 {
     int Va = 1;
 
@@ -82,7 +82,7 @@ int enableMRouter()
 ** Diables the mrouted API and relases by this the lock.
 **          
 */
-void disableMRouter()
+void disableMRouter(void)
 {
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DONE, NULL, 0 ) 
          || close( MRouterFD )

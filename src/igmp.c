@@ -47,7 +47,7 @@ extern int MRouterFD;
  * Open and initialize the igmp socket, and fill in the non-changing
  * IP header fields in the output packet buffer.
  */
-void initIgmp() {
+void initIgmp(void) {
     struct ip *ip;
 
     recv_buf = malloc(RECV_BUF_SIZE);
@@ -79,7 +79,7 @@ void initIgmp() {
 /**
 *   Finds the textual name of the supplied IGMP request.
 */
-char *igmpPacketKind(u_int type, u_int code) {
+static const char *igmpPacketKind(u_int type, u_int code) {
     static char unknown[20];
 
     switch (type) {
@@ -181,7 +181,7 @@ void acceptIgmp(int recvlen) {
     switch (igmp->igmp_type) {
     case IGMP_V1_MEMBERSHIP_REPORT:
     case IGMP_V2_MEMBERSHIP_REPORT:
-        acceptGroupReport(src, group, igmp->igmp_type);
+        acceptGroupReport(src, group);
         return;
     
     case IGMP_V2_LEAVE_GROUP:
@@ -205,7 +205,7 @@ void acceptIgmp(int recvlen) {
  * Construct an IGMP message in the output packet buffer.  The caller may
  * have already placed data in that buffer, of length 'datalen'.
  */
-void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
+static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
     struct ip *ip;
     struct igmp *igmp;
     extern int curttl;

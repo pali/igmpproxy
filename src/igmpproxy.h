@@ -177,6 +177,7 @@ void buildIfVc( void );
 struct IfDesc *getIfByName( const char *IfName );
 struct IfDesc *getIfByIx( unsigned Ix );
 struct IfDesc *getIfByAddress( uint32_t Ix );
+struct IfDesc *getIfByVifIndex( unsigned vifindex );
 int isAdressValidForIf(struct IfDesc* intrface, uint32_t ipaddr);
 
 /* mroute-api.c
@@ -201,8 +202,8 @@ int getVifIx( struct IfDesc *IfDp );
 /* config.c
  */
 int loadConfig(char *configFile);
-void configureVifs();
-struct Config *getCommonConfig();
+void configureVifs(void);
+struct Config *getCommonConfig(void);
 
 /* igmp.c
 */
@@ -243,29 +244,29 @@ int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
 
 /* rttable.c
  */
-void initRouteTable();
-void clearAllRoutes();
+void initRouteTable(void);
+void clearAllRoutes(void);
 int insertRoute(uint32_t group, int ifx);
 int activateRoute(uint32_t group, uint32_t originAddr);
-void ageActiveRoutes();
+void ageActiveRoutes(void);
 void setRouteLastMemberMode(uint32_t group);
 int lastMemberGroupAge(uint32_t group);
 int interfaceInRoute(int32_t group, int Ix);
 
 /* request.c
  */
-void acceptGroupReport(uint32_t src, uint32_t group, uint8_t type);
+void acceptGroupReport(uint32_t src, uint32_t group);
 void acceptLeaveMessage(uint32_t src, uint32_t group);
-void sendGeneralMembershipQuery();
+void sendGeneralMembershipQuery(void);
 
 /* callout.c 
 */
 typedef void (*timer_f)(void *);
 
-void callout_init();
-void free_all_callouts();
+void callout_init(void);
+void free_all_callouts(void);
 void age_callout_queue(int);
-int timer_nextTimer();
+int timer_nextTimer(void);
 int timer_setTimer(int, timer_f, void *);
 int timer_clearTimer(int);
 int timer_leftTimer(int);
@@ -275,8 +276,8 @@ int timer_leftTimer(int);
 #define MAX_TOKEN_LENGTH    30
 
 int openConfigFile(char *filename);
-void closeConfigFile();
-char* nextConfigToken();
-char* getCurrentConfigToken();
+void closeConfigFile(void);
+char* nextConfigToken(void);
+char* getCurrentConfigToken(void);
 
 

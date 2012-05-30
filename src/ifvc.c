@@ -40,7 +40,7 @@ struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
 ** the module will fail if they are called before the vector is build.
 **          
 */
-void buildIfVc() {
+void buildIfVc(void) {
     struct ifreq IfVc[ sizeof( IfDescVc ) / sizeof( IfDescVc[ 0 ] )  ];
     struct ifreq *IfEp;
 
