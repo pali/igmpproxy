@@ -62,7 +62,7 @@ static int sighandled = 0;
 #define	GOT_SIGUSR2	0x08
 
 // The upstream VIF index
-int         upStreamVif;   
+int         upStreamVif[MAX_UPS_VIFS];   
 
 /**
 *   Program main method. Is invoked when the program is started
@@ -171,18 +171,23 @@ int igmpProxyInit(void) {
     {
         unsigned Ix;
         struct IfDesc *Dp;
-        int     vifcount = 0;
-        upStreamVif = -1;
+        int     vifcount = 0, upsvifcount = 0;
+        
+        for ( Ix = 0; Ix < MAX_UPS_VIFS; Ix++)
+        {
+		upStreamVif[Ix] = -1;
+	}
 
         for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
 
             if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
                 if(Dp->state == IF_STATE_UPSTREAM) {
-                    if(upStreamVif == -1) {
-                        upStreamVif = Ix;
+		    if (upsvifcount < MAX_UPS_VIFS -1)
+		    {
+			upStreamVif[upsvifcount++] = Ix;
                     } else {
-                        my_log(LOG_ERR, 0, "Vif #%d was already upstream. Cannot set VIF #%d as upstream as well.",
-                            upStreamVif, Ix);
+                        my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Mac upstream Vif count is %d",
+                            Ix, MAX_UPS_VIFS);
                     }
                 }
 
@@ -193,9 +198,8 @@ int igmpProxyInit(void) {
             }
         }
 
-        // If there is only one VIF, or no defined upstream VIF, we send an error.
-        if(vifcount < 2 || upStreamVif < 0) {
-            my_log(LOG_ERR, 0, "There must be at least 2 Vif's where one is upstream.");
+	if(0 == upsvifcount) {
+            my_log(LOG_ERR, 0, "There unless be 1 Vif's as upstream.");
         }
     }  
     
@@ -228,7 +232,7 @@ void igmpProxyCleanUp(void) {
 */
 void igmpProxyRun(void) {
     // Get the config.
-    //struct Config *config = getCommonConfig();
+    struct Config *config = getCommonConfig();
     // Set some needed values.
     register int recvlen;
     int     MaxFD, Rt, secs;
@@ -258,13 +262,17 @@ void igmpProxyRun(void) {
             }
         }
 
+        /* aimwang: call rebuildIfVc */
+        if (config->rescanVif)
+            rebuildIfVc();
+
         // Prepare timeout...
         secs = timer_nextTimer();
         if(secs == -1) {
             timeout = NULL;
         } else {
             timeout->tv_usec = 0;
-            timeout->tv_sec = secs;
+            timeout->tv_sec = (secs > 3) ? 3 : secs; // aimwang: set max timeout
         }
 
         // Prepare for select.

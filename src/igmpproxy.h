@@ -67,6 +67,7 @@
 #define IP_HEADER_RAOPT_LEN	24
 
 #define MAX_MC_VIFS    32     // !!! check this const in the specific includes
+#define MAX_UPS_VIFS    8
 
 // Useful macros..          
 #define VCMC( Vc )  (sizeof( Vc ) / sizeof( (Vc)[ 0 ] ))
@@ -116,6 +117,8 @@ void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 #define IF_STATE_DISABLED      0   // Interface should be ignored.
 #define IF_STATE_UPSTREAM      1   // Interface is the upstream interface
 #define IF_STATE_DOWNSTREAM    2   // Interface is a downstream interface
+#define IF_STATE_LOST		   3   // aimwang: Temp from downstream to hidden
+#define IF_STATE_HIDDEN		   4   // aimwang: Interface is hidden
 
 // Multicast default values...
 #define DEFAULT_ROBUSTNESS     2
@@ -166,13 +169,20 @@ struct Config {
     unsigned int        lastMemberQueryCount;
     // Set if upstream leave messages should be sent instantly..
     unsigned short      fastUpstreamLeave;
+    //~ aimwang added
+    // Set if nneed to detect new interface.
+    unsigned short	rescanVif;
+    // Set if not detect new interface for down stream.
+    unsigned short	defaultInterfaceState;	// 0: disable, 2: downstream
+    //~ aimwang added done
 };
 
 // Defines the Index of the upstream VIF...
-extern int upStreamVif;
+extern int upStreamVif[MAX_UPS_VIFS];
 
 /* ifvc.c
  */
+void rebuildIfVc( void );
 void buildIfVc( void );
 struct IfDesc *getIfByName( const char *IfName );
 struct IfDesc *getIfByIx( unsigned Ix );
@@ -195,6 +205,7 @@ extern int MRouterFD;
 int enableMRouter( void );
 void disableMRouter( void );
 void addVIF( struct IfDesc *Dp );
+void delVIF( struct IfDesc *Dp );
 int addMRoute( struct MRouteDesc * Dp );
 int delMRoute( struct MRouteDesc * Dp );
 int getVifIx( struct IfDesc *IfDp );
@@ -247,11 +258,12 @@ int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
 void initRouteTable(void);
 void clearAllRoutes(void);
 int insertRoute(uint32_t group, int ifx);
-int activateRoute(uint32_t group, uint32_t originAddr);
+int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif);
 void ageActiveRoutes(void);
 void setRouteLastMemberMode(uint32_t group);
 int lastMemberGroupAge(uint32_t group);
 int interfaceInRoute(int32_t group, int Ix);
+int getMcGroupSock(void);
 
 /* request.c
  */
