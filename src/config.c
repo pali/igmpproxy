@@ -83,6 +83,10 @@ static void initCommonConfig(void) {
 
     // If 1, a leave message is sent upstream on leave messages from downstream.
     commonConfig.fastUpstreamLeave = 0;
+    
+    // aimwang: default value
+    commonConfig.defaultInterfaceState = IF_STATE_DISABLED;
+    commonConfig.rescanVif = 0;
 
 }
 
@@ -147,6 +151,24 @@ int loadConfig(char *configFile) {
             my_log(LOG_DEBUG, 0, "Config: Quick leave mode enabled.");
             commonConfig.fastUpstreamLeave = 1;
             
+            // Read next token...
+            token = nextConfigToken();
+            continue;
+        }
+        else if(strcmp("defaultdown", token)==0) {
+	    // Got a defaultdown token...
+	    my_log(LOG_DEBUG, 0, "Config: interface Default as down stream.");
+	    commonConfig.defaultInterfaceState = IF_STATE_DOWNSTREAM;
+
+            // Read next token...
+            token = nextConfigToken();
+            continue;
+        }
+        else if(strcmp("rescanvif", token)==0) {
+	    // Got a defaultdown token...
+	    my_log(LOG_DEBUG, 0, "Config: Need detect new interace.");
+	    commonConfig.rescanVif = 1;
+
             // Read next token...
             token = nextConfigToken();
             continue;
@@ -242,7 +264,7 @@ struct vifconfig *parsePhyintToken(void) {
     tmpPtr->next = NULL;    // Important to avoid seg fault...
     tmpPtr->ratelimit = 0;
     tmpPtr->threshold = 1;
-    tmpPtr->state = IF_STATE_DOWNSTREAM;
+    tmpPtr->state = commonConfig.defaultInterfaceState;
     tmpPtr->allowednets = NULL;
     tmpPtr->allowedgroups = NULL;
 

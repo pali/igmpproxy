@@ -95,6 +95,28 @@ void disableMRouter(void)
 }
 
 /*
+ * aimwang: delVIF()
+ */
+void delVIF( struct IfDesc *IfDp )
+{
+    struct vifctl VifCtl;
+
+	if (-1 == IfDp->index)
+		return;
+
+    VifCtl.vifc_vifi = IfDp->index;
+    
+    my_log( LOG_NOTICE, 0, "removing VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
+         IfDp->index, IfDp->Flags, IfDp->InAdr.s_addr, IfDp->Name, IfDp->threshold, IfDp->ratelimit);
+
+    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_VIF,
+                     (char *)&VifCtl, sizeof( VifCtl ) ) )
+        my_log( LOG_WARNING, errno, "MRT_DEL_VIF" );
+}
+
+
+
+/*
 ** Adds the interface '*IfDp' as virtual interface to the mrouted API
 ** 
 */
@@ -103,10 +125,10 @@ void addVIF( struct IfDesc *IfDp )
     struct vifctl VifCtl;
     struct VifDesc *VifDp;
 
-    /* search free VifDesc
+    /* search free (aimwang: or exist) VifDesc
      */
     for ( VifDp = VifDescVc; VifDp < VCEP( VifDescVc ); VifDp++ ) {
-        if ( ! VifDp->IfDp )
+        if ( ! VifDp->IfDp || VifDp->IfDp == IfDp)
             break;
     }
 
