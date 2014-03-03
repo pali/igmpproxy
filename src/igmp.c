@@ -79,7 +79,7 @@ void initIgmp() {
 /**
 *   Finds the textual name of the supplied IGMP request.
 */
-char *igmpPacketKind(u_int type, u_int code) {
+char *igmpPacketKind(unsigned int type, unsigned int code) {
     static char unknown[20];
 
     switch (type) {
@@ -232,7 +232,7 @@ void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, i
     igmp->igmp_code         = code;
     igmp->igmp_group.s_addr = group;
     igmp->igmp_cksum        = 0;
-    igmp->igmp_cksum        = inetChksum((u_short *)igmp,
+    igmp->igmp_cksum        = inetChksum((unsigned short *)igmp,
                                          IP_HEADER_RAOPT_LEN + datalen);
 
 }

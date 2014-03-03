@@ -10,12 +10,12 @@
 
 #define INADDR_ALLRTRS_GROUP INADDR_ALLROUTERS_GROUP
 
-static inline u_short ip_data_len(const struct ip *ip)
+static inline unsigned short ip_data_len(const struct ip *ip)
 {
 	return ntohs(ip->ip_len) - (ip->ip_hl << 2);
 }
 
-static inline void ip_set_len(struct ip *ip, u_short len)
+static inline void ip_set_len(struct ip *ip, unsigned short len)
 {
 	ip->ip_len = htons(len);
 }
