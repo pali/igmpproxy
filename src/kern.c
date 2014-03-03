@@ -82,7 +82,7 @@ void k_hdr_include(int hdrincl) {
 
 void k_set_ttl(int t) {
 #ifndef RAW_OUTPUT_IS_RAW
-    u_char ttl;
+    unsigned char ttl;
 
     ttl = t;
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_MULTICAST_TTL,
@@ -94,7 +94,7 @@ void k_set_ttl(int t) {
 
 
 void k_set_loop(int l) {
-    u_char loop;
+    unsigned char loop;
 
     loop = l;
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_MULTICAST_LOOP,

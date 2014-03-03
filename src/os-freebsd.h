@@ -12,12 +12,12 @@
 #define IGMP_V2_LEAVE_GROUP IGMP_HOST_LEAVE_MESSAGE
 #endif
 
-static inline u_short ip_data_len(const struct ip *ip)
+static inline unsigned short ip_data_len(const struct ip *ip)
 {
 	return ip->ip_len;
 }
 
-static inline void ip_set_len(struct ip *ip, u_short len)
+static inline void ip_set_len(struct ip *ip, unsigned short len)
 {
 	ip->ip_len = len;
 }
