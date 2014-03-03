@@ -79,7 +79,7 @@ void initIgmp(void) {
 /**
 *   Finds the textual name of the supplied IGMP request.
 */
-static const char *igmpPacketKind(u_int type, u_int code) {
+static const char *igmpPacketKind(unsigned int type, unsigned int code) {
     static char unknown[20];
 
     switch (type) {
@@ -230,17 +230,17 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
     }
 
     /* Add Router Alert option */
-    ((u_char*)send_buf+MIN_IP_HEADER_LEN)[0] = IPOPT_RA;
-    ((u_char*)send_buf+MIN_IP_HEADER_LEN)[1] = 0x04;
-    ((u_char*)send_buf+MIN_IP_HEADER_LEN)[2] = 0x00;
-    ((u_char*)send_buf+MIN_IP_HEADER_LEN)[3] = 0x00;
+    ((unsigned char*)send_buf+MIN_IP_HEADER_LEN)[0] = IPOPT_RA;
+    ((unsigned char*)send_buf+MIN_IP_HEADER_LEN)[1] = 0x04;
+    ((unsigned char*)send_buf+MIN_IP_HEADER_LEN)[2] = 0x00;
+    ((unsigned char*)send_buf+MIN_IP_HEADER_LEN)[3] = 0x00;
 
     igmp                    = (struct igmp *)(send_buf + IP_HEADER_RAOPT_LEN);
     igmp->igmp_type         = type;
     igmp->igmp_code         = code;
     igmp->igmp_group.s_addr = group;
     igmp->igmp_cksum        = 0;
-    igmp->igmp_cksum        = inetChksum((u_short *)igmp,
+    igmp->igmp_cksum        = inetChksum((unsigned short *)igmp,
                                          IP_HEADER_RAOPT_LEN + datalen);
 
 }
