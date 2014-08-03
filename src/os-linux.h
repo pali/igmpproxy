@@ -3,6 +3,7 @@
 #include <linux/mroute.h>
 #include <netinet/ip.h>
 #include <netinet/igmp.h>
+#include <sys/types.h>
 
 #define IGMP_V3_MEMBERSHIP_REPORT 0x22
 
