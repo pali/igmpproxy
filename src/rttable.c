@@ -428,6 +428,25 @@ void ageActiveRoutes() {
 }
 
 /**
+*   Counts the number of interfaces a given route is active on
+*/
+int numberOfInterfaces(struct RouteTable *croute) {
+    int Ix;
+    struct IfDesc *Dp;
+    int result = 0;
+    // Loop through all interfaces
+    for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
+        // If the interface is used by the route, increase counter
+        if(BIT_TST(croute->vifBits, Dp->index)) {
+            result++;
+        }
+    }
+    my_log(LOG_DEBUG, 0, "counted %d interfaces", result);
+    return result;
+}
+
+
+/**
 *   Should be called when a leave message is recieved, to
 *   mark a route for the last member probe state.
 */
@@ -439,8 +458,11 @@ void setRouteLastMemberMode(uint32_t group) {
     if(croute!=NULL) {
         // Check for fast leave mode...
         if(croute->upstrState == ROUTESTATE_JOINED && conf->fastUpstreamLeave) {
-            // Send a leave message right away..
-            sendJoinLeaveUpstream(croute, 0);
+            // Send a leave message right away only when the route has been active on only one interface
+            if (numberOfInterfaces(croute) <= 1) {
+		my_log(LOG_DEBUG, 0, "Leaving group %d now", group);
+                sendJoinLeaveUpstream(croute, 0);
+            } 
         }
         // Set the routingstate to Last member check...
         croute->upstrState = ROUTESTATE_CHECK_LAST_MEMBER;
@@ -677,3 +699,18 @@ void logRouteTable(char *header) {
     
         my_log(LOG_DEBUG, 0, "-----------------------------------------------------");
 }
+
+/**
+*   Returns true when the given group belongs to the given interface
+*/
+int interfaceInRoute(int32_t group, int Ix) {
+    struct RouteTable*  croute;
+    croute = findRoute(group);
+    if (croute != NULL) {
+        my_log(LOG_DEBUG, 0, "Interface id %d is in group $d", Ix, group);
+        return BIT_TST(croute->vifBits, Ix);
+    } else {
+        return 0;
+    }
+}
+

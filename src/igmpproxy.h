@@ -250,6 +250,7 @@ int activateRoute(uint32_t group, uint32_t originAddr);
 void ageActiveRoutes();
 void setRouteLastMemberMode(uint32_t group);
 int lastMemberGroupAge(uint32_t group);
+int interfaceInRoute(int32_t group, int Ix);
 
 /* request.c
  */
