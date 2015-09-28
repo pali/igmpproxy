@@ -407,7 +407,7 @@ int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr ) {
     // Loop through all registered allowed nets of the VIF...
     for(currsubnet = intrface->allowednets; currsubnet != NULL; currsubnet = currsubnet->next) {
         // Check if the ip falls in under the subnet....
-        if((ipaddr & currsubnet->subnet_mask) == currsubnet->subnet_addr) {
+        if((ipaddr & currsubnet->subnet_mask) == (currsubnet->subnet_addr& currsubnet->subnet_mask)) {
             return 1;
         }
     }
