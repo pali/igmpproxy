@@ -215,7 +215,7 @@ int igmpProxyInit(void) {
         }
 
 	if(0 == upsvifcount) {
-            my_log(LOG_ERR, 0, "There unless be 1 Vif's as upstream.");
+            my_log(LOG_ERR, 0, "There must be at least 1 Vif as upstream.");
         }
     }  
     
