@@ -122,8 +122,7 @@ void acceptIgmp(int recvlen) {
     dst       = ip->ip_dst.s_addr;
 
     /* filter local multicast 239.255.255.250 */
-    if (dst == htonl(0xEFFFFFFA))
-    {
+    if (dst == htonl(0xEFFFFFFA)) {
         my_log(LOG_NOTICE, 0, "The IGMP message was local multicast. Ignoring.");
         return;
     }
@@ -136,26 +135,21 @@ void acceptIgmp(int recvlen) {
     if (ip->ip_p == 0) {
         if (src == 0 || dst == 0) {
             my_log(LOG_WARNING, 0, "kernel request not accurate");
-        }
-        else {
+        } else {
             struct IfDesc *checkVIF;
             
-            for(i=0; i<MAX_UPS_VIFS; i++)
-            {
-		if(-1 != upStreamVif[i])
-		{
+            for(i=0; i<MAX_UPS_VIFS; i++) {
+                if(-1 != upStreamVif[i]) {
                     // Check if the source address matches a valid address on upstream vif.
                     checkVIF = getIfByIx( upStreamVif[i] );
                     if(checkVIF == 0) {
                         my_log(LOG_ERR, 0, "Upstream VIF was null.");
                         return;
-                    } 
-                    else if(src == checkVIF->InAdr.s_addr) {
+                    } else if(src == checkVIF->InAdr.s_addr) {
                         my_log(LOG_NOTICE, 0, "Route activation request from %s for %s is from myself. Ignoring.",
                             inetFmt(src, s1), inetFmt(dst, s2));
                         return;
-                    }
-                    else if(!isAdressValidForIf(checkVIF, src)) {
+                    } else if(!isAdressValidForIf(checkVIF, src)) {
                         struct IfDesc *downVIF = getIfByAddress(src);
                         if (downVIF && downVIF->state & IF_STATE_DOWNSTREAM) {
                             my_log(LOG_NOTICE, 0, "The source address %s for group %s is from downstream VIF[%d]. Ignoring.",
@@ -165,17 +159,15 @@ void acceptIgmp(int recvlen) {
                                 inetFmt(src, s1), inetFmt(dst, s2), i);
                         }
                     } else {
-			// Activate the route.
-			my_log(LOG_DEBUG, 0, "Route activate request from %s to %s",
-			    inetFmt(src,s1), inetFmt(dst,s2));
-			activateRoute(dst, src, upStreamVif[i]-1);
-			i = MAX_UPS_VIFS;
-		    }
-		}
-                else
-                {
-		    i = MAX_UPS_VIFS;
-		}
+                        // Activate the route.
+                        my_log(LOG_DEBUG, 0, "Route activate request from %s to %s",
+                            inetFmt(src,s1), inetFmt(dst,s2));
+                        activateRoute(dst, src, upStreamVif[i]-1);
+                        i = MAX_UPS_VIFS;
+                    }
+                } else {
+                    i = MAX_UPS_VIFS;
+                }
             }
         }
         return;
@@ -210,14 +202,15 @@ void acceptIgmp(int recvlen) {
         group = igmp->igmp_group.s_addr;
         acceptGroupReport(src, group);
         return;
-    
+
     case IGMP_V3_MEMBERSHIP_REPORT:
         igmpv3 = (struct igmpv3_report *)(recv_buf + iphdrlen);
         grec = &igmpv3->igmp_grec[0];
         ngrec = ntohs(igmpv3->igmp_ngrec);
         while (ngrec--) {
-            if ((uint8_t *)igmpv3 + ipdatalen < (uint8_t *)grec + sizeof(*grec))
+            if ((uint8_t *)igmpv3 + ipdatalen < (uint8_t *)grec + sizeof(*grec)) {
                 break;
+            }
             group = grec->grec_mca.s_addr;
             nsrcs = ntohs(grec->grec_nsrcs);
             switch (grec->grec_type) {
@@ -245,7 +238,7 @@ void acceptIgmp(int recvlen) {
                 (&grec->grec_src[nsrcs] + grec->grec_auxwords * 4);
         }
         return;
-    
+
     case IGMP_V2_LEAVE_GROUP:
         group = igmp->igmp_group.s_addr;
         acceptLeaveMessage(src, group);
@@ -329,12 +322,13 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
     if (sendto(MRouterFD, send_buf,
                IP_HEADER_RAOPT_LEN + IGMP_MINLEN + datalen, 0,
                (struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
-        if (errno == ENETDOWN)
+        if (errno == ENETDOWN) {
             my_log(LOG_ERR, errno, "Sender VIF was down.");
-        else
+        } else {
             my_log(LOG_INFO, errno,
                 "sendto to %s on %s",
                 inetFmt(dst, s1), inetFmt(src, s2));
+        }
     }
 
     if(setigmpsource) {
@@ -346,6 +340,6 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
     }
 
     my_log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
-	    igmpPacketKind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
-	    inetFmt(src, s1), inetFmt(dst, s2));
+            igmpPacketKind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
+            inetFmt(src, s1), inetFmt(dst, s2));
 }

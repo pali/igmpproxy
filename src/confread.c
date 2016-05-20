@@ -67,20 +67,20 @@ int openConfigFile(char *filename) {
 
     // Open the file for reading...
     confFilePtr = fopen(filename, "r");
-    
+
     // On error, return false
     if(confFilePtr == NULL) {
         return 0;
     }
-    
+
     // Allocate memory for inputbuffer...
     iBuffer = (char*) malloc( sizeof(char) * READ_BUFFER_SIZE );
-    
+
     if(iBuffer == NULL) {
         closeConfigFile();
         return 0;
     }
-    
+
     // Reset bufferpointer and readsize
     bufPtr = 0;
     readSize = 0;
@@ -149,7 +149,6 @@ char *nextConfigToken(void) {
                         commentFound = 0;
                     }
                 } else {
-
                     // Check current char...
                     switch(iBuffer[bufPtr]) {
                     case '#':
@@ -188,10 +187,11 @@ char *nextConfigToken(void) {
             }
             // If the readsize is less than buffersize, we assume EOF.
             if(readSize < READ_BUFFER_SIZE && bufPtr == readSize) {
-                if (tokenPtr > 0)
+                if (tokenPtr > 0) {
                     finished = 1;
-                else
+                } else {
                     return NULL;
+                }
             }
         }
         if(tokenPtr>0) {
@@ -210,4 +210,3 @@ char *nextConfigToken(void) {
 char *getCurrentConfigToken(void) {
     return validToken ? cToken : NULL;
 }
-

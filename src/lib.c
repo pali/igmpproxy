@@ -40,7 +40,7 @@ char s1[19];        /* buffers to hold the string representations  */
 char s2[19];        /* of IP addresses, to be passed to inet_fmt() */
 char s3[19];        /* or inet_fmts().                             */
 char s4[19];
-            
+
 /*
 ** Formats 'InAdr' into a dotted decimal string. 
 **
@@ -85,29 +85,33 @@ char *inetFmts(uint32_t addr, uint32_t mask, char *s) {
     m = (unsigned char *)&mask;
     bits = 33 - ffs(ntohl(mask));
 
-    if (m[3] != 0) sprintf(s, "%u.%u.%u.%u/%d", a[0], a[1], a[2], a[3],
-                           bits);
-    else if (m[2] != 0) sprintf(s, "%u.%u.%u/%d",    a[0], a[1], a[2], bits);
-    else if (m[1] != 0) sprintf(s, "%u.%u/%d",       a[0], a[1], bits);
-    else                sprintf(s, "%u/%d",          a[0], bits);
+    if (m[3] != 0) {
+        sprintf(s, "%u.%u.%u.%u/%d", a[0], a[1], a[2], a[3], bits);
+    } else if (m[2] != 0) {
+        sprintf(s, "%u.%u.%u/%d",    a[0], a[1], a[2], bits);
+    } else if (m[1] != 0) {
+        sprintf(s, "%u.%u/%d",       a[0], a[1], bits);
+    } else {
+        sprintf(s, "%u/%d",          a[0], bits);
+    }
 
     return(s);
 }
 
 /*
  * inet_cksum extracted from:
- *			P I N G . C
+ *              P I N G . C
  *
  * Author -
- *	Mike Muuss
- *	U. S. Army Ballistic Research Laboratory
- *	December, 1983
+ *      Mike Muuss
+ *      U. S. Army Ballistic Research Laboratory
+ *      December, 1983
  * Modified at Uc Berkeley
  *
  * (ping.c) Status -
- *	Public Domain.  Distribution Unlimited.
+ *      Public Domain.  Distribution Unlimited.
  *
- *			I N _ C K S U M
+ *              I N _ C K S U M
  *
  * Checksum routine for Internet Protocol family headers (C Version)
  *
@@ -143,6 +147,3 @@ uint16_t inetChksum(uint16_t *addr, int len) {
     answer = ~sum;              /* truncate to 16 bits */
     return(answer);
 }
-
-
-

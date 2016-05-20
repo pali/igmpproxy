@@ -133,7 +133,6 @@ int loadConfig(char *configFile) {
                 my_log(LOG_WARNING, 0, "Unknown token '%s' in configfile", token);
                 return 0;
             } else {
-
                 my_log(LOG_DEBUG, 0, "IF name : %s", tmpPtr->name);
                 my_log(LOG_DEBUG, 0, "Next ptr : %x", tmpPtr->next);
                 my_log(LOG_DEBUG, 0, "Ratelimit : %d", tmpPtr->ratelimit);
@@ -145,8 +144,7 @@ int loadConfig(char *configFile) {
                 *currPtr = tmpPtr;
                 currPtr = &tmpPtr->next;
             }
-        } 
-        else if(strcmp("quickleave", token)==0) {
+        } else if(strcmp("quickleave", token)==0) {
             // Got a quickleave token....
             my_log(LOG_DEBUG, 0, "Config: Quick leave mode enabled.");
             commonConfig.fastUpstreamLeave = 1;
@@ -154,20 +152,18 @@ int loadConfig(char *configFile) {
             // Read next token...
             token = nextConfigToken();
             continue;
-        }
-        else if(strcmp("defaultdown", token)==0) {
-	    // Got a defaultdown token...
-	    my_log(LOG_DEBUG, 0, "Config: interface Default as down stream.");
-	    commonConfig.defaultInterfaceState = IF_STATE_DOWNSTREAM;
+        } else if(strcmp("defaultdown", token)==0) {
+            // Got a defaultdown token...
+            my_log(LOG_DEBUG, 0, "Config: interface Default as down stream.");
+            commonConfig.defaultInterfaceState = IF_STATE_DOWNSTREAM;
 
             // Read next token...
             token = nextConfigToken();
             continue;
-        }
-        else if(strcmp("rescanvif", token)==0) {
-	    // Got a defaultdown token...
-	    my_log(LOG_DEBUG, 0, "Config: Need detect new interace.");
-	    commonConfig.rescanVif = 1;
+        } else if(strcmp("rescanvif", token)==0) {
+            // Got a defaultdown token...
+            my_log(LOG_DEBUG, 0, "Config: Need detect new interace.");
+            commonConfig.rescanVif = 1;
 
             // Read next token...
             token = nextConfigToken();
@@ -227,7 +223,7 @@ void configureVifs(void) {
                     // Insert the configured nets...
                     vifLast->next = confPtr->allowednets;
 
-		    Dp->allowedgroups = confPtr->allowedgroups;
+                    Dp->allowedgroups = confPtr->allowedgroups;
 
                     break;
                 }
@@ -250,8 +246,12 @@ struct vifconfig *parsePhyintToken(void) {
     token = nextConfigToken();
 
     // Sanitycheck the name...
-    if(token == NULL) return NULL;
-    if(strlen(token) >= IF_NAMESIZE) return NULL;
+    if(token == NULL) {
+        return NULL;
+    }
+    if(strlen(token) >= IF_NAMESIZE) {
+        return NULL;
+    }
     my_log(LOG_DEBUG, 0, "Config: IF: Config for interface %s.", token);
 
     // Allocate memory for configuration...
@@ -294,37 +294,32 @@ struct vifconfig *parsePhyintToken(void) {
             } else {
                 anetPtr = &(*anetPtr)->next;
             }
-        }
-	else if(strcmp("whitelist", token)==0) {
-	    // Whitelist
-	    token = nextConfigToken();
-	    my_log(LOG_DEBUG, 0, "Config: IF: Got whitelist token %s.", token);
-	
-	    *agrpPtr = parseSubnetAddress(token);
-	    if(*agrpPtr == NULL) {
-		parseError = 1;
-		my_log(LOG_WARNING, 0, "Unable to parse subnet address.");
-		break;
-	    } else {
-		agrpPtr = &(*agrpPtr)->next;
-	    }
-	}
-        else if(strcmp("upstream", token)==0) {
+        } else if(strcmp("whitelist", token)==0) {
+            // Whitelist
+            token = nextConfigToken();
+            my_log(LOG_DEBUG, 0, "Config: IF: Got whitelist token %s.", token);
+
+            *agrpPtr = parseSubnetAddress(token);
+            if(*agrpPtr == NULL) {
+                parseError = 1;
+                my_log(LOG_WARNING, 0, "Unable to parse subnet address.");
+                break;
+            } else {
+                agrpPtr = &(*agrpPtr)->next;
+            }
+        } else if(strcmp("upstream", token)==0) {
             // Upstream
             my_log(LOG_DEBUG, 0, "Config: IF: Got upstream token.");
             tmpPtr->state = IF_STATE_UPSTREAM;
-        }
-        else if(strcmp("downstream", token)==0) {
+        } else if(strcmp("downstream", token)==0) {
             // Downstream
             my_log(LOG_DEBUG, 0, "Config: IF: Got downstream token.");
             tmpPtr->state = IF_STATE_DOWNSTREAM;
-        }
-        else if(strcmp("disabled", token)==0) {
+        } else if(strcmp("disabled", token)==0) {
             // Disabled
             my_log(LOG_DEBUG, 0, "Config: IF: Got disabled token.");
             tmpPtr->state = IF_STATE_DISABLED;
-        }
-        else if(strcmp("ratelimit", token)==0) {
+        } else if(strcmp("ratelimit", token)==0) {
             // Ratelimit
             token = nextConfigToken();
             my_log(LOG_DEBUG, 0, "Config: IF: Got ratelimit token '%s'.", token);
@@ -334,8 +329,7 @@ struct vifconfig *parsePhyintToken(void) {
                 parseError = 1;
                 break;
             }
-        }
-        else if(strcmp("threshold", token)==0) {
+        } else if(strcmp("threshold", token)==0) {
             // Threshold
             token = nextConfigToken();
             my_log(LOG_DEBUG, 0, "Config: IF: Got threshold token '%s'.", token);
@@ -345,8 +339,7 @@ struct vifconfig *parsePhyintToken(void) {
                 parseError = 1;
                 break;
             }
-        }
-        else {
+        } else {
             // Unknown token. Break...
             break;
         }
@@ -385,10 +378,11 @@ struct SubnetList *parseSubnetAddress(char *addrstr) {
             return NULL;
         }
 
-        if (bitcnt == 0)
+        if (bitcnt == 0) {
             mask = 0;
-        else
+        } else {
             mask <<= (32 - bitcnt);
+        }
     }
 
     if(addr == -1) {
@@ -402,7 +396,7 @@ struct SubnetList *parseSubnetAddress(char *addrstr) {
     tmpSubnet->next = NULL;
 
     my_log(LOG_DEBUG, 0, "Config: IF: Altnet: Parsed altnet to %s.",
-	    inetFmts(tmpSubnet->subnet_addr, tmpSubnet->subnet_mask,s1));
+            inetFmts(tmpSubnet->subnet_addr, tmpSubnet->subnet_mask,s1));
 
     return tmpSubnet;
 }

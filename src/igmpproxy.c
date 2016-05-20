@@ -56,10 +56,11 @@ void    igmpProxyRun(void);
 
 // Global vars...
 static int sighandled = 0;
-#define	GOT_SIGINT	0x01
-#define	GOT_SIGHUP	0x02
-#define	GOT_SIGUSR1	0x04
-#define	GOT_SIGUSR2	0x08
+
+#define GOT_SIGINT          0x01
+#define GOT_SIGHUP          0x02
+#define GOT_SIGUSR1         0x04
+#define GOT_SIGUSR2         0x08
 
 // The upstream VIF index
 int         upStreamVif[MAX_UPS_VIFS];   
@@ -67,7 +68,7 @@ int         upStreamVif[MAX_UPS_VIFS];
 /**
 *   Program main method. Is invoked when the program is started
 *   on commandline. The number of commandline arguments, and a
-*   pointer to the arguments are recieved on the line...
+*   pointer to the arguments are received on the line...
 */    
 int main( int ArgCn, char *ArgVc[] ) {
 
@@ -96,8 +97,8 @@ int main( int ArgCn, char *ArgVc[] ) {
     }
 
     if (optind != ArgCn - 1) {
-	fputs("You must specify the configuration file.\n", stderr);
-	exit(1);
+        fputs("You must specify the configuration file.\n", stderr);
+        exit(1);
     }
     char *configFilePath = ArgVc[optind];
 
@@ -126,23 +127,25 @@ int main( int ArgCn, char *ArgVc[] ) {
             break;
         }
 
-	if ( !Log2Stderr ) {
+        if ( !Log2Stderr ) {
 
-	    // Only daemon goes past this line...
-	    if (fork()) exit(0);
+            // Only daemon goes past this line...
+            if (fork()) {
+                exit(0);
+            }
 
-	    // Detach daemon from terminal
-	    if ( close( 0 ) < 0 || close( 1 ) < 0 || close( 2 ) < 0
-		 || open( "/dev/null", 0 ) != 0 || dup2( 0, 1 ) < 0 || dup2( 0, 2 ) < 0
-		 || setpgid( 0, 0 ) < 0
-	       ) {
-		my_log( LOG_ERR, errno, "failed to detach daemon" );
-	    }
-	}
+            // Detach daemon from terminal
+            if ( close( 0 ) < 0 || close( 1 ) < 0 || close( 2 ) < 0
+                 || open( "/dev/null", 0 ) != 0 || dup2( 0, 1 ) < 0 || dup2( 0, 2 ) < 0
+                 || setpgid( 0, 0 ) < 0
+               ) {
+                my_log( LOG_ERR, errno, "failed to detach daemon" );
+            }
+        }
 
         // Go to the main loop.
         igmpProxyRun();
-    
+
         // Clean up
         igmpProxyCleanUp();
 
@@ -171,15 +174,19 @@ int igmpProxyInit(void) {
     sigaction(SIGINT, &sa, NULL);
 
     // Loads configuration for Physical interfaces...
-    buildIfVc();    
-    
+    buildIfVc();
+
     // Configures IF states and settings
     configureVifs();
 
     switch ( Err = enableMRouter() ) {
-    case 0: break;
-    case EADDRINUSE: my_log( LOG_ERR, EADDRINUSE, "MC-Router API already in use" ); break;
-    default: my_log( LOG_ERR, Err, "MRT_INIT failed" );
+    case 0:
+        break;
+    case EADDRINUSE:
+        my_log( LOG_ERR, EADDRINUSE, "MC-Router API already in use" );
+        break;
+    default:
+        my_log( LOG_ERR, Err, "MRT_INIT failed" );
     }
 
     /* create VIFs for all IP, non-loop interfaces
@@ -188,19 +195,17 @@ int igmpProxyInit(void) {
         unsigned Ix;
         struct IfDesc *Dp;
         int     vifcount = 0, upsvifcount = 0;
-        
-        for ( Ix = 0; Ix < MAX_UPS_VIFS; Ix++)
-        {
-		upStreamVif[Ix] = -1;
-	}
+
+        for ( Ix = 0; Ix < MAX_UPS_VIFS; Ix++) {
+            upStreamVif[Ix] = -1;
+        }
 
         for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
 
             if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
                 if(Dp->state == IF_STATE_UPSTREAM) {
-		    if (upsvifcount < MAX_UPS_VIFS -1)
-		    {
-			upStreamVif[upsvifcount++] = Ix;
+                    if (upsvifcount < MAX_UPS_VIFS -1) {
+                        upStreamVif[upsvifcount++] = Ix;
                     } else {
                         my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Mac upstream Vif count is %d",
                             Ix, MAX_UPS_VIFS);
@@ -214,11 +219,11 @@ int igmpProxyInit(void) {
             }
         }
 
-	if(0 == upsvifcount) {
+        if(0 == upsvifcount) {
             my_log(LOG_ERR, 0, "There must be at least 1 Vif as upstream.");
         }
-    }  
-    
+    }
+
     // Initialize IGMP
     initIgmp();
     // Initialize Routing table
@@ -279,8 +284,9 @@ void igmpProxyRun(void) {
         }
 
         /* aimwang: call rebuildIfVc */
-        if (config->rescanVif)
+        if (config->rescanVif) {
             rebuildIfVc();
+        }
 
         // Prepare timeout...
         secs = timer_nextTimer();
@@ -304,16 +310,16 @@ void igmpProxyRun(void) {
         if( Rt < 0 ) {
             my_log( LOG_WARNING, errno, "select() failure" );
             continue;
-        }
-        else if( Rt > 0 ) {
+        } else if( Rt > 0 ) {
 
             // Read IGMP request, and handle it...
             if( FD_ISSET( MRouterFD, &ReadFDS ) ) {
-    
                 recvlen = recvfrom(MRouterFD, recv_buf, RECV_BUF_SIZE,
                                    0, NULL, &dummy);
                 if (recvlen < 0) {
-                    if (errno != EINTR) my_log(LOG_ERR, errno, "recvfrom");
+                    if (errno != EINTR) {
+                        my_log(LOG_ERR, errno, "recvfrom");
+                    }
                     continue;
                 }
                 
@@ -347,8 +353,9 @@ void igmpProxyRun(void) {
                 difftime.tv_nsec += 1000000000;
             }
             lasttime = curtime;
-            if (secs == 0 || difftime.tv_sec > 0)
+            if (secs == 0 || difftime.tv_sec > 0) {
                 age_callout_queue(difftime.tv_sec);
+            }
             secs = -1;
         } while (difftime.tv_sec > 0);
 
@@ -370,11 +377,11 @@ static void signalHandler(int sig) {
         case SIGHUP:
             sighandled |= GOT_SIGHUP;
             break;
-    
+
         case SIGUSR1:
             sighandled |= GOT_SIGUSR1;
             break;
-    
+
         case SIGUSR2:
             sighandled |= GOT_SIGUSR2;
             break;

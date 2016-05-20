@@ -152,8 +152,7 @@ int timer_setTimer(int delay, timer_f action, void *data) {
     /* if the queue is empty, insert the node and return */
     if (!queue) {
         queue = node;
-    }
-    else {
+    } else {
         /* chase the pointer looking for the right place */
         while (ptr) {
             if (delay < ptr->time) {
@@ -161,15 +160,14 @@ int timer_setTimer(int delay, timer_f action, void *data) {
                 node->next = ptr;
                 if (ptr == queue) {
                     queue = node;
-                }
-                else {
+                } else {
                     prev->next = node;
                 }
                 ptr->time -= node->time;
-		my_log(LOG_DEBUG, 0,
-			"Created timeout %d (#%d) - delay %d secs",
-			node->id, i, node->time);
-		debugQueue();
+                my_log(LOG_DEBUG, 0,
+                        "Created timeout %d (#%d) - delay %d secs",
+                        node->id, i, node->time);
+                debugQueue();
                 return node->id;
             } else {
                 // Continur to check nodes.
@@ -195,8 +193,9 @@ int timer_leftTimer(int timer_id) {
     struct timeOutQueue *ptr;
     int left = 0;
 
-    if (!timer_id)
+    if (!timer_id) {
         return -1;
+    }
 
     for (ptr = queue; ptr; ptr = ptr->next) {
         left += ptr->time;
@@ -214,8 +213,9 @@ int timer_clearTimer(int  timer_id) {
     struct timeOutQueue  *ptr, *prev;
     int i = 0;
 
-    if (!timer_id)
+    if (!timer_id) {
         return 0;
+    }
 
     prev = ptr = queue;
 
@@ -230,17 +230,20 @@ int timer_clearTimer(int  timer_id) {
             /* got the right node */
 
             /* unlink it from the queue */
-            if (ptr == queue)
+            if (ptr == queue) {
                 queue = queue->next;
-            else
+            } else {
                 prev->next = ptr->next;
+            }
 
             /* increment next node if any */
-            if (ptr->next != 0)
+            if (ptr->next != 0) {
                 (ptr->next)->time += ptr->time;
+            }
 
-            if (ptr->data)
+            if (ptr->data) {
                 free(ptr->data);
+            }
             my_log(LOG_DEBUG, 0, "deleted timer %d (#%d)", ptr->id, i);
             free(ptr);
             debugQueue();
@@ -263,6 +266,6 @@ static void debugQueue(void) {
     struct timeOutQueue  *ptr;
 
     for (ptr = queue; ptr; ptr = ptr->next) {
-            my_log(LOG_DEBUG, 0, "(Id:%d, Time:%d) ", ptr->id, ptr->time);
+        my_log(LOG_DEBUG, 0, "(Id:%d, Time:%d) ", ptr->id, ptr->time);
     }
 }

@@ -46,9 +46,9 @@
      
 // need an IGMP socket as interface for the mrouted API
 // - receives the IGMP messages
-int         MRouterFD;        /* socket for all network I/O  */
-char        *recv_buf;           /* input packet buffer         */
-char        *send_buf;           /* output packet buffer        */
+int         MRouterFD;          /* socket for all network I/O  */
+char        *recv_buf;          /* input packet buffer         */
+char        *send_buf;          /* output packet buffer        */
 
 
 // my internal virtual interfaces descriptor vector  
@@ -64,16 +64,17 @@ static struct VifDesc {
 ** returns: - 0 if the functions succeeds     
 **          - the errno value for non-fatal failure condition
 */
-int enableMRouter(void)
-{
+int enableMRouter(void) {
     int Va = 1;
 
-    if ( (MRouterFD  = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0 )
+    if ( (MRouterFD  = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0 ) {
         my_log( LOG_ERR, errno, "IGMP socket open" );
+    }
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_INIT, 
-                     (void *)&Va, sizeof( Va ) ) )
+                     (void *)&Va, sizeof( Va ) ) ) {
         return errno;
+    }
 
     return 0;
 }
@@ -82,8 +83,7 @@ int enableMRouter(void)
 ** Diables the mrouted API and relases by this the lock.
 **          
 */
-void disableMRouter(void)
-{
+void disableMRouter(void) {
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DONE, NULL, 0 ) 
          || close( MRouterFD )
        ) {
@@ -97,21 +97,22 @@ void disableMRouter(void)
 /*
  * aimwang: delVIF()
  */
-void delVIF( struct IfDesc *IfDp )
-{
+void delVIF( struct IfDesc *IfDp ) {
     struct vifctl VifCtl;
 
-	if (-1 == IfDp->index)
-		return;
+    if (-1 == IfDp->index) {
+        return;
+    }
 
     VifCtl.vifc_vifi = IfDp->index;
-    
+
     my_log( LOG_NOTICE, 0, "removing VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
          IfDp->index, IfDp->Flags, IfDp->InAdr.s_addr, IfDp->Name, IfDp->threshold, IfDp->ratelimit);
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_VIF,
-                     (char *)&VifCtl, sizeof( VifCtl ) ) )
+                     (char *)&VifCtl, sizeof( VifCtl ) ) ) {
         my_log( LOG_WARNING, errno, "MRT_DEL_VIF" );
+    }
 }
 
 
@@ -120,29 +121,30 @@ void delVIF( struct IfDesc *IfDp )
 ** Adds the interface '*IfDp' as virtual interface to the mrouted API
 ** 
 */
-void addVIF( struct IfDesc *IfDp )
-{
+void addVIF( struct IfDesc *IfDp ) {
     struct vifctl VifCtl;
     struct VifDesc *VifDp;
 
     /* search free (aimwang: or exist) VifDesc
      */
     for ( VifDp = VifDescVc; VifDp < VCEP( VifDescVc ); VifDp++ ) {
-        if ( ! VifDp->IfDp || VifDp->IfDp == IfDp)
+        if ( ! VifDp->IfDp || VifDp->IfDp == IfDp) {
             break;
+        }
     }
 
     /* no more space
      */
-    if ( VifDp >= VCEP( VifDescVc ) )
+    if ( VifDp >= VCEP( VifDescVc ) ) {
         my_log( LOG_ERR, ENOMEM, "addVIF, out of VIF space" );
+    }
 
     VifDp->IfDp = IfDp;
 
-    VifCtl.vifc_vifi  = VifDp - VifDescVc; 
-    VifCtl.vifc_flags = 0;        /* no tunnel, no source routing, register ? */
-    VifCtl.vifc_threshold  = VifDp->IfDp->threshold;    // Packet TTL must be at least 1 to pass them
-    VifCtl.vifc_rate_limit = VifDp->IfDp->ratelimit;    // Ratelimit
+    VifCtl.vifc_vifi        = VifDp - VifDescVc; 
+    VifCtl.vifc_flags       = 0;                        // no tunnel, no source routing, register ?
+    VifCtl.vifc_threshold   = VifDp->IfDp->threshold;   // Packet TTL must be at least 1 to pass them
+    VifCtl.vifc_rate_limit  = VifDp->IfDp->ratelimit;   // Ratelimit
 
     VifCtl.vifc_lcl_addr.s_addr = VifDp->IfDp->InAdr.s_addr;
     VifCtl.vifc_rmt_addr.s_addr = INADDR_ANY;
@@ -156,14 +158,19 @@ void addVIF( struct IfDesc *IfDp )
 
     struct SubnetList *currSubnet;
     for(currSubnet = IfDp->allowednets; currSubnet; currSubnet = currSubnet->next) {
-	my_log(LOG_DEBUG, 0, "        Network for [%s] : %s",
-	    IfDp->Name,
-	    inetFmts(currSubnet->subnet_addr, currSubnet->subnet_mask, s1));
+        my_log(LOG_DEBUG, 0, "        Network for [%s] : %s",
+            IfDp->Name,
+            inetFmts(currSubnet->subnet_addr, currSubnet->subnet_mask, s1)
+        );
     }
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_ADD_VIF, 
-                     (char *)&VifCtl, sizeof( VifCtl ) ) )
-        my_log( LOG_ERR, errno, "MRT_ADD_VIF" );
+                     (char *)&VifCtl, sizeof( VifCtl ) ) ) {
+        my_log( LOG_ERR, errno, "MRT_ADD_VIF: [%s]·:·%s",
+            IfDp->Name,
+            inetFmt(currSubnet->subnet_addr, s1)
+        );
+    }
 
 }
 
@@ -173,8 +180,7 @@ void addVIF( struct IfDesc *IfDp )
 ** returns: - 0 if the function succeeds
 **          - the errno value for non-fatal failure condition
 */
-int addMRoute( struct MRouteDesc *Dp )
-{
+int addMRoute( struct MRouteDesc *Dp ) {
     struct mfcctl CtlReq;
     int rc;
 
@@ -198,9 +204,10 @@ int addMRoute( struct MRouteDesc *Dp )
     }
 
     rc = setsockopt( MRouterFD, IPPROTO_IP, MRT_ADD_MFC,
-		    (void *)&CtlReq, sizeof( CtlReq ) );
-    if (rc)
+            (void *)&CtlReq, sizeof( CtlReq ) );
+    if (rc) {
         my_log( LOG_WARNING, errno, "MRT_ADD_MFC" );
+    }
 
     return rc;
 }
@@ -235,9 +242,10 @@ int delMRoute( struct MRouteDesc *Dp )
     }
 
     rc = setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_MFC,
-		    (void *)&CtlReq, sizeof( CtlReq ) );
-    if (rc)
+            (void *)&CtlReq, sizeof( CtlReq ) );
+    if (rc) {
         my_log( LOG_WARNING, errno, "MRT_DEL_MFC" );
+    }
 
     return rc;
 }
@@ -249,16 +257,14 @@ int delMRoute( struct MRouteDesc *Dp )
 **          - -1 if no virtual interface exists for the interface 
 **          
 */
-int getVifIx( struct IfDesc *IfDp )
-{
+int getVifIx( struct IfDesc *IfDp ) {
     struct VifDesc *Dp;
 
-    for ( Dp = VifDescVc; Dp < VCEP( VifDescVc ); Dp++ )
-        if ( Dp->IfDp == IfDp )
+    for ( Dp = VifDescVc; Dp < VCEP( VifDescVc ); Dp++ ) {
+        if ( Dp->IfDp == IfDp ) {
             return Dp - VifDescVc;
+        }
+    }
 
     return -1;
 }
-
-
-

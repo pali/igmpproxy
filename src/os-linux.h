@@ -1,4 +1,5 @@
 #define _LINUX_IN_H
+
 #include <linux/types.h>
 #include <linux/mroute.h>
 #include <netinet/ip.h>
@@ -11,10 +12,10 @@
 
 static inline unsigned short ip_data_len(const struct ip *ip)
 {
-	return ntohs(ip->ip_len) - (ip->ip_hl << 2);
+    return ntohs(ip->ip_len) - (ip->ip_hl << 2);
 }
 
 static inline void ip_set_len(struct ip *ip, unsigned short len)
 {
-	ip->ip_len = htons(len);
+    ip->ip_len = htons(len);
 }

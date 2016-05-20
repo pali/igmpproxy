@@ -36,7 +36,7 @@
 */
 
 #include "igmpproxy.h"
-       
+
 
 /**
 *   Common function for joining or leaving a MCast group.
@@ -48,20 +48,19 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcasta
     memset(&CtlReq, 0, sizeof(CtlReq));
     CtlReq.imr_multiaddr.s_addr = mcastaddr;
     CtlReq.imr_interface.s_addr = IfDp->InAdr.s_addr;
-    
+
     {
         my_log( LOG_NOTICE, 0, "%sMcGroup: %s on %s", CmdSt, 
             inetFmt( mcastaddr, s1 ), IfDp ? IfDp->Name : "<any>" );
     }
-    
+
     if( setsockopt( UdpSock, IPPROTO_IP, 
           Cmd == 'j' ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP, 
-          (void *)&CtlReq, sizeof( CtlReq ) ) ) 
-    {
+          (void *)&CtlReq, sizeof( CtlReq ) ) ) {
         my_log( LOG_WARNING, errno, "MRT_%s_MEMBERSHIP failed", Cmd == 'j' ? "ADD" : "DROP" );
         return 1;
     }
-    
+
     return 0;
 }
 
