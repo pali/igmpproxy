@@ -291,15 +291,6 @@ void buildIfVc(void) {
                 subnet = addr & mask;
             }
 
-			// aimwang: when pppx get dstaddr for use
-			if (0x10d1 == IfDescEp->Flags)
-			{
-				if ( ioctl( Sock, SIOCGIFDSTADDR, &IfReq ) < 0 )
-					my_log(LOG_ERR, errno, "ioctl SIOCGIFDSTADDR for %s", IfReq.ifr_name);
-				addr = ((struct sockaddr_in *)&IfReq.ifr_dstaddr)->sin_addr.s_addr;
-				subnet = addr & mask;
-			}
-
             // Insert the verified subnet as an allowed net...
             IfDescEp->allowednets = (struct SubnetList *)malloc(sizeof(struct SubnetList));
             if(IfDescEp->allowednets == NULL) my_log(LOG_ERR, 0, "Out of memory !");
