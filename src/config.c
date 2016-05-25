@@ -154,15 +154,15 @@ int loadConfig(char *configFile) {
             continue;
         } else if(strcmp("defaultdown", token)==0) {
             // Got a defaultdown token...
-            my_log(LOG_DEBUG, 0, "Config: interface Default as down stream.");
+            my_log(LOG_DEBUG, 0, "Config: Interfaces default to downstream.");
             commonConfig.defaultInterfaceState = IF_STATE_DOWNSTREAM;
 
             // Read next token...
             token = nextConfigToken();
             continue;
         } else if(strcmp("rescanvif", token)==0) {
-            // Got a defaultdown token...
-            my_log(LOG_DEBUG, 0, "Config: Need detect new interace.");
+            // Got a rescanvif token...
+            my_log(LOG_DEBUG, 0, "Config: Rescan interfaces at runtime enabled.");
             commonConfig.rescanVif = 1;
 
             // Read next token...

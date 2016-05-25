@@ -41,7 +41,7 @@ aliases not in use should be configured as disabled.
 Any line in the configuration file starting with
 .B #
 is treated as a comment. Keywords and parameters can be distributed over many lines.
-The configuration file has two main keywords:
+The configuration file has four main keywords:
 
 .B quickleave
 .RS 
@@ -53,6 +53,20 @@ is not noticed at all by clients on the downstream networks. If it's vital
 that the daemon should act exactly as a real multicast client on the upstream
 interface, this function should not be used. Disabling this function increases
 the risk of bandwidth saturation.
+.RE
+
+.B defaultdown
+.RS 
+All devices not explicitly disabled will be configured as downstream!
+Be careful to have your WAN/PPPoE interface configured as disabled.
+This option is per default turned off and has to be explicitly set. 
+.RE
+
+.B rescanvif
+.RS 
+Interfaces (not the config file) will be rescaned at runtime.
+This mode might be useful when working with VPN and in combination with 
+.B defaultdown.
 .RE
 
 
