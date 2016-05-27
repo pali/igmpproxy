@@ -191,6 +191,7 @@ struct IfDesc *getIfByIx( unsigned Ix );
 struct IfDesc *getIfByAddress( uint32_t Ix );
 struct IfDesc *getIfByVifIndex( unsigned vifindex );
 int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr );
+const char* get_sa_family_str( const struct ifreq  *IfPt );
 
 /* mroute-api.c
  */
