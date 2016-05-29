@@ -257,7 +257,7 @@ void buildIfVc(void) {
             /* don't retrieve more info for non-IP interfaces
              */
             if ( IfPt->ifr_addr.sa_family != AF_INET ) {
-                const char* sa_family_str = get_sa_family_str( IfPt );
+                const char* sa_family_str = get_sa_family_str( IfPt->ifr_addr.sa_family );
 
                 // Log the skipped interface...
                 my_log( LOG_DEBUG, 0, "buildIfVc: Interface is non-IP: %s, sa_family: %s (%u)",
@@ -439,22 +439,3 @@ int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr ) {
 
     return 0;
 }
-
-/**
-*   Returns plain text representation of the sa_family flag of the given 
-*   struct ifreq (or "AF_UNKOWN" if not yet mapped).
-*/
-const char* get_sa_family_str( const struct ifreq  *IfPt ) {
-
-    switch( IfPt->ifr_addr.sa_family ) {
-    case AF_INET:
-        return "AF_INET";
-    case AF_INET6:
-        return "AF_INET6";
-    case AF_LINK:
-        return "AF_LINK";
-    default:
-        return "AF_UNKNOWN";
-    }
-}
-

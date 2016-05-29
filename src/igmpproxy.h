@@ -186,12 +186,12 @@ extern int upStreamVif[MAX_UPS_VIFS];
  */
 void rebuildIfVc( void );
 void buildIfVc( void );
+
 struct IfDesc *getIfByName( const char *IfName );
 struct IfDesc *getIfByIx( unsigned Ix );
 struct IfDesc *getIfByAddress( uint32_t Ix );
 struct IfDesc *getIfByVifIndex( unsigned vifindex );
 int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr );
-const char* get_sa_family_str( const struct ifreq  *IfPt );
 
 /* mroute-api.c
  */
@@ -296,3 +296,10 @@ int openConfigFile( char *filename );
 void closeConfigFile( void );
 char* nextConfigToken( void );
 char* getCurrentConfigToken( void );
+
+
+/* utils.c
+ */
+const char* get_sa_family_str( const sa_family_t sa_family );
+struct sockaddr_in* sockaddr2sockaddr_in(struct sockaddr* sockaddrPt);
+struct in_addr sockaddr2in_addr(struct sockaddr* sockaddrPt);
