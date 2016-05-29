@@ -35,6 +35,46 @@
 
 struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
 
+
+/** Set all downstream IF as IF_STATE_LOST to abe able to check
+ *  if IF still exists or is gone.
+ */
+void looseDownstreamIfs( void ) {
+    struct IfDesc *Dp;
+
+    // aimwang: set all downstream IF as lost, for check IF exist or gone.
+    for ( Dp = IfDescVc; Dp < IfDescEp; Dp++ ) {
+        if ( Dp->state == IF_STATE_DOWNSTREAM ) {
+            Dp->state = IF_STATE_LOST;
+        }
+    }
+}
+
+/** Set IF with IF_STATE_LOST to IF_STATE_HIDDEN,
+ *  leave the multicast group and delete the VIF.
+ */
+void hideLostIf ( struct IfDesc *Dp ) {
+    if ( IF_STATE_LOST == Dp->state ) {
+        my_log(LOG_NOTICE, 0, "%s [Downstream -> Hidden]", Dp->Name);
+        Dp->state = IF_STATE_HIDDEN;
+        leaveMcGroup( getMcGroupSock(), Dp, allrouters_group );
+        delVIF( Dp );
+    }
+}
+
+/** Enable IF with IF_STATE_HIDDEN as IF_STATE_DOWNSTREAM,
+ *  add the VIF and join the multicast group.
+ */
+void enableHiddenIf ( struct IfDesc *Dp ) {
+    // when IF become enabled from downstream, addVIF to enable its VIF
+    if ( Dp->state == IF_STATE_HIDDEN ) {
+        my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
+        Dp->state = IF_STATE_DOWNSTREAM;
+        addVIF( Dp );
+        joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
+    }
+}
+
 /* aimwang: add for detect interface and rebuild IfVc record */
 /***************************************************
  * TODO:    Only need run me when detect downstream changed.
@@ -42,133 +82,107 @@ struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
  *          So I can check if the file exist then run me and delete the file.
  ***************************************************/
 void rebuildIfVc () {
-    struct ifreq IfVc[ sizeof( IfDescVc ) / sizeof( IfDescVc[ 0 ] )  ];
-    struct ifreq *IfEp;
-    struct ifconf IoCtlReq;
+    struct ifaddrs *ifap;     // pointer to iterate the if linked list
     struct IfDesc *Dp;
-    struct ifreq  *IfPt, *IfNext;
-    uint32_t addr, subnet, mask;
-    int Sock, Ix;
-    // Get the config.
+
+    // get the config
     struct Config *config = getCommonConfig();
 
-    if ( (Sock = socket( AF_INET, SOCK_DGRAM, 0 )) < 0 ) {
-        my_log( LOG_ERR, errno, "RAW socket open" );
+    /* get If vector
+     */
+    if (getifaddrs(&ifap) < 0) {
+       my_log( LOG_ERR, errno, "getifaddrs" );
     }
 
     // aimwang: set all downstream IF as lost, for check IF exist or gone.
-    for (Dp = IfDescVc; Dp < IfDescEp; Dp++) {
-        if (Dp->state == IF_STATE_DOWNSTREAM) {
-            Dp->state = IF_STATE_LOST;
-        }
-    }
+    looseDownstreamIfs();
 
-    IoCtlReq.ifc_buf = (void *)IfVc;
-    IoCtlReq.ifc_len = sizeof( IfVc );
-
-    if ( ioctl( Sock, SIOCGIFCONF, &IoCtlReq ) < 0 ) {
-        my_log( LOG_ERR, errno, "ioctl SIOCGIFCONF" );
-    }
-
-    IfEp = (void *)((char *)IfVc + IoCtlReq.ifc_len);
-
-    for ( IfPt = IfVc; IfPt < IfEp; IfPt = IfNext ) {
-        struct ifreq IfReq;
+    /* loop over interfaces and copy interface info to IfDescVc
+     */
+    {
+        struct ifaddrs *ifa;     // pointer to iterate the if linked list
         char FmtBu[ 32 ];
+ 
+        int Ix;
 
-        IfNext = (struct ifreq *)((char *)&IfPt->ifr_addr +
-            #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-                IfPt->ifr_addr.sa_len
-            #else
-                sizeof(struct sockaddr_in)
-            #endif
-            );
-        if (IfNext < IfPt + 1) {
-            IfNext = IfPt + 1;
-        }
+        // Temp keepers of interface params...
+        uint32_t addr, subnet, mask;
 
-        for (Dp = IfDescVc; Dp < IfDescEp; Dp++) {
-            if (0 == strcmp(Dp->Name, IfPt->ifr_name)) {
-                break;
+        struct SubnetList *allowednet, *currsubnet;
+
+        for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+
+            for (Dp = IfDescVc; Dp < IfDescEp; Dp++) {
+                if (0 == strcmp(Dp->Name, ifa->ifa_name)) {
+                    break;
+                }
             }
-        }
-        if (Dp == IfDescEp) {
-            strncpy( Dp->Name, IfPt->ifr_name, sizeof( IfDescEp->Name ) );
-        }
 
-        if ( IfPt->ifr_addr.sa_family != AF_INET ) {
             if (Dp == IfDescEp) {
+                strncpy( Dp->Name, ifa->ifa_name, sizeof( IfDescEp->Name ) );
+            }
+
+            if ( ifa->ifa_addr->sa_family != AF_INET ) {
+                if (Dp == IfDescEp) {
+                    IfDescEp++;
+                }
+                Dp->InAdr.s_addr = 0;  /* mark as non-IP interface */
+                continue;
+            }
+
+            // Get the interface adress...
+            Dp->InAdr = sockaddr2in_addr(ifa->ifa_addr);
+            addr = Dp->InAdr.s_addr;
+
+            // Get the subnet mask...
+            mask = sockaddr2in_addr(ifa->ifa_netmask).s_addr;
+            subnet = addr & mask;
+
+            Dp->Flags = ifa->ifa_flags;
+
+            if (0x10d1 == Dp->Flags) {
+                addr = sockaddr2in_addr(ifa->ifa_dstaddr).s_addr;
+                subnet = addr & mask;
+            }
+
+            if (Dp == IfDescEp) {
+                // Insert the verified subnet as an allowed net...
+                Dp->allowednets = (struct SubnetList *)malloc(sizeof(struct SubnetList));
+                if(IfDescEp->allowednets == NULL) {
+                    my_log(LOG_ERR, 0, "Out of memory !");
+                }
+                Dp->allowednets->next = NULL;
+                Dp->state         = IF_STATE_DOWNSTREAM;
+                Dp->robustness    = DEFAULT_ROBUSTNESS;
+                Dp->threshold     = DEFAULT_THRESHOLD;   /* ttl limit */
+                Dp->ratelimit     = DEFAULT_RATELIMIT; 
+            }
+
+            // Set the network address for the IF..
+            Dp->allowednets->subnet_mask = mask;
+            Dp->allowednets->subnet_addr = subnet;
+
+            // Set the state for the IF...
+            if (Dp->state == IF_STATE_LOST) {
+                Dp->state         = IF_STATE_DOWNSTREAM;
+            }
+
+            // when IF become enabeld from downstream, addVIF to enable its VIF
+            if (Dp->state == IF_STATE_HIDDEN) {
+                my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
+                Dp->state = IF_STATE_DOWNSTREAM;
+                addVIF(Dp);
+                joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
+            }
+
+            // addVIF when found new IF
+            if (Dp == IfDescEp) {
+                my_log(LOG_NOTICE, 0, "%s [New]", Dp->Name);
+                Dp->state = config->defaultInterfaceState;
+                addVIF(Dp);
+                joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
                 IfDescEp++;
             }
-            Dp->InAdr.s_addr = 0;  /* mark as non-IP interface */
-            continue;
-        }
-
-        // Get the interface adress...
-        Dp->InAdr = ((struct sockaddr_in *)&IfPt->ifr_addr)->sin_addr;
-        addr = Dp->InAdr.s_addr;
-
-        memcpy( IfReq.ifr_name, Dp->Name, sizeof( IfReq.ifr_name ) );
-        IfReq.ifr_addr.sa_family = AF_INET;
-        ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr = addr;
-
-        // Get the subnet mask...
-        if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0) {
-            my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
-        }
-        mask = ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr;
-        subnet = addr & mask;
-
-        if ( ioctl( Sock, SIOCGIFFLAGS, &IfReq ) < 0 ) {
-            my_log( LOG_ERR, errno, "ioctl SIOCGIFFLAGS" );
-        }
-        Dp->Flags = IfReq.ifr_flags;
-
-        if (0x10d1 == Dp->Flags) {
-            if ( ioctl( Sock, SIOCGIFDSTADDR, &IfReq ) < 0 ) {
-                my_log(LOG_ERR, errno, "ioctl SIOCGIFDSTADDR for %s", IfReq.ifr_name);
-            }
-            addr = ((struct sockaddr_in *)&IfReq.ifr_dstaddr)->sin_addr.s_addr;
-            subnet = addr & mask;
-        }
-
-        if (Dp == IfDescEp) {
-            // Insert the verified subnet as an allowed net...
-            Dp->allowednets = (struct SubnetList *)malloc(sizeof(struct SubnetList));
-            if(IfDescEp->allowednets == NULL) {
-                my_log(LOG_ERR, 0, "Out of memory !");
-            }
-            Dp->allowednets->next = NULL;
-            Dp->state         = IF_STATE_DOWNSTREAM;
-            Dp->robustness    = DEFAULT_ROBUSTNESS;
-            Dp->threshold     = DEFAULT_THRESHOLD;   /* ttl limit */
-            Dp->ratelimit     = DEFAULT_RATELIMIT; 
-        }
-
-        // Set the network address for the IF..
-        Dp->allowednets->subnet_mask = mask;
-        Dp->allowednets->subnet_addr = subnet;
-
-        // Set the state for the IF...
-        if (Dp->state == IF_STATE_LOST) {
-            Dp->state         = IF_STATE_DOWNSTREAM;
-        }
-
-        // when IF become enabeld from downstream, addVIF to enable its VIF
-        if (Dp->state == IF_STATE_HIDDEN) {
-            my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
-            Dp->state = IF_STATE_DOWNSTREAM;
-            addVIF(Dp);
-            joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
-        }
-
-        // addVIF when found new IF
-        if (Dp == IfDescEp) {
-            my_log(LOG_NOTICE, 0, "%s [New]", Dp->Name);
-            Dp->state = config->defaultInterfaceState;
-            addVIF(Dp);
-            joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
-            IfDescEp++;
         }
 
         // Debug log the result...
@@ -176,7 +190,8 @@ void rebuildIfVc () {
              Dp->Name,
              fmtInAdr( FmtBu, Dp->InAdr ),
              Dp->Flags,
-             inetFmts(subnet,mask, s1));
+             inetFmts( subnet, mask, s1 )
+        );
     }
 
     // aimwang: search not longer exist IF, set as hidden and call delVIF
@@ -189,7 +204,7 @@ void rebuildIfVc () {
         }
     }
 
-    close( Sock );
+    freeifaddrs( ifap );
 }
 
 /*
@@ -198,55 +213,32 @@ void rebuildIfVc () {
 **          
 */
 void buildIfVc(void) {
-    struct ifreq IfVc[ sizeof( IfDescVc ) / sizeof( IfDescVc[ 0 ] )  ];
-    struct ifreq *IfEp;
+    struct ifaddrs *ifap, *ifa;     // pointer to iterate the if linked list
+
+    // get the config
     struct Config *config = getCommonConfig();
-
-    int Sock;
-
-    if ( (Sock = socket( AF_INET, SOCK_DGRAM, 0 )) < 0 ) {
-        my_log( LOG_ERR, errno, "RAW socket open" );
-    }
 
     /* get If vector
      */
-    {
-        struct ifconf IoCtlReq;
-
-        IoCtlReq.ifc_buf = (void *)IfVc;
-        IoCtlReq.ifc_len = sizeof( IfVc );
-
-        if ( ioctl( Sock, SIOCGIFCONF, &IoCtlReq ) < 0 ) {
-            my_log( LOG_ERR, errno, "ioctl SIOCGIFCONF" );
-        }
-
-        IfEp = (void *)((char *)IfVc + IoCtlReq.ifc_len);
+    if (getifaddrs(&ifap) < 0) {
+       my_log( LOG_ERR, errno, "getifaddrs" );
     }
 
     /* loop over interfaces and copy interface info to IfDescVc
      */
     {
-        struct ifreq  *IfPt, *IfNext;
-
         // Temp keepers of interface params...
         uint32_t addr, subnet, mask;
 
-        for ( IfPt = IfVc; IfPt < IfEp; IfPt = IfNext ) {
-            struct ifreq IfReq;
+        for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
             char FmtBu[ 32 ];
 
-            IfNext = (struct ifreq *)((char *)&IfPt->ifr_addr +
-#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-                    IfPt->ifr_addr.sa_len
-#else
-                    sizeof(struct sockaddr_in)
-#endif
-            );
-            if (IfNext < IfPt + 1) {
-                IfNext = IfPt + 1;
+            if (IfDescEp >= &IfDescVc[ MAX_IF ]) {
+                my_log(LOG_WARNING, 0, "Too many interfaces, skipping %s", ifa->ifa_name);
+                continue;
             }
 
-            strncpy( IfDescEp->Name, IfPt->ifr_name, sizeof( IfDescEp->Name ) );
+            strncpy( IfDescEp->Name, ifa->ifa_name, sizeof( IfDescEp->Name ) );
 
             // Currently don't set any allowed nets...
             //IfDescEp->allowednets = NULL;
@@ -256,14 +248,14 @@ void buildIfVc(void) {
 
             /* don't retrieve more info for non-IP interfaces
              */
-            if ( IfPt->ifr_addr.sa_family != AF_INET ) {
-                const char* sa_family_str = get_sa_family_str( IfPt->ifr_addr.sa_family );
+            if ( ifa->ifa_addr != NULL && ifa->ifa_addr->sa_family != AF_INET ) {
+                const char* sa_family_str = get_sa_family_str( ifa->ifa_addr->sa_family );
 
                 // Log the skipped interface...
                 my_log( LOG_DEBUG, 0, "buildIfVc: Interface is non-IP: %s, sa_family: %s (%u)",
-                        IfPt->ifr_name,
+                        ifa->ifa_name,
                         sa_family_str,
-                        IfPt->ifr_addr.sa_family
+                        ifa->ifa_addr->sa_family
                 );
 
                 IfDescEp->InAdr.s_addr = 0;  /* mark as non-IP interface */
@@ -272,18 +264,11 @@ void buildIfVc(void) {
             }
 
             // Get the interface adress...
-            IfDescEp->InAdr = ((struct sockaddr_in *)&IfPt->ifr_addr)->sin_addr;
+            IfDescEp->InAdr = sockaddr2in_addr(ifa->ifa_addr);
             addr = IfDescEp->InAdr.s_addr;
 
-            memcpy( IfReq.ifr_name, IfDescEp->Name, sizeof( IfReq.ifr_name ) );
-            IfReq.ifr_addr.sa_family = AF_INET;
-            ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr = addr;
-
             // Get the subnet mask...
-            if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0) {
-                my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
-            }
-            mask = ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr;
+            mask = sockaddr2in_addr(ifa->ifa_netmask).s_addr;
             subnet = addr & mask;
 
             /* get if flags
@@ -295,18 +280,11 @@ void buildIfVc(void) {
             ** grex  0x00C1 -> NoArp, Running, Up
             ** ipipx 0x00C1 -> NoArp, Running, Up
             */
-            if ( ioctl( Sock, SIOCGIFFLAGS, &IfReq ) < 0 ) {
-                my_log( LOG_ERR, errno, "ioctl SIOCGIFFLAGS" );
-            }
-
-            IfDescEp->Flags = IfReq.ifr_flags;
+            IfDescEp->Flags = ifa->ifa_flags;
 
             // aimwang: when pppx get dstaddr for use
             if (0x10d1 == IfDescEp->Flags) {
-                if ( ioctl( Sock, SIOCGIFDSTADDR, &IfReq ) < 0 ) {
-                    my_log(LOG_ERR, errno, "ioctl SIOCGIFDSTADDR for %s", IfReq.ifr_name);
-                }
-                addr = ((struct sockaddr_in *)&IfReq.ifr_dstaddr)->sin_addr.s_addr;
+                addr = sockaddr2in_addr(ifa->ifa_dstaddr).s_addr;
                 subnet = addr & mask;
             }
 
@@ -333,13 +311,14 @@ void buildIfVc(void) {
                  IfDescEp->Name,
                  fmtInAdr( FmtBu, IfDescEp->InAdr ),
                  IfDescEp->Flags,
-                 inetFmts(subnet,mask, s1));
+                 inetFmts( subnet,mask, s1 )
+            );
 
             IfDescEp++;
         }
     }
 
-    close( Sock );
+    freeifaddrs( ifap );
 }
 
 /*
@@ -407,7 +386,7 @@ struct IfDesc *getIfByAddress( uint32_t ipaddr ) {
 */
 struct IfDesc *getIfByVifIndex( unsigned vifindex ) {
     struct IfDesc       *Dp;
-    if(vifindex>0) {
+    if( vifindex > 0 ) {
         for ( Dp = IfDescVc; Dp < IfDescEp; Dp++ ) {
             if(Dp->index == vifindex) {
                 return Dp;
@@ -426,11 +405,11 @@ struct IfDesc *getIfByVifIndex( unsigned vifindex ) {
 int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr ) {
     struct SubnetList   *currsubnet;
 
-    if(intrface == NULL) {
+    if( intrface == NULL ) {
         return 0;
     }
     // Loop through all registered allowed nets of the VIF...
-    for(currsubnet = intrface->allowednets; currsubnet != NULL; currsubnet = currsubnet->next) {
+    for( currsubnet = intrface->allowednets; currsubnet != NULL; currsubnet = currsubnet->next ) {
         // Check if the ip falls in under the subnet....
         if((ipaddr & currsubnet->subnet_mask) == (currsubnet->subnet_addr& currsubnet->subnet_mask)) {
             return 1;

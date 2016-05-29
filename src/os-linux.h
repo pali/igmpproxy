@@ -2,9 +2,11 @@
 
 #include <linux/types.h>
 #include <linux/mroute.h>
+#include <linux/sockios.h>
 #include <netinet/ip.h>
 #include <netinet/igmp.h>
 #include <sys/types.h>
+#include <ifaddrs.h>
 
 #define IGMP_V3_MEMBERSHIP_REPORT 0x22
 
