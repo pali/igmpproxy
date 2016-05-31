@@ -470,7 +470,7 @@ int numberOfInterfaces(struct RouteTable *croute) {
     // Loop through all interfaces
     for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
         // If the interface is used by the route, increase counter
-        if(BIT_TST(croute->vifBits, Dp->index)) {
+        if(BIT_TST(croute->vifBits, Dp->vifindex)) {
             result++;
         }
     }
@@ -678,9 +678,9 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate) {
         for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
             if(Dp->state == IF_STATE_UPSTREAM) {
                 continue;
-            } else if(BIT_TST(route->vifBits, Dp->index)) {
-                my_log(LOG_DEBUG, 0, "Setting TTL for Vif %d to %d", Dp->index, Dp->threshold);
-                mrDesc.TtlVc[ Dp->index ] = Dp->threshold;
+            } else if(BIT_TST(route->vifBits, Dp->vifindex)) {
+                my_log(LOG_DEBUG, 0, "Setting TTL for Vif %d to %d", Dp->vifindex, Dp->threshold);
+                mrDesc.TtlVc[ Dp->vifindex ] = Dp->threshold;
             }
         }
 

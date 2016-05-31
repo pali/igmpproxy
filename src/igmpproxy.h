@@ -155,7 +155,7 @@ struct IfDesc {
     unsigned int        robustness;
     unsigned char       threshold;   /* ttl limit */
     unsigned int        ratelimit; 
-    unsigned int        index;
+    unsigned int        vifindex;
 };
 
 // Keeps common configuration settings 

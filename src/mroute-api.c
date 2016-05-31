@@ -100,14 +100,14 @@ void disableMRouter(void) {
 void delVIF( struct IfDesc *IfDp ) {
     struct vifctl VifCtl;
 
-    if (-1 == IfDp->index) {
+    if (-1 == IfDp->vifindex) {
         return;
     }
 
-    VifCtl.vifc_vifi = IfDp->index;
+    VifCtl.vifc_vifi = IfDp->vifindex;
 
     my_log( LOG_NOTICE, 0, "removing VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
-         IfDp->index, IfDp->Flags, IfDp->InAdr.s_addr, IfDp->Name, IfDp->threshold, IfDp->ratelimit);
+         IfDp->vifindex, IfDp->Flags, IfDp->InAdr.s_addr, IfDp->Name, IfDp->threshold, IfDp->ratelimit);
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_VIF,
                      (char *)&VifCtl, sizeof( VifCtl ) ) ) {
@@ -150,7 +150,7 @@ void addVIF( struct IfDesc *IfDp ) {
     VifCtl.vifc_rmt_addr.s_addr = INADDR_ANY;
 
     // Set the index...
-    VifDp->IfDp->index = VifCtl.vifc_vifi;
+    VifDp->IfDp->vifindex = VifCtl.vifc_vifi;
 
     my_log( LOG_NOTICE, 0, "adding VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
          VifCtl.vifc_vifi, VifCtl.vifc_flags,  VifCtl.vifc_lcl_addr.s_addr, VifDp->IfDp->Name,

@@ -243,8 +243,8 @@ void buildIfVc(void) {
             // Currently don't set any allowed nets...
             //IfDescEp->allowednets = NULL;
 
-            // Set the index to -1 by default.
-            IfDescEp->index = -1;
+            // Set the Vif index to -1 by default.
+            IfDescEp->vifindex = -1;
 
             /* don't retrieve more info for non-IP interfaces
              */
@@ -388,7 +388,7 @@ struct IfDesc *getIfByVifIndex( unsigned vifindex ) {
     struct IfDesc       *Dp;
     if( vifindex > 0 ) {
         for ( Dp = IfDescVc; Dp < IfDescEp; Dp++ ) {
-            if(Dp->index == vifindex) {
+            if(Dp->vifindex == vifindex) {
                 return Dp;
             }
         }

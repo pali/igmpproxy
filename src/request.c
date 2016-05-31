@@ -80,11 +80,11 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
     if(sourceVif->state == IF_STATE_DOWNSTREAM) {
 
         my_log(LOG_DEBUG, 0, "Should insert group %s (from: %s) to route table. Vif Ix : %d",
-            inetFmt(group,s1), inetFmt(src,s2), sourceVif->index);
+            inetFmt(group,s1), inetFmt(src,s2), sourceVif->vifindex);
 
         // If we don't have a whitelist we insertRoute and done
         if(sourceVif->allowedgroups == NULL) {
-            insertRoute(group, sourceVif->index);
+            insertRoute(group, sourceVif->vifindex);
             return;
         }
 
@@ -93,7 +93,7 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
         for(sn = sourceVif->allowedgroups; sn != NULL; sn = sn->next) {
             if((group & sn->subnet_mask) == sn->subnet_addr) {
                 // The membership report was OK... Insert it into the route table
-                insertRoute(group, sourceVif->index);
+                insertRoute(group, sourceVif->vifindex);
                 return;
             }
         }
@@ -185,7 +185,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
         if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
             if(Dp->state == IF_STATE_DOWNSTREAM) {
                 // Is that interface used in the group?
-                if (interfaceInRoute(gvDesc->group ,Dp->index)) {
+                if (interfaceInRoute(gvDesc->group ,Dp->vifindex)) {
 
                     // Send a group specific membership query...
                     sendIgmp(Dp->InAdr.s_addr, gvDesc->group, 
