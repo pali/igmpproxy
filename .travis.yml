@@ -1,0 +1,7 @@
+# Travis CI integration
+sudo: false
+language: c
+compiler:
+  - gcc
+
+script: ./bootstrap && ./configure && make
