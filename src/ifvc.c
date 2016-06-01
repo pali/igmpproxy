@@ -85,13 +85,15 @@ void rebuildIfVc () {
     struct ifaddrs *ifap;     // pointer to iterate the if linked list
     struct IfDesc *Dp;
 
+    my_log(LOG_DEBUG, 0, "rebuildIfVc: Starting...");
+
     // get the config
     struct Config *config = getCommonConfig();
 
     /* get If vector
      */
     if (getifaddrs(&ifap) < 0) {
-       my_log( LOG_ERR, errno, "getifaddrs" );
+       my_log( LOG_ERR, errno, "rebuildIfVc: getifaddrs() failed" );
     }
 
     // aimwang: set all downstream IF as lost, for check IF exist or gone.
@@ -149,7 +151,7 @@ void rebuildIfVc () {
                 // Insert the verified subnet as an allowed net...
                 Dp->allowednets = (struct SubnetList *)malloc(sizeof(struct SubnetList));
                 if(IfDescEp->allowednets == NULL) {
-                    my_log(LOG_ERR, 0, "Out of memory !");
+                    my_log(LOG_ERR, 0, "rebuildIfVc: Out of memory !");
                 }
                 Dp->allowednets->next = NULL;
                 Dp->state         = IF_STATE_DOWNSTREAM;
@@ -169,7 +171,7 @@ void rebuildIfVc () {
 
             // when IF become enabeld from downstream, addVIF to enable its VIF
             if (Dp->state == IF_STATE_HIDDEN) {
-                my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
+                my_log(LOG_NOTICE, 0, "rebuildIfVc: %s [Hidden -> Downstream]", Dp->Name);
                 Dp->state = IF_STATE_DOWNSTREAM;
                 addVIF(Dp);
                 joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
@@ -177,7 +179,7 @@ void rebuildIfVc () {
 
             // addVIF when found new IF
             if (Dp == IfDescEp) {
-                my_log(LOG_NOTICE, 0, "%s [New]", Dp->Name);
+                my_log(LOG_NOTICE, 0, "rebuildIfVc: %s [New]", Dp->Name);
                 Dp->state = config->defaultInterfaceState;
                 addVIF(Dp);
                 joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
@@ -197,7 +199,7 @@ void rebuildIfVc () {
     // aimwang: search not longer exist IF, set as hidden and call delVIF
     for (Dp = IfDescVc; Dp < IfDescEp; Dp++) {
         if (IF_STATE_LOST == Dp->state) {
-            my_log(LOG_NOTICE, 0, "%s [Downstream -> Hidden]", Dp->Name);
+            my_log(LOG_NOTICE, 0, "rebuildIfVc: %s [Downstream -> Hidden]", Dp->Name);
             Dp->state = IF_STATE_HIDDEN;
             leaveMcGroup( getMcGroupSock(), Dp, allrouters_group );
             delVIF(Dp);
@@ -215,13 +217,15 @@ void rebuildIfVc () {
 void buildIfVc(void) {
     struct ifaddrs *ifap, *ifa;     // pointer to iterate the if linked list
 
+    my_log(LOG_DEBUG, 0, "buildIfVc: Starting...");
+
     // get the config
     struct Config *config = getCommonConfig();
 
     /* get If vector
      */
     if (getifaddrs(&ifap) < 0) {
-       my_log( LOG_ERR, errno, "getifaddrs" );
+       my_log( LOG_ERR, errno, "buildIfVc: getifaddrs() failed" );
     }
 
     /* loop over interfaces and copy interface info to IfDescVc
@@ -234,7 +238,7 @@ void buildIfVc(void) {
             char FmtBu[ 32 ];
 
             if (IfDescEp >= &IfDescVc[ MAX_IF ]) {
-                my_log(LOG_WARNING, 0, "Too many interfaces, skipping %s", ifa->ifa_name);
+                my_log(LOG_WARNING, 0, "buildIfVc: Too many interfaces, skipping %s", ifa->ifa_name);
                 continue;
             }
 
@@ -291,7 +295,7 @@ void buildIfVc(void) {
             // Insert the verified subnet as an allowed net...
             IfDescEp->allowednets = (struct SubnetList *)malloc(sizeof(struct SubnetList));
             if(IfDescEp->allowednets == NULL) {
-                my_log(LOG_ERR, 0, "Out of memory !");
+                my_log(LOG_ERR, 0, "buildIfVc: Out of memory !");
             }
 
             // Create the network address for the IF..
@@ -418,3 +422,4 @@ int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr ) {
 
     return 0;
 }
+

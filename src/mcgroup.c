@@ -59,6 +59,9 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcasta
           (void *)&CtlReq, sizeof( CtlReq ) ) ) {
         my_log( LOG_WARNING, errno, "MRT_%s_MEMBERSHIP failed", Cmd == 'j' ? "ADD" : "DROP" );
         return 1;
+    } else {
+        my_log( LOG_DEBUG, 0, "MRT_%s_MEMBERSHIP on Vif %d from %s", Cmd == 'j' ? "ADD" : "DROP",
+            IfDp->vifindex, inetFmt(  IfDp->InAdr.s_addr, s1 ) );
     }
 
     return 0;

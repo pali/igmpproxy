@@ -158,7 +158,6 @@ int main( int ArgCn, char *ArgVc[] ) {
 }
 
 
-
 /**
 *   Handles the initial startup of the daemon.
 */
@@ -196,6 +195,7 @@ int igmpProxyInit(void) {
         struct IfDesc *Dp;
         int     vifcount = 0, upsvifcount = 0;
 
+        // init array to "not set"
         for ( Ix = 0; Ix < MAX_UPS_VIFS; Ix++) {
             upStreamVif[Ix] = -1;
         }
@@ -205,9 +205,11 @@ int igmpProxyInit(void) {
             if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
                 if(Dp->state == IF_STATE_UPSTREAM) {
                     if (upsvifcount < MAX_UPS_VIFS -1) {
+                        my_log(LOG_DEBUG, 0, "Found upstrem IF #%d, will assing as upstream Vif %d",
+                            upsvifcount, Ix);
                         upStreamVif[upsvifcount++] = Ix;
                     } else {
-                        my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Mac upstream Vif count is %d",
+                        my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Max upstream Vif count is %d",
                             Ix, MAX_UPS_VIFS);
                     }
                 }
@@ -358,9 +360,7 @@ void igmpProxyRun(void) {
             }
             secs = -1;
         } while (difftime.tv_sec > 0);
-
     }
-
 }
 
 /*

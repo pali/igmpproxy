@@ -128,7 +128,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
 
             // Check if there is a white list for the upstram VIF
             if (upstrIf->allowedgroups != NULL) {
-              uint32_t           group = route->group;
+                uint32_t group = route->group;
                 struct SubnetList* sn;
 
                 // Check if this Request is legit to be forwarded to upstream
@@ -196,7 +196,7 @@ void clearAllRoutes(void) {
 
         // Uninstall current route
         if(!internUpdateKernelRoute(croute, 0)) {
-            my_log(LOG_WARNING, 0, "The removal from Kernel failed.");
+            my_log(LOG_WARNING, 0, "Removal of route from Kernel failed.");
         }
 
         // Send Leave message upstream.

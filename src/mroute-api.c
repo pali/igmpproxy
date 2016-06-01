@@ -101,12 +101,14 @@ void delVIF( struct IfDesc *IfDp ) {
     struct vifctl VifCtl;
 
     if (-1 == IfDp->vifindex) {
+        my_log( LOG_DEBUG, 0, "No VIF to remove, Ix %d, %s (IP: %s)", 
+            IfDp->vifindex, IfDp->Name, inetFmt(IfDp->InAdr.s_addr, s1) );
         return;
     }
 
     VifCtl.vifc_vifi = IfDp->vifindex;
 
-    my_log( LOG_NOTICE, 0, "removing VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
+    my_log( LOG_NOTICE, 0, "Removing VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
          IfDp->vifindex, IfDp->Flags, IfDp->InAdr.s_addr, IfDp->Name, IfDp->threshold, IfDp->ratelimit);
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_VIF,
@@ -136,6 +138,8 @@ void addVIF( struct IfDesc *IfDp ) {
     /* no more space
      */
     if ( VifDp >= VCEP( VifDescVc ) ) {
+        my_log( LOG_DEBUG, 0, "Could not add VIF, Ix %d, %s (IP: %s)", 
+            IfDp->vifindex, IfDp->Name, inetFmt(IfDp->InAdr.s_addr, s1) );
         my_log( LOG_ERR, ENOMEM, "addVIF, out of VIF space" );
     }
 
@@ -152,7 +156,7 @@ void addVIF( struct IfDesc *IfDp ) {
     // Set the index...
     VifDp->IfDp->vifindex = VifCtl.vifc_vifi;
 
-    my_log( LOG_NOTICE, 0, "adding VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
+    my_log( LOG_NOTICE, 0, "Adding VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
          VifCtl.vifc_vifi, VifCtl.vifc_flags,  VifCtl.vifc_lcl_addr.s_addr, VifDp->IfDp->Name,
          VifCtl.vifc_threshold, VifCtl.vifc_rate_limit);
 

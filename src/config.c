@@ -133,12 +133,12 @@ int loadConfig(char *configFile) {
                 my_log(LOG_WARNING, 0, "Unknown token '%s' in configfile", token);
                 return 0;
             } else {
-                my_log(LOG_DEBUG, 0, "IF name : %s", tmpPtr->name);
-                my_log(LOG_DEBUG, 0, "Next ptr : %x", tmpPtr->next);
-                my_log(LOG_DEBUG, 0, "Ratelimit : %d", tmpPtr->ratelimit);
-                my_log(LOG_DEBUG, 0, "Threshold : %d", tmpPtr->threshold);
-                my_log(LOG_DEBUG, 0, "State : %d", tmpPtr->state);
-                my_log(LOG_DEBUG, 0, "Allowednet ptr : %x", tmpPtr->allowednets);
+                my_log(LOG_DEBUG, 0, "Config: IF name          : %s", tmpPtr->name );
+                my_log(LOG_DEBUG, 0, "Config:   Next ptr       : %x", tmpPtr->next );
+                my_log(LOG_DEBUG, 0, "Config:   Ratelimit      : %d", tmpPtr->ratelimit );
+                my_log(LOG_DEBUG, 0, "Config:   Threshold      : %d", tmpPtr->threshold );
+                my_log(LOG_DEBUG, 0, "Config:   State          : %d", tmpPtr->state );
+                my_log(LOG_DEBUG, 0, "Config:   Allowednet ptr : %x", tmpPtr->allowednets );
 
                 // Insert config, and move temppointer to next location...
                 *currPtr = tmpPtr;
@@ -209,7 +209,6 @@ void configureVifs(void) {
                     struct SubnetList *vifLast;
 
                     my_log(LOG_DEBUG, 0, "Found config for %s", Dp->Name);
-
 
                     // Set the VIF state 
                     Dp->state = confPtr->state;
