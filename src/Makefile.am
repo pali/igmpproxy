@@ -5,6 +5,7 @@ igmpproxy_SOURCES = \
 	confread.c \
 	ifvc.c \
 	igmp.c \
+	igmplog.c \
 	igmpv3.h \
 	igmpproxy.c \
 	igmpproxy.h \

@@ -46,7 +46,6 @@ uint32_t    alligmp3_group;         /* IGMPv3 addr in net order */
 extern int MRouterFD;
 
 /* Prototypes */
-void log_IGMPv3_report ( struct igmpv3_report * igmpv3 );
 
 /*
  * Open and initialize the igmp socket, and fill in the non-changing
@@ -82,46 +81,6 @@ void initIgmp(void) {
     alligmp3_group   = htonl(INADDR_ALLIGMPV3_GROUP);
 }
 
-/**
-*   Finds the textual name of the supplied IGMP request.
-*/
-static const char *igmpPacketKind(unsigned int type, unsigned int code) {
-    static char unknown[30];
-
-    switch (type) {
-    case IGMP_MEMBERSHIP_QUERY:     return "Membership query  ";
-    case IGMP_V1_MEMBERSHIP_REPORT: return "V1 member report  ";
-    case IGMP_V2_MEMBERSHIP_REPORT: return "V2 member report  ";
-    case IGMP_V3_MEMBERSHIP_REPORT: return "V3 member report  ";
-    case IGMP_V2_LEAVE_GROUP:       return "Leave message     ";
-    
-    default:
-        sprintf(unknown, "unk: 0x%02x/0x%02x ", type, code);
-        return unknown;
-    }
-}
-
-
-/**
-*   Finds the textual name of the supplied IGMP report.
-*/
-static const char *igmpReportKind(unsigned int type) {
-    static char unknown[20];
-
-    switch (type) {
-    case IGMPV3_MODE_IS_INCLUDE:    return  "Mode Include      ";
-    case IGMPV3_CHANGE_TO_INCLUDE:  return  "Change to include ";
-    case IGMPV3_MODE_IS_EXCLUDE:    return  "Mode Exclude      ";
-    case IGMPV3_CHANGE_TO_EXCLUDE:  return  "Change to Exclude ";
-    case IGMPV3_ALLOW_NEW_SOURCES:  return  "Allow New Sources ";
-    case IGMPV3_BLOCK_OLD_SOURCES:  return  "Block Old Sources ";
-      
-    default:
-        sprintf(unknown, "unk: 0x%02x ", type);
-        return unknown;
-    }
-}
-
 
 /**
  * Process a newly received IGMP packet that is sitting in the input
@@ -134,6 +93,8 @@ void acceptIgmp(int recvlen) {
     struct igmpv3_report *igmpv3;
     struct igmpv3_grec *grec;
     int ipdatalen, iphdrlen, ngrec, nsrcs, i;
+
+    log_received_IGMP( recvlen );
 
     if (recvlen < sizeof(struct ip)) {
         my_log(LOG_WARNING, 0,
@@ -218,7 +179,7 @@ void acceptIgmp(int recvlen) {
     }
 
     my_log(LOG_NOTICE, 0, "RECV %s from %-15s to %s",
-        igmpPacketKind(igmp->igmp_type, igmp->igmp_code),
+        igmp_packet_kind(igmp->igmp_type, igmp->igmp_code),
         inetFmt(src, s1), inetFmt(dst, s2) );
 
     switch (igmp->igmp_type) {
@@ -230,9 +191,6 @@ void acceptIgmp(int recvlen) {
 
     case IGMP_V3_MEMBERSHIP_REPORT:
         igmpv3 = (struct igmpv3_report *)(recv_buf + iphdrlen);
-
-        log_IGMPv3_report( igmpv3 );
-
         grec = &igmpv3->igmp_grec[0];
         ngrec = ntohs(igmpv3->igmp_ngrec);
         while (ngrec--) {
@@ -368,62 +326,6 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
     }
 
     my_log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
-            igmpPacketKind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
+            igmp_packet_kind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
             inetFmt(src, s1), inetFmt(dst, s2));
-}
-
-void log_IGMPv3_report ( struct igmpv3_report * igmpv3 ) {
-    if ( LOG_TRACE <= LogLevel ) {
-        // we reallly want to log the reports only in DEBUG mode
-        return;
-    }
-
-    register uint32_t src, dst, group;
-
-    struct igmpv3_grec *grec;
-    struct in_addr *grec_src;
-
-    uint16_t ipdatalen, iphdrlen, ngrec, nsrcs, i, j;
-        
-    ngrec = ntohs(igmpv3->igmp_ngrec);
-
-    my_log(LOG_DEBUG, 0, "Num Group Records: %d", ngrec);
-    
-    grec = &igmpv3->igmp_grec[0];
-    for (i=0; i< ngrec; i++) {
-        if ((uint8_t *)igmpv3 + ipdatalen < (uint8_t *)grec + sizeof(*grec)) {
-            break;
-        }
-
-        group = grec->grec_mca.s_addr;
-        my_log(LOG_TRACE, 0, "Group Record : %s %s", 
-                inetFmt(group, s3),
-                igmpReportKind(grec->grec_type)
-        );
-
-        my_log(LOG_TRACE, 0, "    Multicast Address: %s", 
-                inetFmt(group, s3)
-        );
-
-        nsrcs = ntohs(grec->grec_nsrcs);
-        my_log(LOG_TRACE, 0, "    Num Src : %d", 
-                nsrcs
-        );
-
-        grec_src = &grec->grec_src[0];
-        for (j=0; j< nsrcs; j++) {
-            if ((uint8_t *)igmpv3 + ipdatalen < (uint8_t *)grec_src + sizeof(*grec_src)) {
-                break;
-            }
-            src = grec_src->s_addr;
-            my_log(LOG_TRACE, 0, "    Source Address: %s",
-                    inetFmt(src, s3)
-            );
-
-            grec_src++;
-        }
-
-        grec = (struct igmpv3_grec *)
-            (&grec->grec_src[nsrcs] + grec->grec_auxwords * 4);
-    }
 }

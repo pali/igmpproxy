@@ -249,6 +249,15 @@ void initIgmp( void );
 void acceptIgmp( int );
 void sendIgmp( uint32_t, uint32_t, int, int, uint32_t,int );
 
+/* igmplog.c
+*/
+const char *igmp_packet_kind( unsigned int type, unsigned int code );
+const char *igmp_report_kind( unsigned int type );
+void log_received_IGMP( int recvlen );
+void log_IP ( struct ip *ip );
+void log_IGMP( struct ip *ip, struct igmp *igmp ); 
+void log_IGMPv3_report ( struct ip *ip, struct igmp *igmp );
+
 /* lib.c
  */
 char   *fmtInAdr( char *St, struct in_addr InAdr );
