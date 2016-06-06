@@ -37,6 +37,8 @@
 int LogLevel = LOG_WARNING;
 bool Log2Stderr = false;
 
+void print_log_prefix( int Severity );
+
 void my_log( int Severity, int Errno, const char *FmtSt, ... ) {
     char LogMsg[ 128 ];
 
@@ -52,14 +54,11 @@ void my_log( int Severity, int Errno, const char *FmtSt, ... ) {
 
     if (Severity <= LogLevel) {
         if (Log2Stderr) {
-            struct timeval curTime;
-            gettimeofday(&curTime,NULL);
-            int milli = curTime.tv_usec / 1000;
-            char currentTime[84] = "";
-            strftime(currentTime, 84, "%H:%M:%S", localtime(&curTime.tv_sec));
 
-            fprintf(stderr, "%s,%d: %s\n", currentTime, milli, LogMsg);
-        } else {
+            print_log_prefix( Severity );
+            fprintf(stderr, "%s\n", LogMsg);
+        } else if (Severity <= LOG_DEBUG) {
+            // we log only known severity levels to syslog
             syslog(Severity, "%s", LogMsg);
         }
     }
@@ -67,4 +66,25 @@ void my_log( int Severity, int Errno, const char *FmtSt, ... ) {
     if( Severity <= LOG_ERR ) {
         exit( -1 );
     }
+}
+
+void print_log_prefix( int Severity )
+{
+    const char SeverityVc[][ 6 ] = {
+        "EMERG", "ALERT", "CRITI", "ERROR", 
+        "Warn ", "Notic", "Info ", "Debug", "Trace", "Init "
+    };
+
+    const char *SeverityPt = Severity < 0 || Severity >= (int) VCMC( SeverityVc ) ? 
+                       "*****" : SeverityVc[ Severity ];
+
+    struct timeval curTime;
+    gettimeofday(&curTime, NULL);
+    int milli = curTime.tv_usec / 1000;
+    char currentTime[84] = "";
+    strftime(currentTime, 84, "%H:%M:%S", localtime(&curTime.tv_sec));
+
+    // now we have something like:
+    // [Trace] 14:37,628 
+    fprintf(stderr, "[%5s] %s,%03d ", SeverityPt, currentTime, milli);
 }
