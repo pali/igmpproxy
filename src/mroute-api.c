@@ -65,9 +65,16 @@ static struct VifDesc {
 **          - the errno value for non-fatal failure condition
 */
 int enableMRouter(void) {
-    int Va = 1;
+    int Va = 1, socket_type;
 
-    if ( (MRouterFD  = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0 ) {
+    socket_type = SOCK_RAW;
+
+#ifdef SOCK_CLOEXEC
+    // use only if available
+    socket_type |= SOCK_CLOEXEC;
+#endif
+
+    if ( (MRouterFD  = socket(AF_INET, socket_type, IPPROTO_IGMP)) < 0 ) {
         my_log( LOG_ERR, errno, "IGMP socket open" );
     }
 
