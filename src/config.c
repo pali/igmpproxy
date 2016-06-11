@@ -138,7 +138,28 @@ int loadConfig(char *configFile) {
                 my_log(LOG_DEBUG, 0, "Config:   Ratelimit      : %d", tmpPtr->ratelimit );
                 my_log(LOG_DEBUG, 0, "Config:   Threshold      : %d", tmpPtr->threshold );
                 my_log(LOG_DEBUG, 0, "Config:   State          : %d", tmpPtr->state );
-                my_log(LOG_DEBUG, 0, "Config:   Allowednet ptr : %x", tmpPtr->allowednets );
+                if( tmpPtr->allowednets ) {
+                    struct SubnetList *allowedNet;
+                    for(allowedNet = tmpPtr->allowednets; allowedNet->next; allowedNet = allowedNet->next)
+                    {
+                        my_log(LOG_DEBUG, 0, "Config:   Allowed net    : %s", 
+                                inetFmts(allowedNet->subnet_addr, allowedNet->subnet_mask,s1) 
+                        );
+                    }
+                } else {
+                    my_log(LOG_DEBUG, 0, "Config:   Allowed net    : none" );
+                }
+                if( tmpPtr->allowedgroups ) {
+                    struct SubnetList *allowedGroup;
+                    for(allowedGroup = tmpPtr->allowedgroups; allowedGroup->next; allowedGroup = allowedGroup->next)
+                    {
+                        my_log(LOG_DEBUG, 0, "Config:   Allowed group  : %s", 
+                                inetFmts(allowedGroup->subnet_addr, allowedGroup->subnet_mask,s1) 
+                        );
+                    }
+                } else {
+                    my_log(LOG_DEBUG, 0, "Config:   Allowed group  : none" );
+                }
 
                 // Insert config, and move temppointer to next location...
                 *currPtr = tmpPtr;
