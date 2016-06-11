@@ -119,9 +119,9 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
     int i;
     
     for(i=0; i<MAX_UPS_VIFS; i++) {
-        if (-1 != upStreamVif[i]) {
+        if (-1 != upStreamIfIdx[i]) {
             // Get the upstream VIF...
-            upstrIf = getIfByIx( upStreamVif[i] );
+            upstrIf = getIfByIx( upStreamIfIdx[i] );
             if(upstrIf == NULL) {
                 my_log(LOG_ERR, 0 ,"FATAL: Unable to get Upstream IF.");
             }

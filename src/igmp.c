@@ -124,9 +124,9 @@ void acceptIgmp(int recvlen) {
             struct IfDesc *checkVIF;
             
             for(i=0; i<MAX_UPS_VIFS; i++) {
-                if(-1 != upStreamVif[i]) {
+                if(-1 != upStreamIfIdx[i]) {
                     // Check if the source address matches a valid address on upstream vif.
-                    checkVIF = getIfByIx( upStreamVif[i] );
+                    checkVIF = getIfByIx( upStreamIfIdx[i] );
                     if(checkVIF == 0) {
                         my_log(LOG_ERR, 0, "Upstream VIF was null.");
                         return;

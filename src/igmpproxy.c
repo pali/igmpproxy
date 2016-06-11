@@ -63,7 +63,7 @@ static int sighandled = 0;
 #define GOT_SIGUSR2         0x08
 
 // The upstream VIF index
-int         upStreamVif[MAX_UPS_VIFS];   
+int         upStreamIfIdx[MAX_UPS_VIFS];   
 
 /**
 *   Program main method. Is invoked when the program is started
@@ -194,7 +194,7 @@ int igmpProxyInit(void) {
 
         // init array to "not set"
         for ( Ix = 0; Ix < MAX_UPS_VIFS; Ix++) {
-            upStreamVif[Ix] = -1;
+            upStreamIfIdx[Ix] = -1;
         }
 
         for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
@@ -204,7 +204,7 @@ int igmpProxyInit(void) {
                     if (upsvifcount < MAX_UPS_VIFS -1) {
                         my_log(LOG_DEBUG, 0, "Found upstrem IF #%d, will assing as upstream Vif %d",
                             upsvifcount, Ix);
-                        upStreamVif[upsvifcount++] = Ix;
+                        upStreamIfIdx[upsvifcount++] = Ix;
                     } else {
                         my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Max upstream Vif count is %d",
                             Ix, MAX_UPS_VIFS);

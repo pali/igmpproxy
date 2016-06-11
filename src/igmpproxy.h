@@ -199,8 +199,8 @@ struct Config {
     //~ aimwang added done
 };
 
-// Defines the Index of the upstream VIF...
-extern int upStreamVif[MAX_UPS_VIFS];
+// Holds the indeces of the upstream IF...
+extern int upStreamIfIdx[MAX_UPS_VIFS];
 
 /* ifvc.c
  */
