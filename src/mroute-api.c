@@ -76,11 +76,15 @@ int enableMRouter(void) {
 
     if ( (MRouterFD  = socket(AF_INET, socket_type, IPPROTO_IGMP)) < 0 ) {
         my_log( LOG_ERR, errno, "IGMP socket open" );
+    } else {
+        my_log( LOG_DEBUG, 0, "IGMP socket opened" );
     }
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_INIT, 
                      (void *)&Va, sizeof( Va ) ) ) {
         return errno;
+    } else {
+        my_log( LOG_DEBUG, 0, "MRT_INIT successful" );
     }
 
     return 0;
@@ -115,7 +119,7 @@ void delVIF( struct IfDesc *IfDp ) {
 
     VifCtl.vifc_vifi = IfDp->vifindex;
 
-    my_log( LOG_NOTICE, 0, "Removing VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
+    my_log( LOG_DEBUG, 0, "Removing VIF (MRT_DEL_VIF), Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
          IfDp->vifindex, IfDp->Flags, IfDp->InAdr.s_addr, IfDp->Name, IfDp->threshold, IfDp->ratelimit);
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_VIF,
@@ -163,8 +167,8 @@ void addVIF( struct IfDesc *IfDp ) {
     // Set the index...
     VifDp->IfDp->vifindex = VifCtl.vifc_vifi;
 
-    my_log( LOG_NOTICE, 0, "Adding VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
-         VifCtl.vifc_vifi, VifCtl.vifc_flags,  VifCtl.vifc_lcl_addr.s_addr, VifDp->IfDp->Name,
+    my_log( LOG_DEBUG, 0, "Adding VIF (MRT_ADD_VIF), Ix %d Fl 0x%x IP %15s %s, Threshold: %d, Ratelimit: %d", 
+         VifCtl.vifc_vifi, VifCtl.vifc_flags,  inetFmt(VifCtl.vifc_lcl_addr.s_addr, s1), VifDp->IfDp->Name,
          VifCtl.vifc_threshold, VifCtl.vifc_rate_limit);
 
     struct SubnetList *currSubnet;
@@ -207,7 +211,7 @@ int addMRoute( struct MRouteDesc *Dp ) {
     {
         char FmtBuO[ 32 ], FmtBuM[ 32 ];
 
-        my_log( LOG_NOTICE, 0, "Adding MFC: %s -> %s, InpVIf: %d", 
+        my_log( LOG_DEBUG, 0, "Adding MFC (MRT_ADD_MFC): %s -> %s, InpVIf: %d", 
              fmtInAdr( FmtBuO, CtlReq.mfcc_origin ), 
              fmtInAdr( FmtBuM, CtlReq.mfcc_mcastgrp ),
              (int)CtlReq.mfcc_parent
@@ -245,7 +249,7 @@ int delMRoute( struct MRouteDesc *Dp )
     {
         char FmtBuO[ 32 ], FmtBuM[ 32 ];
 
-        my_log( LOG_NOTICE, 0, "Removing MFC: %s -> %s, InpVIf: %d", 
+        my_log( LOG_DEBUG, 0, "Removing MFC (MRT_DEL_MFC): %s -> %s, InpVIf: %d", 
              fmtInAdr( FmtBuO, CtlReq.mfcc_origin ), 
              fmtInAdr( FmtBuM, CtlReq.mfcc_mcastgrp ),
              (int)CtlReq.mfcc_parent
