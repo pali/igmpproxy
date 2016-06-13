@@ -124,7 +124,7 @@ void rebuildIfVc () {
                 strncpy( Dp->Name, ifa->ifa_name, sizeof( IfDescEp->Name ) );
             }
 
-            if ( ifa->ifa_addr->sa_family != AF_INET ) {
+            if ( NULL == ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET ) {
                 if (Dp == IfDescEp) {
                     IfDescEp++;
                 }
@@ -252,15 +252,22 @@ void buildIfVc(void) {
 
             /* don't retrieve more info for non-IP interfaces
              */
-            if ( ifa->ifa_addr != NULL && ifa->ifa_addr->sa_family != AF_INET ) {
-                const char* sa_family_str = get_sa_family_str( ifa->ifa_addr->sa_family );
+            if ( NULL == ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET ) {
+                if ( NULL == ifa->ifa_addr ) {
+                    // Log the skipped interface...
+                    my_log( LOG_DEBUG, 0, "buildIfVc: Interface is non-IP: %s",
+                            ifa->ifa_name
+                    );
+                } else {
+                    const char* sa_family_str = get_sa_family_str( ifa->ifa_addr->sa_family );
 
-                // Log the skipped interface...
-                my_log( LOG_DEBUG, 0, "buildIfVc: Interface is non-IP: %s, sa_family: %s (%u)",
-                        ifa->ifa_name,
-                        sa_family_str,
-                        ifa->ifa_addr->sa_family
-                );
+                    // Log the skipped interface...
+                    my_log( LOG_DEBUG, 0, "buildIfVc: Interface is non-IP: %s, sa_family: %s (%u)",
+                            ifa->ifa_name,
+                            sa_family_str,
+                            ifa->ifa_addr->sa_family
+                    );
+                }
 
                 IfDescEp->InAdr.s_addr = 0;  /* mark as non-IP interface */
                 IfDescEp++;
