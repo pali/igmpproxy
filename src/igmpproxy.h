@@ -112,7 +112,7 @@ extern bool Log2Stderr;           // Log to stderr instead of to syslog
 extern int  LogLevel;             // Log threshold, LOG_WARNING .... LOG_DEBUG, LOG_TRACE, LOG_INIT
 
 // uncomment for more details while logging
-//#define DEVEL_LOGGING
+#define DEVEL_LOGGING
 
 #ifdef DEVEL_LOGGING
 #define _my_log(Severity, Errno, Fmt, args...)     __my_log((Severity), (Errno), __FUNCTION__, __LINE__, (Fmt), ##args)
