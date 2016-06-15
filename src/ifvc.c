@@ -35,7 +35,7 @@
 
 struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
 
-
+void remove_allowednet( struct IfDesc *Dp );
 struct SubnetList *create_allowednet( struct ifaddrs *ifa );
 void delete_subnetlist( struct SubnetList *subnet );
 
@@ -60,10 +60,12 @@ void loose_downstream_ifs( void ) {
 void hide_lost_downstream_if( struct IfDesc *Dp ) {
     if ( IF_STATE_LOST == Dp->state ) {
         my_log(LOG_NOTICE, 0, "%s [Downstream -> Hidden]", Dp->Name);
-        Dp->state = IF_STATE_HIDDEN;
+
         leaveMcGroup( getMcGroupSock(), Dp, allrouters_group );
         delVIF( Dp );
-        delete_subnetlist(Dp->allowednets);
+
+        remove_allowednet( Dp );
+        Dp->state = IF_STATE_HIDDEN;
     }
 }
 
@@ -73,11 +75,12 @@ void hide_lost_downstream_if( struct IfDesc *Dp ) {
 void enable_hidden_downstream_if( struct ifaddrs *ifa, struct IfDesc *Dp ) {
     // when IF become enabled from downstream, addVIF to enable its VIF
     if ( Dp->state == IF_STATE_HIDDEN ) {
+        my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
+
         // Create the network address for the IF..
         Dp->allowednets = create_allowednet(ifa);
-
-        my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
         Dp->state = IF_STATE_DOWNSTREAM;
+
         addVIF( Dp );
         joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
     }
@@ -104,6 +107,14 @@ void delete_subnetlist( struct SubnetList *subnet ) {
 
     my_log(LOG_TRACE, 0, "delete_subnetlist: ...done.");
 }
+
+void remove_allowednet( struct IfDesc *Dp ) {
+    // clear list
+    delete_subnetlist(Dp->allowednets);
+    // clear danling pointer
+    Dp->allowednets = NULL;
+}
+
 
 /*
 ** Build the SubnetList structure from an ifaddrs.
@@ -511,4 +522,3 @@ int isAdressValidForIf( struct IfDesc* intrface, uint32_t ipaddr ) {
 
     return 0;
 }
-

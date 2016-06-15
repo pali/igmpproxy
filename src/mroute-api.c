@@ -57,6 +57,8 @@ static struct VifDesc {
 } VifDescVc[ MAXVIFS ];
 
 
+struct VifDesc *get_free_vif();
+
 
 /*
 ** Initialises the mrouted API and locks it by this exclusively.
@@ -110,21 +112,35 @@ void disableMRouter(void) {
  */
 void delVIF( struct IfDesc *IfDp ) {
     struct vifctl VifCtl;
+    struct VifDesc *VifDp;
 
     if (-1 == IfDp->vifindex) {
-        my_log( LOG_DEBUG, 0, "No VIF to remove, Ix %d, %s (IP: %s)", 
+        my_log( LOG_DEBUG, 0, "delVIF: No VIF to remove, Ix %d, %s (IP: %s)", 
             IfDp->vifindex, IfDp->Name, inetFmt(IfDp->InAdr.s_addr, s1) );
         return;
     }
-
+    
+    VifDp = VifDescVc + IfDp->vifindex;
+    
+    /*
+    **  invalid pointer
+    */
+    if ( VifDp >= VCEP( VifDescVc ) ) {
+        my_log( LOG_ERR, EFAULT, "delVIF: Not a valid address for VIF: %d", IfDp->vifindex );
+    }
+    
     VifCtl.vifc_vifi = IfDp->vifindex;
 
-    my_log( LOG_DEBUG, 0, "Removing VIF (MRT_DEL_VIF), Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
+    my_log( LOG_DEBUG, 0, "delVIF: Removing VIF (MRT_DEL_VIF), Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
          IfDp->vifindex, IfDp->Flags, IfDp->InAdr.s_addr, IfDp->Name, IfDp->threshold, IfDp->ratelimit);
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_VIF,
                      (char *)&VifCtl, sizeof( VifCtl ) ) ) {
-        my_log( LOG_WARNING, errno, "MRT_DEL_VIF" );
+        my_log( LOG_WARNING, errno, "delVIF: MRT_DEL_VIF failed" );
+    } else {
+        // update data for success
+        IfDp->vifindex = -1;
+        VifDp->IfDp = NULL;
     }
 }
 
@@ -138,37 +154,43 @@ void addVIF( struct IfDesc *IfDp ) {
     struct vifctl VifCtl;
     struct VifDesc *VifDp;
 
-    /* search free (aimwang: or exist) VifDesc
+    int vifindex;
+
+    /* search existing VifDesc
      */
-    for ( VifDp = VifDescVc; VifDp < VCEP( VifDescVc ); VifDp++ ) {
-        if ( ! VifDp->IfDp || VifDp->IfDp == IfDp) {
-            break;
-        }
+    VifDp = get_vif_by_if( IfDp );
+    if ( NULL == VifDp ) {
+        /* search free or existing VifDesc
+         */
+        VifDp = get_free_vif();
+    } else {
+        my_log( LOG_WARNING, 0, "addVIF: VIF #%d is already in use by IF %s (IP: %s)", 
+                VifDp - VifDescVc, 
+                IfDp->Name, 
+                inetFmt(IfDp->InAdr.s_addr, s1)
+        );
     }
 
     /* no more space
      */
-    if ( VifDp >= VCEP( VifDescVc ) ) {
-        my_log( LOG_DEBUG, 0, "Could not add VIF, Ix %d, %s (IP: %s)", 
+    if ( NULL == VifDp ) {
+        my_log( LOG_DEBUG, 0, "addVIF: No more VIFs! Could not add VIF, Ix %d, %s (IP: %s)", 
             IfDp->vifindex, IfDp->Name, inetFmt(IfDp->InAdr.s_addr, s1) );
-        my_log( LOG_ERR, ENOMEM, "addVIF, out of VIF space" );
+        my_log( LOG_ERR, ENOMEM, "addVIF: out of VIF space" );
     }
 
-    VifDp->IfDp = IfDp;
-
-    VifCtl.vifc_vifi        = VifDp - VifDescVc; 
+    vifindex = VifDp - VifDescVc;
+    
+    VifCtl.vifc_vifi        = vifindex; 
     VifCtl.vifc_flags       = 0;                        // no tunnel, no source routing, register ?
-    VifCtl.vifc_threshold   = VifDp->IfDp->threshold;   // Packet TTL must be at least 1 to pass them
-    VifCtl.vifc_rate_limit  = VifDp->IfDp->ratelimit;   // Ratelimit
+    VifCtl.vifc_threshold   = IfDp->threshold;   // Packet TTL must be at least 1 to pass them
+    VifCtl.vifc_rate_limit  = IfDp->ratelimit;   // Ratelimit
 
-    VifCtl.vifc_lcl_addr.s_addr = VifDp->IfDp->InAdr.s_addr;
+    VifCtl.vifc_lcl_addr.s_addr = IfDp->InAdr.s_addr;
     VifCtl.vifc_rmt_addr.s_addr = INADDR_ANY;
 
-    // Set the index...
-    VifDp->IfDp->vifindex = VifCtl.vifc_vifi;
-
     my_log( LOG_DEBUG, 0, "Adding VIF (MRT_ADD_VIF), Ix %d Fl 0x%x IP %15s %s, Threshold: %d, Ratelimit: %d", 
-         VifCtl.vifc_vifi, VifCtl.vifc_flags,  inetFmt(VifCtl.vifc_lcl_addr.s_addr, s1), VifDp->IfDp->Name,
+         VifCtl.vifc_vifi, VifCtl.vifc_flags,  inetFmt(VifCtl.vifc_lcl_addr.s_addr, s1), IfDp->Name,
          VifCtl.vifc_threshold, VifCtl.vifc_rate_limit);
 
     struct SubnetList *currSubnet;
@@ -186,7 +208,12 @@ void addVIF( struct IfDesc *IfDp ) {
             inetFmt(currSubnet->subnet_addr, s1)
         );
     }
+    
+    // Set the index...
+    IfDp->vifindex = vifindex;
 
+    // assgin IF to VIF
+    VifDp->IfDp = IfDp;
 }
 
 /*
@@ -272,14 +299,35 @@ int delMRoute( struct MRouteDesc *Dp )
 **          - -1 if no virtual interface exists for the interface 
 **          
 */
-int getVifIx( struct IfDesc *IfDp ) {
+struct VifDesc *get_vif_by_if( const struct IfDesc *IfDp ) {
     struct VifDesc *Dp;
 
     for ( Dp = VifDescVc; Dp < VCEP( VifDescVc ); Dp++ ) {
         if ( Dp->IfDp == IfDp ) {
-            return Dp - VifDescVc;
+            return Dp;
         }
     }
 
-    return -1;
+    return NULL;
 }
+
+/*
+** Returns the first virtual interface for '*IfDp'
+**
+** returns: - the free vitrual interface
+**          - NULL if no free virtual interface exists
+*/
+struct VifDesc *get_free_vif()
+{
+    struct VifDesc *Dp;
+
+    for ( Dp = VifDescVc; Dp < VCEP( VifDescVc ); Dp++ ) {
+        if ( NULL == Dp->IfDp) {
+            return Dp;
+        }
+    }
+
+    return NULL;
+}
+
+

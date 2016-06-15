@@ -231,7 +231,7 @@ void addVIF( struct IfDesc *Dp );
 void delVIF( struct IfDesc *Dp );
 int addMRoute( struct MRouteDesc * Dp );
 int delMRoute( struct MRouteDesc * Dp );
-int getVifIx( struct IfDesc *IfDp );
+struct VifDesc *get_vif_by_if( const struct IfDesc *IfDp );
 
 /* config.c
  */
