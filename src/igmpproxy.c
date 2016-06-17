@@ -230,7 +230,6 @@ int igmpProxyInit(void) {
     // Initialize timer
     callout_init();
 
-
     return 1;
 }
 
@@ -270,6 +269,12 @@ void igmpProxyRun(void) {
     // First thing we send a membership query in downstream VIF's...
     sendGeneralMembershipQuery();
 
+    // check for changed IFs if rescan is active
+    if (config->rescanVif) {
+        // Install timer for first scan
+        timer_setTimer(REBUILD_VIF_STARTUP_INTERVALL, (timer_f) rebuildIfVc_loop, NULL);
+    }
+
     // Loop until the end...
     for (;;) {
 
@@ -280,11 +285,6 @@ void igmpProxyRun(void) {
                 my_log(LOG_NOTICE, 0, "Got a interupt signal. Exiting.");
                 break;
             }
-        }
-
-        /* aimwang: call rebuildIfVc */
-        if (config->rescanVif) {
-            rebuildIfVc();
         }
 
         // Prepare timeout...

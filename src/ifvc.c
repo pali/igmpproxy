@@ -235,6 +235,19 @@ void buildIf(
 }
 
 
+/*
+** Start loop for rebuild.
+**
+**
+*/
+void rebuildIfVc_loop() {
+    // Install timer for next scan 
+    timer_setTimer(REBUILD_VIF_INTERVALL, (timer_f) rebuildIfVc_loop, NULL);
+
+    // Scan for changed Ifs and rebuild VIFs if changes were detected. 
+    rebuildIfVc();
+}
+
 /* aimwang: add for detect interface and rebuild IfVc record */
 /***************************************************
  * TODO:    Only need run me when detect downstream changed.

@@ -204,6 +204,13 @@ extern int upStreamIfIdx[MAX_UPS_VIFS];
 
 /* ifvc.c
  */
+// Initial delay at startup before first scan for IF changes (in seconds)
+#define REBUILD_VIF_STARTUP_INTERVALL ((REBUILD_VIF_INTERVALL)*2)
+
+// Intervall between followup scans for IF changes (in seconds)
+#define REBUILD_VIF_INTERVALL 5
+
+void rebuildIfVc_loop( void );
 void rebuildIfVc( void );
 void buildIfVc( void );
 
