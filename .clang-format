@@ -1,0 +1,58 @@
+Language: Cpp
+IndentWidth: 4
+
+AlignAfterOpenBracket: false
+
+AlignConsecutiveAssignments: true
+
+# not supported in clang-format-3.7
+# supported in clang-format-3.8 and above
+AlignConsecutiveDeclarations: true
+
+AlignTrailingComments: true 
+
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+# Control of individual brace wrapping cases
+# not supported in clang-format-3.7
+# supported in clang-format-3.8 and above
+BraceWrapping: {
+    AfterClass: 'true'
+    AfterControlStatement: 'false'
+    AfterEnum: 'true'
+    AfterFunction: 'true'
+    AfterNamespace: 'true'
+    AfterStruct: 'true'
+    AfterUnion: 'true'
+    BeforeCatch: 'true'
+    BeforeElse: 'false'
+    IndentBraces: 'false'
+}
+
+BreakBeforeBraces: Stroustrup
+
+ColumnLimit: 120
+ContinuationIndentWidth: 8
+
+IndentCaseLabels: true
+
+KeepEmptyLinesAtTheStartOfBlocks: true
+
+MaxEmptyLinesToKeep: 2
+
+# Pointer is aligned to right side
+PointerAlignment: Right
+
+# High penalty to avoid line break just after return type
+PenaltyReturnTypeOnItsOwnLine: 10000
+
+SpaceAfterCStyleCast: true
+
+SpacesInParentheses: true
+SpaceInEmptyParentheses: false
+
+UseTab: Never

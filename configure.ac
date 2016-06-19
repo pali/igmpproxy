@@ -5,6 +5,12 @@ AC_CONFIG_SRCDIR([src/igmpproxy.c])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC_C99
 
+AC_CHECK_PROGS(
+    [CLANG_FORMAT], [clang-format clang-format-3.9 clang-format-3.8 clang-format38 clang-format-3.7 clang-format37],
+    [AC_MSG_ERROR([clang-format was not not found during configure.])]
+)
+AM_CONDITIONAL([HAVE_CLANG_FORMAT], [test -n "$CLANG_FORMAT"])
+
 AC_CANONICAL_HOST
 case $host_os in
 	linux*|uclinux*) os=linux;;
