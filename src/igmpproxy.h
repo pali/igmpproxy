@@ -115,11 +115,20 @@ extern int  LogLevel;             // Log threshold, LOG_WARNING .... LOG_DEBUG, 
 //#define DEVEL_LOGGING
 
 #ifdef DEVEL_LOGGING
-#define my_log(Severity, Errno, Fmt, args...)     _my_log((Severity), (Errno), __FUNCTION__, __LINE__, (Fmt), ##args)
-void _my_log( int Severity, int Errno, const char *func, int line, const char *FmtSt, ...);
+#define _my_log(Severity, Errno, Fmt, args...)     __my_log((Severity), (Errno), __FUNCTION__, __LINE__, (Fmt), ##args)
+
+void __my_log( int Severity, int Errno, char *func, int line, char *FmtSt, ...);
 #else
-void my_log( int Severity, int Errno, const char *FmtSt, ... );
+void _my_log( int Severity, int Errno, char *FmtSt, ... );
 #endif
+
+// short circuit log level evaluation to avoid unnecessary function calls for argruments
+#define my_log(Severity, Errno, Fmt, args...)  do { \
+    if (LogLevel < (Severity)) { \
+        break; \
+    } \
+   _my_log((Severity), (Errno), (Fmt), ##args); \
+} while (0)
 
 
 /* ifvc.c
