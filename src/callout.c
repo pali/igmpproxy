@@ -74,7 +74,7 @@ void free_all_callouts(void) {
  * elapsed_time seconds have passed; perform all the events that should
  * happen.
  */
-void age_callout_queue(int elapsed_time) {
+void age_callout_queue( int elapsed_time ) {
     struct timeOutQueue *ptr;
     struct timeOutQueue *_queue = NULL;
     struct timeOutQueue *last = NULL;
@@ -119,6 +119,7 @@ int timer_nextTimer(void) {
             my_log(LOG_WARNING, 0, "timer_nextTimer top of queue says %d", 
                     queue->time
             );
+
             return 0;
         }
         return queue->time;
@@ -132,7 +133,7 @@ int timer_nextTimer(void) {
  *  @param action - The function to call on timeout.
  *  @param data - Pointer to the function data to supply...
  */
-int timer_setTimer(int delay, timer_f action, void *data) {
+int timer_setTimer( int delay, const timer_f action, void *data ) {
     struct     timeOutQueue  *ptr, *node, *prev;
     int i = 0;
 
@@ -187,11 +188,13 @@ int timer_setTimer(int delay, timer_f action, void *data) {
         }
         prev->next = node;
     }
+
     my_log(LOG_DEBUG, 0, "Created timeout %d (#%d) - delay %d secs", 
             node->id,
             i, 
             node->time
     );
+
     debugQueue();
 
     return node->id;
@@ -200,7 +203,7 @@ int timer_setTimer(int delay, timer_f action, void *data) {
 /**
 *   returns the time until the timer is scheduled 
 */
-int timer_leftTimer(int timer_id) {
+int timer_leftTimer( const int timer_id ) {
     struct timeOutQueue *ptr;
     int left = 0;
 
@@ -220,7 +223,7 @@ int timer_leftTimer(int timer_id) {
 /**
 *   clears the associated timer.  Returns 1 if succeeded. 
 */
-int timer_clearTimer(int  timer_id) {
+int timer_clearTimer( const int timer_id ) {
     struct timeOutQueue  *ptr, *prev;
     int i = 0;
 
@@ -264,9 +267,12 @@ int timer_clearTimer(int  timer_id) {
         ptr = ptr->next;
         i++;
     }
+
     // If we get here, the timer was not deleted.
     my_log(LOG_DEBUG, 0, "failed to delete timer %d (#%d)", timer_id, i);
+
     debugQueue();
+
     return 0;
 }
 

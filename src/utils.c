@@ -38,13 +38,13 @@ const char* get_sa_family_str( const sa_family_t sa_family ) {
     }
 }
 
-struct sockaddr_in* sockaddr2sockaddr_in(struct sockaddr* sockaddrPt) {
+struct sockaddr_in* sockaddr2sockaddr_in(const struct sockaddr* sockaddrPt) {
     struct sockaddr_in *sockaddr_inPt = ((struct sockaddr_in *) sockaddrPt);
 
     return sockaddr_inPt;
 }
 
-struct in_addr sockaddr2in_addr(struct sockaddr* sockaddrPt) {
+struct in_addr sockaddr2in_addr(const struct sockaddr* sockaddrPt) {
     struct sockaddr_in *sockaddr_inPt = sockaddr2sockaddr_in(sockaddrPt);
 
     return sockaddr_inPt->sin_addr;

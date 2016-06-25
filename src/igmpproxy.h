@@ -117,9 +117,9 @@ extern int  LogLevel;             // Log threshold, LOG_WARNING .... LOG_DEBUG, 
 #ifdef DEVEL_LOGGING
 #define _my_log(Severity, Errno, Fmt, args...)     __my_log((Severity), (Errno), __FUNCTION__, __LINE__, (Fmt), ##args)
 
-void __my_log( int Severity, int Errno, char *func, int line, char *FmtSt, ...);
+void __my_log( const int Severity, const int Errno, const char *func, const int line, const char *FmtSt, ...);
 #else
-void _my_log( int Severity, int Errno, char *FmtSt, ... );
+void _my_log( const int Severity, const int Errno, const char *FmtSt, ... );
 #endif
 
 // short circuit log level evaluation to avoid unnecessary function calls for argruments
@@ -242,7 +242,7 @@ struct VifDesc *get_vif_by_if( const struct IfDesc *IfDp );
 
 /* config.c
  */
-int loadConfig( char *configFile );
+int loadConfig( const char *configFile );
 void configureVifs( void );
 struct Config *getCommonConfig( void );
 
@@ -258,12 +258,12 @@ void sendIgmp( uint32_t, uint32_t, int, int, uint32_t,int );
 
 /* igmplog.c
 */
-const char *igmp_packet_kind( unsigned int type, unsigned int code );
-const char *igmp_report_kind( unsigned int type );
+const char *igmp_packet_kind( const unsigned int type, const unsigned int code );
+const char *igmp_report_kind( const unsigned int type );
 void log_received_IGMP( int recvlen );
-void log_IP ( struct ip *ip );
-void log_IGMP( struct ip *ip, struct igmp *igmp ); 
-void log_IGMPv3_report ( struct ip *ip, struct igmp *igmp );
+void log_IP ( const struct ip *ip );
+void log_IGMP( const struct ip *ip, const struct igmp *igmp ); 
+void log_IGMPv3_report ( const struct ip *ip, const struct igmp *igmp );
 
 /* lib.c
  */
@@ -328,7 +328,7 @@ int timer_leftTimer( int );
  */
 #define MAX_TOKEN_LENGTH    30
 
-int openConfigFile( char *filename );
+int openConfigFile( const char *filename );
 void closeConfigFile( void );
 char* nextConfigToken( void );
 char* getCurrentConfigToken( void );
@@ -337,5 +337,5 @@ char* getCurrentConfigToken( void );
 /* utils.c
  */
 const char* get_sa_family_str( const sa_family_t sa_family );
-struct sockaddr_in* sockaddr2sockaddr_in(struct sockaddr* sockaddrPt);
-struct in_addr sockaddr2in_addr(struct sockaddr* sockaddrPt);
+struct sockaddr_in* sockaddr2sockaddr_in(const struct sockaddr* sockaddrPt);
+struct in_addr sockaddr2in_addr(const struct sockaddr* sockaddrPt);

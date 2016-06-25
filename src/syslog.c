@@ -39,15 +39,15 @@ bool Log2Stderr = false;
 
 // Prototypes
 #ifdef DEVEL_LOGGING
-void print_log_prefix ( int Severity, char *func, int line );
+void print_log_prefix ( const int Severity, const char *func, const int line );
 #else
-void print_log_prefix( int Severity );
+void print_log_prefix( const int Severity );
 #endif
 
 #ifdef DEVEL_LOGGING
-void __my_log( int Severity, int Errno, char *func, int line, char *FmtSt, ... )
+void __my_log( const int Severity, const int Errno, const char *func, const int line, const char *FmtSt, ... )
 #else
-void _my_log( int Severity, int Errno, char *FmtSt, ... )
+void _my_log( const int Severity, const int Errno, const char *FmtSt, ... )
 #endif
 {
     char LogMsg[ 128 ];
@@ -83,9 +83,9 @@ void _my_log( int Severity, int Errno, char *FmtSt, ... )
 }
 
 #ifdef DEVEL_LOGGING
-void print_log_prefix ( int Severity, char *func, int line )
+void print_log_prefix ( const int Severity, const char *func, const int line )
 #else
-void print_log_prefix( int Severity )
+void print_log_prefix( const int Severity )
 #endif
 {
     const char SeverityVc[][ 6 ] = {

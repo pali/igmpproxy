@@ -67,7 +67,7 @@ static struct RouteTable   *routing_table;
 // Prototypes
 void logRouteTable(const char *header);
 int internAgeRoute(struct RouteTable *croute);
-int internUpdateKernelRoute(struct RouteTable *route, int activate);
+int internUpdateKernelRoute( const struct RouteTable *route, const int activate );
 
 // Socket for sending join or leave requests.
 int mcGroupSock = -1;
@@ -80,6 +80,7 @@ int getMcGroupSock(void) {
     if( mcGroupSock < 0 ) {
         mcGroupSock = openUdpSocket( INADDR_ANY, 0 );;
     }
+
     return mcGroupSock;
 }
  
@@ -118,7 +119,7 @@ void initRouteTable(void) {
 *   Internal function to send join or leave requests for
 *   a specified route upstream...
 */
-static void sendJoinLeaveUpstream(struct RouteTable *route, int join) {
+static void sendJoinLeaveUpstream( struct RouteTable *route, const int join ) {    
     for(int i=0; i<MAX_UPS_VIFS; i++) {
         struct IfDesc *upstrIf;
 
@@ -234,7 +235,7 @@ void clearAllRoutes( void ) {
 *   Private access function to find a route from a given 
 *   Route Descriptor.
 */
-static struct RouteTable *findRoute(uint32_t group) {
+static struct RouteTable *findRoute(const uint32_t group) {
     struct RouteTable   *croute;
 
     for(croute = routing_table; croute; croute = croute->nextroute) {
@@ -251,7 +252,7 @@ static struct RouteTable *findRoute(uint32_t group) {
 *   If the route already exists, the existing route 
 *   is updated...
 */
-int insertRoute(uint32_t group, int ifx) {
+int insertRoute(const uint32_t group, const int ifx) {
 
     struct Config       *conf = getCommonConfig();
     struct RouteTable   *croute;
@@ -402,7 +403,7 @@ int insertRoute(uint32_t group, int ifx) {
 *   activated, it's reinstalled in the kernel. If
 *   the route is activated, no originAddr is needed.
 */
-int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
+int activateRoute( const uint32_t group, const uint32_t originAddr, const int upstrVif ) {
     struct RouteTable   *croute;
     int result = 0;
 
@@ -489,13 +490,14 @@ void ageActiveRoutes(void) {
             internAgeRoute(croute);
         }
     }
+
     logRouteTable("Age active routes");
 }
 
 /**
 *   Counts the number of interfaces a given route is active on
 */
-int numberOfInterfaces(struct RouteTable *croute) {
+int numberOfInterfaces(const struct RouteTable *croute) {
     int Ix;
     struct IfDesc *Dp;
     int result = 0;
@@ -516,7 +518,7 @@ int numberOfInterfaces(struct RouteTable *croute) {
 *   Should be called when a leave message is received, to
 *   mark a route for the last member probe state.
 */
-void setRouteLastMemberMode(uint32_t group) {
+void setRouteLastMemberMode( const uint32_t group ) {
     struct Config       *conf = getCommonConfig();
     struct RouteTable   *croute;
 
@@ -542,7 +544,7 @@ void setRouteLastMemberMode(uint32_t group) {
 *   Ages groups in the last member check state. If the
 *   route is not found, or not in this state, 0 is returned.
 */
-int lastMemberGroupAge(uint32_t group) {
+int lastMemberGroupAge(const uint32_t group) {
     struct RouteTable   *croute;
 
     croute = findRoute(group);
@@ -600,6 +602,7 @@ static int removeRoute(struct RouteTable *croute) {
             croute->nextroute->prevroute = croute->prevroute;
         }
     }
+
     // Free the memory, and set the route to NULL...
     free(croute);
     croute = NULL;
@@ -686,7 +689,7 @@ int internAgeRoute(struct RouteTable *croute) {
 *   Updates the Kernel routing table. If activate is 1, the route
 *   is (re-)activated. If activate is false, the route is removed.
 */
-int internUpdateKernelRoute(struct RouteTable *route, int activate) {
+int internUpdateKernelRoute(const struct RouteTable *route, const int activate) {
     struct   MRouteDesc     mrDesc;
     struct   IfDesc         *Dp;
     unsigned                Ix;
@@ -788,7 +791,7 @@ void logRouteTable(const char *header) {
 /**
 *   Returns true when the given group belongs to the given interface
 */
-int interfaceInRoute(int32_t group, int Ix) {
+int interfaceInRoute(const int32_t group, const int Ix) {
     struct RouteTable*  croute;
     croute = findRoute(group);
     if ( NULL != croute ) {

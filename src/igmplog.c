@@ -44,7 +44,7 @@
 /**
 *   Finds the textual name of the supplied IGMP request.
 */
-const char *igmp_packet_kind( unsigned int type, unsigned int code ) {
+const char *igmp_packet_kind( const unsigned int type, const unsigned int code ) {
     static char unknown[20];
 
     switch (type) {
@@ -63,7 +63,7 @@ const char *igmp_packet_kind( unsigned int type, unsigned int code ) {
 /**
 *   Finds the textual name of the supplied IGMP report.
 */
-const char *igmp_report_kind( unsigned int type ) {
+const char *igmp_report_kind( const unsigned int type ) {
     static char unknown[20];
 
     switch (type) {
@@ -83,7 +83,7 @@ const char *igmp_report_kind( unsigned int type ) {
 /**
 *   Finds the textual name of the supplied IP protocol type.
 */
-const char *ip_protocol_kind( u_char ip_p ) {
+const char *ip_protocol_kind( const u_char ip_p ) {
     static char unknown[20];
 
     /*
@@ -232,7 +232,7 @@ const char *ip_protocol_kind( u_char ip_p ) {
  * Log received IGMP packet that is sitting in the input
  * packet buffer.
  */
-void log_received_IGMP( int recvlen ) {
+void log_received_IGMP( const int recvlen ) {
     if ( LogLevel < LOG_TRACE ) {
         // we really want to log the reports only in DEBUG mode
         return;
@@ -276,7 +276,7 @@ void log_received_IGMP( int recvlen ) {
 /**
  * Log received IGMP packet and the associated IP header
  */
-void log_IGMP( struct ip *ip, struct igmp *igmp ) {
+void log_IGMP( const struct ip *ip, const struct igmp *igmp ) {
     if ( LogLevel < LOG_TRACE ) {
         // we really want to log the reports only in DEBUG mode
         return;
@@ -342,7 +342,7 @@ void log_IGMP( struct ip *ip, struct igmp *igmp ) {
 /**
  * Log received IGMPv3 report packet
  */
-void log_IGMPv3_report( struct ip *ip, struct igmp *igmp ) {
+void log_IGMPv3_report( const struct ip *ip, const struct igmp *igmp ) {
     if ( LogLevel < LOG_TRACE ) {
         // we really want to log the reports only in DEBUG mode
         return;
@@ -413,7 +413,7 @@ void log_IGMPv3_report( struct ip *ip, struct igmp *igmp ) {
 /**
  * Log received IP header
  */
-void log_IP ( struct ip *ip ) {
+void log_IP ( const struct ip *ip ) {
     if ( LogLevel < LOG_TRACE ) {
         // we really want to log the reports only in DEBUG mode
         return;

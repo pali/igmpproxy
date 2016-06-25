@@ -101,7 +101,7 @@ struct Config *getCommonConfig(void) {
 *   Loads the configuration from file, and stores the config in 
 *   respective holders...
 */                 
-int loadConfig(char *configFile) {
+int loadConfig( const char *configFile ) {
     struct vifconfig  *tmpPtr;
     struct vifconfig  **currPtr = &vifconf;
     char *token;
@@ -208,13 +208,15 @@ int loadConfig(char *configFile) {
 /**
 *   Appends extra VIF configuration from config file.
 */
-void configureVifs(void) {
+void configureVifs( void ) {
     unsigned Ix;
     struct IfDesc *Dp;
     struct vifconfig *confPtr;
 
     // If no config is availible, just return...
     if(vifconf == NULL) {
+        my_log(LOG_WARNING, 0, "No config found");
+
         return;
     }
 

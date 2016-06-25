@@ -60,7 +60,7 @@ short   validToken;
 /**
 *   Opens config file specified by filename.
 */    
-int openConfigFile(char *filename) {
+int openConfigFile(const char *filename) {
 
     // Set the buffer to null initially...
     iBuffer = NULL;
