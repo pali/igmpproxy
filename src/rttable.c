@@ -66,7 +66,7 @@ static struct RouteTable   *routing_table;
 
 // Prototypes
 void logRouteTable(const char *header);
-int  internAgeRoute(struct RouteTable*  croute);
+int internAgeRoute(struct RouteTable*  croute);
 int internUpdateKernelRoute(struct RouteTable *route, int activate);
 
 // Socket for sending join or leave requests.
@@ -98,13 +98,17 @@ void initRouteTable(void) {
         // If this is a downstream vif, we should join the All routers group...
         if( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) && Dp->state == IF_STATE_DOWNSTREAM) {
             my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
-                         inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
+                    inetFmt(allrouters_group,s1),
+                    inetFmt(Dp->InAdr.s_addr,s2)
+            );
             
             //k_join(allrouters_group, Dp->InAdr.s_addr);
             joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
 
             my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
-                         inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
+                    inetFmt(alligmp3_group,s1),
+                    inetFmt(Dp->InAdr.s_addr,s2)
+            );
             joinMcGroup( getMcGroupSock(), Dp, alligmp3_group );
         }
     }
@@ -149,8 +153,9 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
                 // Only join a group if there are listeners downstream...
                 if(route->vifBits > 0) {
                     my_log(LOG_DEBUG, 0, "Joining group %s upstream on IF address %s",
-                                 inetFmt(route->group, s1), 
-                                 inetFmt(upstrIf->InAdr.s_addr, s2));
+                            inetFmt(route->group, s1), 
+                            inetFmt(upstrIf->InAdr.s_addr, s2)
+                    );
 
                     //k_join(route->group, upstrIf->InAdr.s_addr);
                     joinMcGroup( getMcGroupSock(), upstrIf, route->group );
@@ -158,14 +163,16 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
                     route->upstrState = ROUTESTATE_JOINED;
                 } else {
                     my_log(LOG_DEBUG, 0, "No downstream listeners for group %s. No join sent.",
-                        inetFmt(route->group, s1));
+                            inetFmt(route->group, s1)
+                    );
                 }
             } else {
                 // Only leave if group is not left already...
                 if(route->upstrState != ROUTESTATE_NOTJOINED) {
                     my_log(LOG_DEBUG, 0, "Leaving group %s upstream on IF address %s",
-                                 inetFmt(route->group, s1), 
-                                 inetFmt(upstrIf->InAdr.s_addr, s2));
+                            inetFmt(route->group, s1), 
+                            inetFmt(upstrIf->InAdr.s_addr, s2)
+                    );
 
                     //k_leave(route->group, upstrIf->InAdr.s_addr);
                     leaveMcGroup( getMcGroupSock(), upstrIf, route->group );
@@ -240,14 +247,15 @@ int insertRoute(uint32_t group, int ifx) {
     // Sanitycheck the group adress...
     if( ! IN_MULTICAST( ntohl(group) )) {
         my_log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group. Table insert failed.",
-            inetFmt(group, s1));
+                inetFmt(group, s1)
+        );
         return 0;
     }
 
     // Santiycheck the VIF index...
     //if(ifx < 0 || ifx >= MAX_MC_VIFS) {
     if(ifx >= MAX_MC_VIFS) {
-        my_log(LOG_WARNING, 0, "The VIF Ix %d is out of range (0-%d). Table insert failed.",ifx,MAX_MC_VIFS);
+        my_log(LOG_WARNING, 0, "The VIF Ix %d is out of range (0-%d). Table insert failed.", ifx, MAX_MC_VIFS);
         return 0;
     }
 
@@ -295,7 +303,9 @@ int insertRoute(uint32_t group, int ifx) {
 
             // Check if the route could be inserted at the beginning...
             if(routing_table->group > group) {
-                my_log(LOG_DEBUG, 0, "Inserting at beginning, before route %s", inetFmt(routing_table->group,s1));
+                my_log(LOG_DEBUG, 0, "Inserting at beginning, before route %s",
+                        inetFmt(routing_table->group,s1)
+                );
 
                 // Insert at beginning...
                 newroute->nextroute = routing_table;
@@ -317,7 +327,9 @@ int insertRoute(uint32_t group, int ifx) {
                     }
                 }
 
-                my_log(LOG_DEBUG, 0, "Inserting after route %s",inetFmt(croute->group,s1));
+                my_log(LOG_DEBUG, 0, "Inserting after route %s",
+                        inetFmt(croute->group,s1)
+                );
                 
                 // Insert after current...
                 newroute->nextroute = croute->nextroute;
@@ -334,7 +346,9 @@ int insertRoute(uint32_t group, int ifx) {
 
         // Log the cleanup in debugmode...
         my_log(LOG_INFO, 0, "Inserted route table entry for %s on VIF #%d",
-            inetFmt(croute->group, s1),ifx);
+                inetFmt(croute->group, s1), 
+                ifx
+        );
 
     } else if(ifx >= 0) {
 
@@ -346,7 +360,9 @@ int insertRoute(uint32_t group, int ifx) {
 
         // Log the cleanup in debugmode...
         my_log(LOG_INFO, 0, "Updated route entry for %s on VIF #%d",
-            inetFmt(croute->group, s1), ifx);
+                inetFmt(croute->group, s1),
+                ifx
+        );
         
         // Update route in kernel...
         if(!internUpdateKernelRoute(croute, 1)) {
@@ -382,7 +398,9 @@ int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
     if(croute == NULL) {
         my_log(LOG_DEBUG, 0,
                 "No table entry for %s [From: %s]. Inserting route.",
-                inetFmt(group, s1),inetFmt(originAddr, s2));
+                inetFmt(group, s1),
+                inetFmt(originAddr, s2)
+        );
 
         // Insert route, but no interfaces have yet requested it downstream.
         insertRoute(group, -1);
@@ -407,9 +425,10 @@ int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
                 i = MAX_ORIGINS - 1;
 
                 my_log(LOG_WARNING, 0, "Too many origins for route %s; replacing %s with %s",
-                    inetFmt(croute->group, s1),
-                    inetFmt(croute->originAddrs[i], s2),
-                    inetFmt(originAddr, s3));
+                        inetFmt(croute->group, s1),
+                        inetFmt(croute->originAddrs[i], s2),
+                        inetFmt(originAddr, s3)
+                );
             }
             
             // set origin

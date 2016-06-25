@@ -45,13 +45,13 @@ struct vifconfig {
     int                 threshold;
 
     // Keep allowed nets for VIF.
-    struct SubnetList*  allowednets;
+    struct SubnetList   *allowednets;
 
     // Allowed Groups
-    struct SubnetList*  allowedgroups;
+    struct SubnetList   *allowedgroups;
     
     // Next config in list...
-    struct vifconfig*   next;
+    struct vifconfig    *next;
 };
                  
 // Structure to keep vif configuration
@@ -61,8 +61,8 @@ struct vifconfig*   vifconf;
 static struct Config commonConfig;
 
 // Prototypes...
-struct vifconfig *parsePhyintToken(void);
-struct SubnetList *parseSubnetAddress(char *addrstr);
+struct vifconfig *parsePhyintToken( void );
+struct SubnetList *parseSubnetAddress( char *addrstr );
 
 
 /**
@@ -381,10 +381,10 @@ struct vifconfig *parsePhyintToken(void) {
 *   a.b.c.d/n into a SubnetList entry.
 */
 struct SubnetList *parseSubnetAddress(char *addrstr) {
-    struct SubnetList *tmpSubnet;
-    char        *tmpStr;
-    uint32_t      addr = 0x00000000;
-    uint32_t      mask = 0xFFFFFFFF;
+    struct SubnetList   *tmpSubnet;
+    char                *tmpStr;
+    uint32_t            addr = 0x00000000;
+    uint32_t            mask = 0xFFFFFFFF;
 
     // First get the network part of the address...
     tmpStr = strtok(addrstr, "/");
@@ -416,7 +416,8 @@ struct SubnetList *parseSubnetAddress(char *addrstr) {
     tmpSubnet->next = NULL;
 
     my_log(LOG_DEBUG, 0, "Config: IF: Altnet: Parsed altnet to %s.",
-            inetFmts(tmpSubnet->subnet_addr, tmpSubnet->subnet_mask,s1));
+            inetFmts(tmpSubnet->subnet_addr, tmpSubnet->subnet_mask,s1)
+    );
 
     return tmpSubnet;
 }

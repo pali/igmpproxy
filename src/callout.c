@@ -86,8 +86,9 @@ void age_callout_queue(int elapsed_time) {
             break;
         } else {
             elapsed_time -= ptr->time;
-            if (_queue == NULL)
+            if (_queue == NULL) {
                 _queue = ptr;
+            }
             last = ptr;
          }
     }
@@ -101,8 +102,9 @@ void age_callout_queue(int elapsed_time) {
     for (ptr = _queue; ptr; ptr = _queue, i++) {
         _queue = _queue->next;
         my_log(LOG_DEBUG, 0, "About to call timeout %d (#%d)", ptr->id, i);
-        if (ptr->func)
+        if (ptr->func) {
              ptr->func(ptr->data);
+        }
         free(ptr);
     }
 }
@@ -115,7 +117,8 @@ int timer_nextTimer(void) {
     if (queue) {
         if (queue->time < 0) {
             my_log(LOG_WARNING, 0, "timer_nextTimer top of queue says %d", 
-                queue->time);
+                    queue->time
+            );
             return 0;
         }
         return queue->time;
@@ -166,12 +169,17 @@ int timer_setTimer(int delay, timer_f action, void *data) {
                 ptr->time -= node->time;
                 my_log(LOG_DEBUG, 0,
                         "Created timeout %d (#%d) - delay %d secs",
-                        node->id, i, node->time);
+                        node->id,
+                        i,
+                        node->time
+                );
                 debugQueue();
                 return node->id;
             } else {
                 // Continur to check nodes.
-                delay -= ptr->time; node->time = delay;
+                delay -= ptr->time;
+                node->time = delay;
+
                 prev = ptr;
                 ptr = ptr->next;
             }
@@ -180,7 +188,10 @@ int timer_setTimer(int delay, timer_f action, void *data) {
         prev->next = node;
     }
     my_log(LOG_DEBUG, 0, "Created timeout %d (#%d) - delay %d secs", 
-            node->id, i, node->time);
+            node->id,
+            i, 
+            node->time
+    );
     debugQueue();
 
     return node->id;
