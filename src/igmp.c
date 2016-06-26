@@ -159,13 +159,25 @@ void acceptIgmp(int recvlen) {
         return;
     }
 
+    my_log(LOG_TRACE, 0, "Packet from %s: proto: %d hdrlen: %d iplen: %d or %d",
+            inetFmt( src, s1 ),
+            ip->ip_p,
+            ip->ip_hl << 2,
+            ip->ip_len,
+            ntohs( ip->ip_len )
+    );
+
     iphdrlen  = ip->ip_hl << 2;
     ipdatalen = ip_data_len(ip);
 
     if (iphdrlen + ipdatalen != recvlen) {
         my_log(LOG_WARNING, 0,
-            "received packet from %s shorter (%u bytes) than hdr+data length (%u+%u)",
-            inetFmt(src, s1), recvlen, iphdrlen, ipdatalen);
+                "received packet from %s shorter (%u bytes) than hdr+data length (%u+%u)",
+                inetFmt( src, s1 ),
+                recvlen,
+                iphdrlen,
+                ipdatalen
+        );
         return;
     }
 
@@ -173,14 +185,18 @@ void acceptIgmp(int recvlen) {
     if ((ipdatalen < IGMP_MINLEN) ||
         (igmp->igmp_type == IGMP_V3_MEMBERSHIP_REPORT && ipdatalen <= IGMPV3_MINLEN)) {
         my_log(LOG_WARNING, 0,
-            "received IP data field too short (%u bytes) for IGMP, from %s",
-            ipdatalen, inetFmt(src, s1));
+                "received IP data field too short (%u bytes) for IGMP, from %s",
+                ipdatalen,
+                inetFmt( src, s1 )
+        );
         return;
     }
 
     my_log(LOG_NOTICE, 0, "RECV %s from %-15s to %s",
-        igmp_packet_kind(igmp->igmp_type, igmp->igmp_code),
-        inetFmt(src, s1), inetFmt(dst, s2) );
+            igmp_packet_kind(igmp->igmp_type, igmp->igmp_code),
+            inetFmt( src, s1 ),
+            inetFmt( dst, s2 )
+    );
 
     switch (igmp->igmp_type) {
     case IGMP_V1_MEMBERSHIP_REPORT:
@@ -215,9 +231,12 @@ void acceptIgmp(int recvlen) {
                 break;
             default:
                 my_log(LOG_INFO, 0,
-                    "ignoring unknown IGMPv3 group record type %x from %s to %s for %s",
-                    grec->grec_type, inetFmt(src, s1), inetFmt(dst, s2),
-                    inetFmt(group, s3));
+                        "ignoring unknown IGMPv3 group record type %x from %s to %s for %s",
+                        grec->grec_type,
+                        inetFmt( src, s1 ),
+                        inetFmt( dst, s2 ),
+                        inetFmt( group, s3 )
+                );
                 break;
             }
             grec = (struct igmpv3_grec *)
@@ -235,9 +254,11 @@ void acceptIgmp(int recvlen) {
 
     default:
         my_log(LOG_INFO, 0,
-            "ignoring unknown IGMP message type %x from %s to %s",
-            igmp->igmp_type, inetFmt(src, s1),
-            inetFmt(dst, s2));
+                "ignoring unknown IGMP message type %x from %s to %s",
+                igmp->igmp_type,
+                inetFmt( src, s1 ),
+                inetFmt( dst, s2 )
+        );
         return;
     }
 }
@@ -327,5 +348,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
 
     my_log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
             igmp_packet_kind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
-            inetFmt(src, s1), inetFmt(dst, s2));
+            inetFmt( src, s1 ),
+            inetFmt( dst, s2 )
+    );
 }
