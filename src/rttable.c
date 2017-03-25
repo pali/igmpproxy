@@ -35,7 +35,7 @@
 *   rttable.c 
 *
 *   Updates the routingtable according to 
-*     recieved request.
+*     received request.
 */
 
 #include "igmpproxy.h"
@@ -487,7 +487,7 @@ int numberOfInterfaces(struct RouteTable *croute) {
 
 
 /**
-*   Should be called when a leave message is recieved, to
+*   Should be called when a leave message is received, to
 *   mark a route for the last member probe state.
 */
 void setRouteLastMemberMode(uint32_t group) {

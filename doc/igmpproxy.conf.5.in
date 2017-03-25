@@ -48,7 +48,7 @@ The configuration file has two main keywords:
 Enables quickleave mode. In this mode the daemon will send a Leave IGMP message
 upstream as soon as it recieves a Leave message for any downstream interface.
 The daemon will then ask for Membership reports on the downstream interfaces, 
-and if a report is recieved the group is joined again upstream. Normally this
+and if a report is received the group is joined again upstream. Normally this
 is not noticed at all by clients on the downstream networks. If it's vital
 that the daemon should act exactly as a real multicast client on the upstream
 interface, this function should not be used. Disabling this function increases

@@ -64,7 +64,7 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
         return;
     }
 
-    // Find the interface on which the report was recieved.
+    // Find the interface on which the report was received.
     sourceVif = getIfByAddress( src );
     if(sourceVif == NULL) {
         my_log(LOG_WARNING, 0, "No interfaces found for source %s",
@@ -100,8 +100,8 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
 	    }
 	my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
     } else {
-        // Log the state of the interface the report was recieved on.
-        my_log(LOG_INFO, 0, "Mebership report was recieved on %s. Ignoring.",
+        // Log the state of the interface the report was received on.
+        my_log(LOG_INFO, 0, "Mebership report was received on %s. Ignoring.",
             sourceVif->state==IF_STATE_UPSTREAM?"the upstream interface":"a disabled interface");
     }
 
@@ -124,7 +124,7 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
         return;
     }
 
-    // Find the interface on which the report was recieved.
+    // Find the interface on which the report was received.
     sourceVif = getIfByAddress( src );
     if(sourceVif == NULL) {
         my_log(LOG_WARNING, 0, "No interfaces found for source %s",

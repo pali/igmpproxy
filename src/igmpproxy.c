@@ -68,7 +68,7 @@ int         upStreamVif[MAX_UPS_VIFS];
 /**
 *   Program main method. Is invoked when the program is started
 *   on commandline. The number of commandline arguments, and a
-*   pointer to the arguments are recieved on the line...
+*   pointer to the arguments are received on the line...
 */    
 int main( int ArgCn, char *ArgVc[] ) {
 
