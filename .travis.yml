@@ -1,0 +1,13 @@
+language: c
+
+compiler:
+  - gcc
+  - clang
+
+before_script:
+  - export CFLAGS="-W -Wall -O2 -g"
+
+script:
+  - ./autogen.sh
+  - ./configure
+  - make
