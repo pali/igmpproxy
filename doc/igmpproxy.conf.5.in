@@ -25,7 +25,7 @@ or
 The
 .B upstream
 network interface is the outgoing interface which is responsible for communicating
-to availible multicast data sources. There can only be one upstream interface.
+to available multicast data sources. There can only be one upstream interface.
 
 .B Downstream
 network interfaces are the distribution interfaces to the destination networks, 

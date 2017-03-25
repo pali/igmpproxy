@@ -197,7 +197,7 @@ void configureVifs(void) {
     struct IfDesc *Dp;
     struct vifconfig *confPtr;
 
-    // If no config is availible, just return...
+    // If no config is available, just return...
     if(vifconf == NULL) {
         return;
     }

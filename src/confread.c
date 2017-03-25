@@ -206,7 +206,7 @@ char *nextConfigToken(void) {
 
 /**
 *   Returns the currently active token, or null
-*   if no tokens are availible.
+*   if no tokens are available.
 */
 char *getCurrentConfigToken(void) {
     return validToken ? cToken : NULL;
