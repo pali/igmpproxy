@@ -86,7 +86,7 @@ The role of the interface. This should be either
 .B downstream
 (one or more interfaces) or
 .B disabled
-. This option is required.
+\&. This option is required.
 .RE
 
 .B ratelimit
