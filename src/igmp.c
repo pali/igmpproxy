@@ -25,10 +25,10 @@
 **  smcroute 0.92 - Copyright (C) 2001 Carsten Schill <carsten@cschill.de>
 **  - Licensed under the GNU General Public License, either version 2 or
 **    any later version.
-**  
-**  mrouted 3.9-beta3 - COPYRIGHT 1989 by The Board of Trustees of 
+**
+**  mrouted 3.9-beta3 - Copyright (C) 2002 by The Board of Trustees of
 **  Leland Stanford Junior University.
-**  - Original license can be found in the Stanford.txt file.
+**  - Licensed under the 3-clause BSD license, see Stanford.txt file.
 **
 */
 /**
