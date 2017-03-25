@@ -274,7 +274,7 @@ void igmpProxyRun(void) {
         if (sighandled) {
             if (sighandled & GOT_SIGINT) {
                 sighandled &= ~GOT_SIGINT;
-                my_log(LOG_NOTICE, 0, "Got a interupt signal. Exiting.");
+                my_log(LOG_NOTICE, 0, "Got a interrupt signal. Exiting.");
                 break;
             }
         }
