@@ -34,30 +34,29 @@
 
 #include "igmpproxy.h"
 
-int LogLevel = LOG_WARNING;
+int  LogLevel   = LOG_WARNING;
 bool Log2Stderr = false;
 
 void my_log( int Severity, int Errno, const char *FmtSt, ... )
 {
-    char LogMsg[ 128 ];
+    char LogMsg[128];
 
-    va_list ArgPt;
+    va_list  ArgPt;
     unsigned Ln;
     va_start( ArgPt, FmtSt );
     Ln = vsnprintf( LogMsg, sizeof( LogMsg ), FmtSt, ArgPt );
-    if( Errno > 0 )
-        snprintf( LogMsg + Ln, sizeof( LogMsg ) - Ln,
-                "; Errno(%d): %s", Errno, strerror(Errno) );
+    if ( Errno > 0 )
+        snprintf( LogMsg + Ln, sizeof( LogMsg ) - Ln, "; Errno(%d): %s", Errno, strerror( Errno ) );
     va_end( ArgPt );
 
-    if (Severity <= LogLevel) {
-        if (Log2Stderr)
-            fprintf(stderr, "%s\n", LogMsg);
+    if ( Severity <= LogLevel ) {
+        if ( Log2Stderr )
+            fprintf( stderr, "%s\n", LogMsg );
         else {
-            syslog(Severity, "%s", LogMsg);
+            syslog( Severity, "%s", LogMsg );
         }
     }
 
-    if( Severity <= LOG_ERR )
+    if ( Severity <= LOG_ERR )
         exit( -1 );
 }
