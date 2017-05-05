@@ -166,17 +166,16 @@ void acceptIgmp(int recvlen) {
                                 inetFmt(src, s1), inetFmt(dst, s2), i);
                         }
                     } else {
-			// Activate the route.
-			my_log(LOG_DEBUG, 0, "Route activate request from %s to %s",
-			    inetFmt(src,s1), inetFmt(dst,s2));
-			activateRoute(dst, src, checkVIF->index);
-			i = MAX_UPS_VIFS;
-		    }
-		}
-                else
-                {
-		    i = MAX_UPS_VIFS;
-		}
+                        // Activate the route.
+                        int vifindex = checkVIF->index;
+                        my_log(LOG_DEBUG, 0, "Route activate request from %s to %s on VIF[%d]",
+                            inetFmt(src,s1), inetFmt(dst,s2), vifindex);
+                        activateRoute(dst, src, vifindex);
+                        i = MAX_UPS_VIFS;
+                    }
+                } else {
+                    i = MAX_UPS_VIFS;
+                }
             }
         }
         return;
