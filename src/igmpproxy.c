@@ -1,5 +1,5 @@
 /*
-**  igmpproxy - IGMP proxy based multicast router 
+**  igmpproxy - IGMP proxy based multicast router
 **  Copyright (C) 2005 Johnny Egeland <johnny@rlo.org>
 **
 **  This program is free software; you can redistribute it and/or modify
@@ -39,9 +39,9 @@
 
 #include "igmpproxy.h"
 
-static const char Usage[] = 
+static const char Usage[] =
 "Usage: igmpproxy [-h] [-d] [-v [-v]] <configfile>\n"
-"\n" 
+"\n"
 "   -h   Display this help screen\n"
 "   -d   Run in debug mode. Output all messages on stderr\n"
 "   -v   Be verbose. Give twice to see even debug messages.\n"
@@ -57,19 +57,19 @@ void    igmpProxyRun(void);
 
 // Global vars...
 static int sighandled = 0;
-#define	GOT_SIGINT	0x01
-#define	GOT_SIGHUP	0x02
-#define	GOT_SIGUSR1	0x04
-#define	GOT_SIGUSR2	0x08
+#define GOT_SIGINT  0x01
+#define GOT_SIGHUP  0x02
+#define GOT_SIGUSR1 0x04
+#define GOT_SIGUSR2 0x08
 
 // The upstream VIF index
-int         upStreamVif[MAX_UPS_VIFS];   
+int     upStreamVif[MAX_UPS_VIFS];
 
 /**
 *   Program main method. Is invoked when the program is started
 *   on commandline. The number of commandline arguments, and a
 *   pointer to the arguments are received on the line...
-*/    
+*/
 int main( int ArgCn, char *ArgVc[] ) {
 
     int c;
@@ -97,8 +97,8 @@ int main( int ArgCn, char *ArgVc[] ) {
     }
 
     if (optind != ArgCn - 1) {
-	fputs("You must specify the configuration file.\n", stderr);
-	exit(1);
+        fputs("You must specify the configuration file.\n", stderr);
+        exit(1);
     }
     char *configFilePath = ArgVc[optind];
 
@@ -120,30 +120,30 @@ int main( int ArgCn, char *ArgVc[] ) {
             my_log(LOG_ERR, 0, "Unable to load config file...");
             break;
         }
-    
+
         // Initializes the deamon.
         if ( !igmpProxyInit() ) {
             my_log(LOG_ERR, 0, "Unable to initialize IGMPproxy.");
             break;
         }
 
-	if ( !Log2Stderr ) {
+        if ( !Log2Stderr ) {
 
-	    // Only daemon goes past this line...
-	    if (fork()) exit(0);
+            // Only daemon goes past this line...
+            if (fork()) exit(0);
 
-	    // Detach daemon from terminal
-	    if ( close( 0 ) < 0 || close( 1 ) < 0 || close( 2 ) < 0
-		 || open( "/dev/null", 0 ) != 0 || dup2( 0, 1 ) < 0 || dup2( 0, 2 ) < 0
-		 || setpgid( 0, 0 ) < 0
-	       ) {
-		my_log( LOG_ERR, errno, "failed to detach daemon" );
-	    }
-	}
+            // Detach daemon from terminal
+            if ( close( 0 ) < 0 || close( 1 ) < 0 || close( 2 ) < 0
+                || open( "/dev/null", 0 ) != 0 || dup2( 0, 1 ) < 0 || dup2( 0, 2 ) < 0
+                || setpgid( 0, 0 ) < 0
+            ) {
+                my_log( LOG_ERR, errno, "failed to detach daemon" );
+            }
+        }
 
         // Go to the main loop.
         igmpProxyRun();
-    
+
         // Clean up
         igmpProxyCleanUp();
 
@@ -155,15 +155,12 @@ int main( int ArgCn, char *ArgVc[] ) {
     exit(0);
 }
 
-
-
 /**
 *   Handles the initial startup of the daemon.
 */
 int igmpProxyInit(void) {
     struct sigaction sa;
     int Err;
-
 
     sa.sa_handler = signalHandler;
     sa.sa_flags = 0;    /* Interrupt system calls */
@@ -172,8 +169,8 @@ int igmpProxyInit(void) {
     sigaction(SIGINT, &sa, NULL);
 
     // Loads configuration for Physical interfaces...
-    buildIfVc();    
-    
+    buildIfVc();
+
     // Configures IF states and settings
     configureVifs();
 
@@ -189,19 +186,19 @@ int igmpProxyInit(void) {
         unsigned Ix;
         struct IfDesc *Dp;
         int     vifcount = 0, upsvifcount = 0;
-        
+
         for ( Ix = 0; Ix < MAX_UPS_VIFS; Ix++)
         {
-		upStreamVif[Ix] = -1;
-	}
+            upStreamVif[Ix] = -1;
+        }
 
         for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
 
             if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
                 if(Dp->state == IF_STATE_UPSTREAM) {
-		    if (upsvifcount < MAX_UPS_VIFS -1)
-		    {
-			upStreamVif[upsvifcount++] = Ix;
+                    if (upsvifcount < MAX_UPS_VIFS -1)
+                    {
+                        upStreamVif[upsvifcount++] = Ix;
                     } else {
                         my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Mac upstream Vif count is %d",
                             Ix, MAX_UPS_VIFS);
@@ -215,18 +212,17 @@ int igmpProxyInit(void) {
             }
         }
 
-	if(0 == upsvifcount) {
+        if(0 == upsvifcount) {
             my_log(LOG_ERR, 0, "There must be at least 1 Vif as upstream.");
         }
-    }  
-    
+    }
+
     // Initialize IGMP
     initIgmp();
     // Initialize Routing table
     initRouteTable();
     // Initialize timer
     callout_init();
-
 
     return 1;
 }
@@ -235,13 +231,11 @@ int igmpProxyInit(void) {
 *   Clean up all on exit...
 */
 void igmpProxyCleanUp(void) {
-
     my_log( LOG_DEBUG, 0, "clean handler called" );
-    
+
     free_all_callouts();    // No more timeouts.
     clearAllRoutes();       // Remove all routes.
     disableMRouter();       // Disable the multirout API
-
 }
 
 /**
@@ -255,7 +249,7 @@ void igmpProxyRun(void) {
     int     MaxFD, Rt, secs;
     fd_set  ReadFDS;
     socklen_t dummy = 0;
-    struct  timespec  curtime, lasttime, difftime, tv; 
+    struct  timespec  curtime, lasttime, difftime, tv;
     // The timeout is a pointer in order to set it to NULL if nessecary.
     struct  timespec  *timeout = &tv;
 
@@ -310,14 +304,13 @@ void igmpProxyRun(void) {
 
             // Read IGMP request, and handle it...
             if( FD_ISSET( MRouterFD, &ReadFDS ) ) {
-    
+
                 recvlen = recvfrom(MRouterFD, recv_buf, RECV_BUF_SIZE,
                                    0, NULL, &dummy);
                 if (recvlen < 0) {
                     if (errno != EINTR) my_log(LOG_ERR, errno, "recvfrom");
                     continue;
                 }
-                
 
                 acceptIgmp(recvlen);
             }
@@ -371,11 +364,11 @@ static void signalHandler(int sig) {
         case SIGHUP:
             sighandled |= GOT_SIGHUP;
             break;
-    
+
         case SIGUSR1:
             sighandled |= GOT_SIGUSR1;
             break;
-    
+
         case SIGUSR2:
             sighandled |= GOT_SIGUSR2;
             break;

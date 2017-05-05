@@ -1,5 +1,5 @@
 /*
-**  igmpproxy - IGMP proxy based multicast router 
+**  igmpproxy - IGMP proxy based multicast router
 **  Copyright (C) 2005 Johnny Egeland <johnny@rlo.org>
 **
 **  This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ static struct timeOutQueue  *queue = 0; /* pointer to the beginning of timeout q
 
 struct timeOutQueue {
     struct timeOutQueue    *next;   // Next event in queue
-    int                     id;  
+    int                     id;
     timer_f                 func;   // function to call
     void                    *data;  // Data for function
     int                     time;   // Time offset for next event
@@ -131,19 +131,19 @@ int timer_nextTimer(void) {
  *  @param data - Pointer to the function data to supply...
  */
 int timer_setTimer(int delay, timer_f action, void *data) {
-    struct     timeOutQueue  *ptr, *node, *prev;
+    struct timeOutQueue  *ptr, *node, *prev;
     int i = 0;
 
-    /* create a node */ 
+    /* create a node */
     node = (struct timeOutQueue *)malloc(sizeof(struct timeOutQueue));
     if (node == 0) {
         my_log(LOG_WARNING, 0, "Malloc Failed in timer_settimer\n");
         return -1;
     }
-    node->func = action; 
+    node->func = action;
     node->data = data;
-    node->time = delay; 
-    node->next = 0; 
+    node->time = delay;
+    node->next = 0;
     node->id   = ++id;
 
     prev = ptr = queue;
@@ -167,10 +167,10 @@ int timer_setTimer(int delay, timer_f action, void *data) {
                     prev->next = node;
                 }
                 ptr->time -= node->time;
-		my_log(LOG_DEBUG, 0,
-			"Created timeout %d (#%d) - delay %d secs",
-			node->id, i, node->time);
-		debugQueue();
+                my_log(LOG_DEBUG, 0,
+                    "Created timeout %d (#%d) - delay %d secs",
+                    node->id, i, node->time);
+                debugQueue();
                 return node->id;
             } else {
                 // Continur to check nodes.
@@ -182,7 +182,7 @@ int timer_setTimer(int delay, timer_f action, void *data) {
         }
         prev->next = node;
     }
-    my_log(LOG_DEBUG, 0, "Created timeout %d (#%d) - delay %d secs", 
+    my_log(LOG_DEBUG, 0, "Created timeout %d (#%d) - delay %d secs",
             node->id, i, node->time);
     debugQueue();
 
@@ -190,7 +190,7 @@ int timer_setTimer(int delay, timer_f action, void *data) {
 }
 
 /**
-*   returns the time until the timer is scheduled 
+*   returns the time until the timer is scheduled
 */
 int timer_leftTimer(int timer_id) {
     struct timeOutQueue *ptr;
@@ -209,7 +209,7 @@ int timer_leftTimer(int timer_id) {
 }
 
 /**
-*   clears the associated timer.  Returns 1 if succeeded. 
+*   clears the associated timer.  Returns 1 if succeeded.
 */
 int timer_clearTimer(int  timer_id) {
     struct timeOutQueue  *ptr, *prev;
@@ -264,6 +264,6 @@ static void debugQueue(void) {
     struct timeOutQueue  *ptr;
 
     for (ptr = queue; ptr; ptr = ptr->next) {
-            my_log(LOG_DEBUG, 0, "(Id:%d, Time:%d) ", ptr->id, ptr->time);
+        my_log(LOG_DEBUG, 0, "(Id:%d, Time:%d) ", ptr->id, ptr->time);
     }
 }

@@ -1,5 +1,5 @@
 /*
-**  igmpproxy - IGMP proxy based multicast router 
+**  igmpproxy - IGMP proxy based multicast router
 **  Copyright (C) 2005 Johnny Egeland <johnny@rlo.org>
 **
 **  This program is free software; you can redistribute it and/or modify
@@ -44,25 +44,23 @@
 #if MAX_MC_VIFS != MAXVIFS
 # error "constants don't match, correct mclab.h"
 #endif
-     
+
 // need an IGMP socket as interface for the mrouted API
 // - receives the IGMP messages
-int         MRouterFD;        /* socket for all network I/O  */
-char        *recv_buf;           /* input packet buffer         */
-char        *send_buf;           /* output packet buffer        */
+int         MRouterFD;          /* socket for all network I/O  */
+char        *recv_buf;          /* input packet buffer         */
+char        *send_buf;          /* output packet buffer        */
 
 
-// my internal virtual interfaces descriptor vector  
+// my internal virtual interfaces descriptor vector
 static struct VifDesc {
     struct IfDesc *IfDp;
 } VifDescVc[ MAXVIFS ];
 
-
-
 /*
 ** Initialises the mrouted API and locks it by this exclusively.
-**     
-** returns: - 0 if the functions succeeds     
+**
+** returns: - 0 if the functions succeeds
 **          - the errno value for non-fatal failure condition
 */
 int enableMRouter(void)
@@ -72,7 +70,7 @@ int enableMRouter(void)
     if ( (MRouterFD  = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0 )
         my_log( LOG_ERR, errno, "IGMP socket open" );
 
-    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_INIT, 
+    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_INIT,
                      (void *)&Va, sizeof( Va ) ) )
         return errno;
 
@@ -80,14 +78,14 @@ int enableMRouter(void)
 }
 
 /*
-** Diables the mrouted API and relases by this the lock.
-**          
+** Diable the mrouted API and relases by this the lock.
+**
 */
 void disableMRouter(void)
 {
-    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DONE, NULL, 0 ) 
+    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DONE, NULL, 0 )
          || close( MRouterFD )
-       ) {
+    ) {
         MRouterFD = 0;
         my_log( LOG_ERR, errno, "MRT_DONE/close" );
     }
@@ -102,12 +100,12 @@ void delVIF( struct IfDesc *IfDp )
 {
     struct vifctl VifCtl;
 
-	if (-1 == IfDp->index)
-		return;
+    if (-1 == IfDp->index)
+        return;
 
     VifCtl.vifc_vifi = IfDp->index;
-    
-    my_log( LOG_NOTICE, 0, "removing VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
+
+    my_log( LOG_NOTICE, 0, "removing VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d",
          IfDp->index, IfDp->Flags, IfDp->InAdr.s_addr, IfDp->Name, IfDp->threshold, IfDp->ratelimit);
 
     if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_VIF,
@@ -115,11 +113,9 @@ void delVIF( struct IfDesc *IfDp )
         my_log( LOG_WARNING, errno, "MRT_DEL_VIF" );
 }
 
-
-
 /*
 ** Adds the interface '*IfDp' as virtual interface to the mrouted API
-** 
+**
 */
 void addVIF( struct IfDesc *IfDp )
 {
@@ -140,7 +136,7 @@ void addVIF( struct IfDesc *IfDp )
 
     VifDp->IfDp = IfDp;
 
-    VifCtl.vifc_vifi  = VifDp - VifDescVc; 
+    VifCtl.vifc_vifi  = VifDp - VifDescVc;
     VifCtl.vifc_flags = 0;        /* no tunnel, no source routing, register ? */
     VifCtl.vifc_threshold  = VifDp->IfDp->threshold;    // Packet TTL must be at least 1 to pass them
     VifCtl.vifc_rate_limit = VifDp->IfDp->ratelimit;    // Ratelimit
@@ -151,18 +147,18 @@ void addVIF( struct IfDesc *IfDp )
     // Set the index...
     VifDp->IfDp->index = VifCtl.vifc_vifi;
 
-    my_log( LOG_NOTICE, 0, "adding VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d", 
+    my_log( LOG_NOTICE, 0, "adding VIF, Ix %d Fl 0x%x IP 0x%08x %s, Threshold: %d, Ratelimit: %d",
          VifCtl.vifc_vifi, VifCtl.vifc_flags,  VifCtl.vifc_lcl_addr.s_addr, VifDp->IfDp->Name,
          VifCtl.vifc_threshold, VifCtl.vifc_rate_limit);
 
     struct SubnetList *currSubnet;
     for(currSubnet = IfDp->allowednets; currSubnet; currSubnet = currSubnet->next) {
-	my_log(LOG_DEBUG, 0, "        Network for [%s] : %s",
-	    IfDp->Name,
-	    inetFmts(currSubnet->subnet_addr, currSubnet->subnet_mask, s1));
+        my_log(LOG_DEBUG, 0, "        Network for [%s] : %s",
+            IfDp->Name,
+            inetFmts(currSubnet->subnet_addr, currSubnet->subnet_mask, s1));
     }
 
-    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_ADD_VIF, 
+    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_ADD_VIF,
                      (char *)&VifCtl, sizeof( VifCtl ) ) )
         my_log( LOG_ERR, errno, "MRT_ADD_VIF" );
 
@@ -191,15 +187,15 @@ int addMRoute( struct MRouteDesc *Dp )
     {
         char FmtBuO[ 32 ], FmtBuM[ 32 ];
 
-        my_log( LOG_NOTICE, 0, "Adding MFC: %s -> %s, InpVIf: %d", 
-             fmtInAdr( FmtBuO, CtlReq.mfcc_origin ), 
+        my_log( LOG_NOTICE, 0, "Adding MFC: %s -> %s, InpVIf: %d",
+             fmtInAdr( FmtBuO, CtlReq.mfcc_origin ),
              fmtInAdr( FmtBuM, CtlReq.mfcc_mcastgrp ),
              (int)CtlReq.mfcc_parent
            );
     }
 
     rc = setsockopt( MRouterFD, IPPROTO_IP, MRT_ADD_MFC,
-		    (void *)&CtlReq, sizeof( CtlReq ) );
+                    (void *)&CtlReq, sizeof( CtlReq ) );
     if (rc)
         my_log( LOG_WARNING, errno, "MRT_ADD_MFC" );
 
@@ -228,15 +224,15 @@ int delMRoute( struct MRouteDesc *Dp )
     {
         char FmtBuO[ 32 ], FmtBuM[ 32 ];
 
-        my_log( LOG_NOTICE, 0, "Removing MFC: %s -> %s, InpVIf: %d", 
-             fmtInAdr( FmtBuO, CtlReq.mfcc_origin ), 
+        my_log( LOG_NOTICE, 0, "Removing MFC: %s -> %s, InpVIf: %d",
+             fmtInAdr( FmtBuO, CtlReq.mfcc_origin ),
              fmtInAdr( FmtBuM, CtlReq.mfcc_mcastgrp ),
              (int)CtlReq.mfcc_parent
            );
     }
 
     rc = setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_MFC,
-		    (void *)&CtlReq, sizeof( CtlReq ) );
+                    (void *)&CtlReq, sizeof( CtlReq ) );
     if (rc)
         my_log( LOG_WARNING, errno, "MRT_DEL_MFC" );
 
@@ -247,8 +243,8 @@ int delMRoute( struct MRouteDesc *Dp )
 ** Returns for the virtual interface index for '*IfDp'
 **
 ** returns: - the vitrual interface index if the interface is registered
-**          - -1 if no virtual interface exists for the interface 
-**          
+**          - -1 if no virtual interface exists for the interface
+**
 */
 int getVifIx( struct IfDesc *IfDp )
 {
@@ -260,6 +256,3 @@ int getVifIx( struct IfDesc *IfDp )
 
     return -1;
 }
-
-
-

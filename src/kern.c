@@ -1,5 +1,5 @@
 /*
-**  igmpproxy - IGMP proxy based multicast router 
+**  igmpproxy - IGMP proxy based multicast router
 **  Copyright (C) 2005 Johnny Egeland <johnny@rlo.org>
 **
 **  This program is free software; you can redistribute it and/or modify
@@ -73,7 +73,6 @@ void k_set_rcvbuf(int bufsize, int minsize) {
     my_log(LOG_DEBUG, 0, "Got %d byte buffer size in %d iterations", bufsize, iter);
 }
 
-
 void k_hdr_include(int hdrincl) {
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_HDRINCL,
                    (char *)&hdrincl, sizeof(hdrincl)) < 0)
@@ -92,7 +91,6 @@ void k_set_ttl(int t) {
 #endif
     curttl = t;
 }
-
 
 void k_set_loop(int l) {
     unsigned char loop;

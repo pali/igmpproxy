@@ -1,5 +1,5 @@
 /*
-**  igmpproxy - IGMP proxy based multicast router 
+**  igmpproxy - IGMP proxy based multicast router
 **  Copyright (C) 2005 Johnny Egeland <johnny@rlo.org>
 **
 **  This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,7 @@
 #define MAX_MC_VIFS    32     // !!! check this const in the specific includes
 #define MAX_UPS_VIFS    8
 
-// Useful macros..          
+// Useful macros..
 #define VCMC( Vc )  (sizeof( Vc ) / sizeof( (Vc)[ 0 ] ))
 #define VCEP( Vc )  (&(Vc)[ VCMC( Vc ) ])
 
@@ -107,20 +107,20 @@ extern char		s4[];
 /* syslog.c
  */
 extern bool Log2Stderr;           // Log to stderr instead of to syslog
-extern int  LogLevel;             // Log threshold, LOG_WARNING .... LOG_DEBUG 
+extern int  LogLevel;             // Log threshold, LOG_WARNING .... LOG_DEBUG
 
 void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 
 /* ifvc.c
  */
-#define MAX_IF         40     // max. number of interfaces recognized 
+#define MAX_IF         40     // max. number of interfaces recognized
 
 // Interface states
 #define IF_STATE_DISABLED      0   // Interface should be ignored.
 #define IF_STATE_UPSTREAM      1   // Interface is the upstream interface
 #define IF_STATE_DOWNSTREAM    2   // Interface is a downstream interface
-#define IF_STATE_LOST		   3   // aimwang: Temp from downstream to hidden
-#define IF_STATE_HIDDEN		   4   // aimwang: Interface is hidden
+#define IF_STATE_LOST          3   // aimwang: Temp from downstream to hidden
+#define IF_STATE_HIDDEN        4   // aimwang: Interface is hidden
 
 // Multicast default values...
 #define DEFAULT_ROBUSTNESS     2
@@ -138,27 +138,27 @@ void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 
 
 
-// Linked list of networks... 
+// Linked list of networks...
 struct SubnetList {
-    uint32_t              subnet_addr;
-    uint32_t              subnet_mask;
-    struct SubnetList*  next;
+    uint32_t            subnet_addr;
+    uint32_t            subnet_mask;
+    struct SubnetList   *next;
 };
 
 struct IfDesc {
     char                Name[IF_NAMESIZE];
-    struct in_addr      InAdr;          /* == 0 for non IP interfaces */            
+    struct in_addr      InAdr;          /* == 0 for non IP interfaces */
     short               Flags;
     short               state;
     struct SubnetList*  allowednets;
     struct SubnetList*  allowedgroups;
     unsigned int        robustness;
     unsigned char       threshold;   /* ttl limit */
-    unsigned int        ratelimit; 
+    unsigned int        ratelimit;
     unsigned int        index;
 };
 
-// Keeps common configuration settings 
+// Keeps common configuration settings
 struct Config {
     unsigned int        robustnessValue;
     unsigned int        queryInterval;
@@ -294,5 +294,3 @@ int openConfigFile(char *filename);
 void closeConfigFile(void);
 char* nextConfigToken(void);
 char* getCurrentConfigToken(void);
-
-

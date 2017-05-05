@@ -1,5 +1,5 @@
 /*
-**  igmpproxy - IGMP proxy based multicast router 
+**  igmpproxy - IGMP proxy based multicast router
 **  Copyright (C) 2005 Johnny Egeland <johnny@rlo.org>
 **
 **  This program is free software; you can redistribute it and/or modify
@@ -32,18 +32,18 @@
 **
 */
 /**
-*   igmp.h - Recieves IGMP requests, and handle them 
+*   igmp.h - Recieves IGMP requests, and handle them
 *            appropriately...
 */
 
 #include "igmpproxy.h"
 #include "igmpv3.h"
- 
-// Globals                  
-uint32_t     allhosts_group;          /* All hosts addr in net order */
+
+// Globals
+uint32_t     allhosts_group;            /* All hosts addr in net order */
 uint32_t     allrouters_group;          /* All hosts addr in net order */
-uint32_t     alligmp3_group;          /* IGMPv3 addr in net order */
-              
+uint32_t     alligmp3_group;            /* IGMPv3 addr in net order */
+
 extern int MRouterFD;
 
 /*
@@ -92,13 +92,12 @@ static const char *igmpPacketKind(unsigned int type, unsigned int code) {
     case IGMP_V2_MEMBERSHIP_REPORT:  return "V2 member report  ";
     case IGMP_V3_MEMBERSHIP_REPORT:  return "V3 member report  ";
     case IGMP_V2_LEAVE_GROUP:        return "Leave message     ";
-    
+
     default:
         sprintf(unknown, "unk: 0x%02x/0x%02x    ", type, code);
         return unknown;
     }
 }
-
 
 /**
  * Process a newly received IGMP packet that is sitting in the input
@@ -129,9 +128,9 @@ void acceptIgmp(int recvlen) {
         return;
     }
 
-    /* 
+    /*
      * this is most likely a message from the kernel indicating that
-     * a new src grp pair message has arrived and so, it would be 
+     * a new src grp pair message has arrived and so, it would be
      * necessary to install a route into the kernel for this.
      */
     if (ip->ip_p == 0) {
@@ -140,17 +139,17 @@ void acceptIgmp(int recvlen) {
         }
         else {
             struct IfDesc *checkVIF;
-            
+
             for(i=0; i<MAX_UPS_VIFS; i++)
             {
-		if(-1 != upStreamVif[i])
-		{
+                if(-1 != upStreamVif[i])
+                {
                     // Check if the source address matches a valid address on upstream vif.
                     checkVIF = getIfByIx( upStreamVif[i] );
                     if(checkVIF == 0) {
                         my_log(LOG_ERR, 0, "Upstream VIF was null.");
                         return;
-                    } 
+                    }
                     else if(src == checkVIF->InAdr.s_addr) {
                         my_log(LOG_NOTICE, 0, "Route activation request from %s for %s is from myself. Ignoring.",
                             inetFmt(src, s1), inetFmt(dst, s2));
@@ -210,7 +209,7 @@ void acceptIgmp(int recvlen) {
         group = igmp->igmp_group.s_addr;
         acceptGroupReport(src, group);
         return;
-    
+
     case IGMP_V3_MEMBERSHIP_REPORT:
         igmpv3 = (struct igmpv3_report *)(recv_buf + iphdrlen);
         grec = &igmpv3->igmp_grec[0];
@@ -245,12 +244,12 @@ void acceptIgmp(int recvlen) {
                 (&grec->grec_src[nsrcs] + grec->grec_auxwords * 4);
         }
         return;
-    
+
     case IGMP_V2_LEAVE_GROUP:
         group = igmp->igmp_group.s_addr;
         acceptLeaveMessage(src, group);
         return;
-    
+
     case IGMP_MEMBERSHIP_QUERY:
         return;
 
@@ -300,7 +299,7 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
 
 }
 
-/* 
+/*
  * Call build_igmp() to build an IGMP message in the output packet buffer.
  * Then send the message from the interface with IP address 'src' to
  * destination 'dst'.
@@ -346,6 +345,6 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
     }
 
     my_log(LOG_DEBUG, 0, "SENT %s from %-15s to %s",
-	    igmpPacketKind(type, code), src == INADDR_ANY ? "INADDR_ANY" :
-	    inetFmt(src, s1), inetFmt(dst, s2));
+        igmpPacketKind(type, code),
+        src == INADDR_ANY ? "INADDR_ANY" : inetFmt(src, s1), inetFmt(dst, s2));
 }

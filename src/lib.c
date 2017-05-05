@@ -1,5 +1,5 @@
 /*
-**  igmpproxy - IGMP proxy based multicast router 
+**  igmpproxy - IGMP proxy based multicast router
 **  Copyright (C) 2005 Johnny Egeland <johnny@rlo.org>
 **
 **  This program is free software; you can redistribute it and/or modify
@@ -41,15 +41,15 @@ char s1[19];        /* buffers to hold the string representations  */
 char s2[19];        /* of IP addresses, to be passed to inet_fmt() */
 char s3[19];        /* or inet_fmts().                             */
 char s4[19];
-            
+
 /*
-** Formats 'InAdr' into a dotted decimal string. 
+** Formats 'InAdr' into a dotted decimal string.
 **
 ** returns: - pointer to 'St'
-**          
+**
 */
 char *fmtInAdr( char *St, struct in_addr InAdr ) {
-    sprintf( St, "%u.%u.%u.%u", 
+    sprintf( St, "%u.%u.%u.%u",
              ((uint8_t *)&InAdr.s_addr)[ 0 ],
              ((uint8_t *)&InAdr.s_addr)[ 1 ],
              ((uint8_t *)&InAdr.s_addr)[ 2 ],
@@ -68,7 +68,6 @@ char *inetFmt(uint32_t addr, char *s) {
     sprintf(s, "%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
     return(s);
 }
-
 
 /*
  * Convert an IP subnet number in u_long (network) format into a printable
@@ -97,18 +96,18 @@ char *inetFmts(uint32_t addr, uint32_t mask, char *s) {
 
 /*
  * inet_cksum extracted from:
- *			P I N G . C
+ *      P I N G . C
  *
  * Author -
- *	Mike Muuss
- *	U. S. Army Ballistic Research Laboratory
- *	December, 1983
+ *      Mike Muuss
+ *      U. S. Army Ballistic Research Laboratory
+ *      December, 1983
  * Modified at Uc Berkeley
  *
  * (ping.c) Status -
- *	Public Domain.  Distribution Unlimited.
+ *      Public Domain.  Distribution Unlimited.
  *
- *			I N _ C K S U M
+ *      I N _ C K S U M
  *
  * Checksum routine for Internet Protocol family headers (C Version)
  *
@@ -140,10 +139,7 @@ uint16_t inetChksum(uint16_t *addr, int len) {
      * add back carry outs from top 16 bits to low 16 bits
      */
     sum = (sum >> 16) + (sum & 0xffff); /* add hi 16 to low 16 */
-    sum += (sum >> 16);         /* add carry */
-    answer = ~sum;              /* truncate to 16 bits */
+    sum += (sum >> 16);                 /* add carry */
+    answer = ~sum;                      /* truncate to 16 bits */
     return(answer);
 }
-
-
-
