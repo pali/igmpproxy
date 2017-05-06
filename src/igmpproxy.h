@@ -103,10 +103,13 @@ extern char s4[];
 
 /* syslog.c
  */
-extern bool Log2Stderr; // Log to stderr instead of to syslog
-extern int  LogLevel;   // Log threshold, LOG_WARNING .... LOG_DEBUG
+#define LOG_TRACE ( LOG_DEBUG + 1 )
+#define LOG_INIT ( LOG_DEBUG + 2 )
 
-void my_log( int Serverity, int Errno, const char *FmtSt, ... );
+extern bool Log2Stderr; // Log to stderr instead of to syslog
+extern int  LogLevel;   // Log threshold, LOG_WARNING .... LOG_DEBUG, LOG_TRACE, LOG_INIT
+
+void my_log( int Severity, int Errno, const char *FmtSt, ... );
 
 /* ifvc.c
  */
