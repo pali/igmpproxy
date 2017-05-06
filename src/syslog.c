@@ -38,9 +38,18 @@
 int  LogLevel   = LOG_WARNING;
 bool Log2Stderr = false;
 
+// Prototypes
+#ifdef DEVEL_LOGGING
+void print_log_prefix( int Severity, const char *func, int line );
+#else
 void print_log_prefix( int Severity );
+#endif
 
+#ifdef DEVEL_LOGGING
+void _my_log( int Severity, int Errno, const char *func, int line, const char *FmtSt, ... )
+#else
 void my_log( int Severity, int Errno, const char *FmtSt, ... )
+#endif
 {
     char LogMsg[128];
 
@@ -54,7 +63,12 @@ void my_log( int Severity, int Errno, const char *FmtSt, ... )
 
     if ( Severity <= LogLevel ) {
         if ( Log2Stderr ) {
+
+#ifdef DEVEL_LOGGING
+            print_log_prefix( Severity, func, line );
+#else
             print_log_prefix( Severity );
+#endif
             fprintf( stderr, "%s\n", LogMsg );
         }
         else if ( Severity <= LOG_DEBUG ) {
@@ -67,7 +81,11 @@ void my_log( int Severity, int Errno, const char *FmtSt, ... )
         exit( -1 );
 }
 
+#ifdef DEVEL_LOGGING
+void print_log_prefix( int Severity, const char *func, int line )
+#else
 void print_log_prefix( int Severity )
+#endif
 {
     const char SeverityVc[][6] = {
             "EMERG", "ALERT", "CRITI", "ERROR", "Warn ", "Notic", "Info ", "Debug", "Trace", "Init "};
@@ -83,4 +101,7 @@ void print_log_prefix( int Severity )
     // now we have something like:
     // [Trace] 14:37,628
     fprintf( stderr, "[%5s] %s,%03d ", SeverityPt, currentTime, milli );
+#ifdef DEVEL_LOGGING
+    fprintf( stderr, "%s():%d: ", func, line );
+#endif
 }
