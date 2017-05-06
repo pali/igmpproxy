@@ -46,9 +46,9 @@ void print_log_prefix( int Severity );
 #endif
 
 #ifdef DEVEL_LOGGING
-void _my_log( int Severity, int Errno, const char *func, int line, const char *FmtSt, ... )
+void __my_log( int Severity, int Errno, char *func, int line, char *FmtSt, ... )
 #else
-void my_log( int Severity, int Errno, const char *FmtSt, ... )
+void _my_log( int Severity, int Errno, char *FmtSt, ... )
 #endif
 {
     char LogMsg[128];
@@ -82,7 +82,7 @@ void my_log( int Severity, int Errno, const char *FmtSt, ... )
 }
 
 #ifdef DEVEL_LOGGING
-void print_log_prefix( int Severity, const char *func, int line )
+void print_log_prefix( int Severity, char *func, int line )
 #else
 void print_log_prefix( int Severity )
 #endif
@@ -102,6 +102,7 @@ void print_log_prefix( int Severity )
     // [Trace] 14:37,628
     fprintf( stderr, "[%5s] %s,%03d ", SeverityPt, currentTime, milli );
 #ifdef DEVEL_LOGGING
+    // print function_name():<line_number>
     fprintf( stderr, "%s():%d: ", func, line );
 #endif
 }
