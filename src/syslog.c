@@ -33,6 +33,7 @@
 */
 
 #include "igmpproxy.h"
+#include <sys/time.h>
 
 int  LogLevel   = LOG_WARNING;
 bool Log2Stderr = false;
@@ -50,8 +51,15 @@ void my_log( int Severity, int Errno, const char *FmtSt, ... )
     va_end( ArgPt );
 
     if ( Severity <= LogLevel ) {
-        if ( Log2Stderr )
-            fprintf( stderr, "%s\n", LogMsg );
+        if ( Log2Stderr ) {
+            struct timeval curTime;
+            gettimeofday( &curTime, NULL );
+            int  milli           = curTime.tv_usec / 1000;
+            char currentTime[84] = "";
+            strftime( currentTime, 84, "%H:%M:%S", localtime( &curTime.tv_sec ) );
+
+            fprintf( stderr, "%s,%d: %s\n", currentTime, milli, LogMsg );
+        }
         else {
             syslog( Severity, "%s", LogMsg );
         }
