@@ -38,8 +38,8 @@ struct igmpv3_report {
     struct igmpv3_grec igmp_grec[0];
 };
 
-#define IGMPV3_MODE_IS_INCLUDE   1
-#define IGMPV3_MODE_IS_EXCLUDE   2
+#define IGMPV3_MODE_IS_INCLUDE 1
+#define IGMPV3_MODE_IS_EXCLUDE 2
 #define IGMPV3_CHANGE_TO_INCLUDE 3
 #define IGMPV3_CHANGE_TO_EXCLUDE 4
 #define IGMPV3_ALLOW_NEW_SOURCES 5
