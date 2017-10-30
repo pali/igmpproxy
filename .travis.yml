@@ -1,11 +1,317 @@
 language: c
 
-compiler:
-  - gcc
-  - clang
+matrix:
+  include:
+    - compiler: gcc-4.4
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - gcc-4.4-multilib
+    - compiler: gcc-4.4
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - gcc-4.4
+    - compiler: gcc-4.6
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - gcc-4.6-multilib
+    - compiler: gcc-4.6
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - gcc-4.6
+    - compiler: gcc-4.7
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - gcc-4.7-multilib
+    - compiler: gcc-4.7
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - gcc-4.7
+    - compiler: gcc-4.8
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - gcc-4.8-multilib
+    - compiler: gcc-4.8
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - gcc-4.8
+    - compiler: gcc-4.9
+      env: PLATFORM=x86
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - libc6-dev:i386
+            - gcc-4.9-multilib
+    - compiler: gcc-4.9
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-4.9
+    - compiler: gcc-5
+      env: PLATFORM=x86
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - libc6-dev:i386
+            - gcc-5-multilib
+    - compiler: gcc-5
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-5
+    - compiler: gcc-6
+      env: PLATFORM=x86
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - libc6-dev:i386
+            - gcc-6-multilib
+    - compiler: gcc-6
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-6
+    - compiler: gcc-7
+      env: PLATFORM=x86
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - libc6-dev:i386
+            - gcc-7-multilib
+    - compiler: gcc-7
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-7
+    - compiler: clang-3.3
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - clang-3.3
+            - gcc-multilib
+    - compiler: clang-3.3
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - clang-3.3
+    - compiler: clang-3.4
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - clang-3.4
+            - gcc-multilib
+    - compiler: clang-3.4
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - clang-3.4
+    - compiler: clang-3.5
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - clang-3.5
+            - gcc-multilib
+    - compiler: clang-3.5
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - clang-3.5
+    - compiler: clang-3.6
+      env: PLATFORM=x86
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-3.6
+          packages:
+            - libc6-dev:i386
+            - clang-3.6
+            - gcc-multilib
+    - compiler: clang-3.6
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-3.6
+          packages:
+            - clang-3.6
+    - compiler: clang-3.7
+      env: PLATFORM=x86
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-3.7
+          packages:
+            - libc6-dev:i386
+            - clang-3.7
+            - gcc-multilib
+    - compiler: clang-3.7
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-3.7
+          packages:
+            - clang-3.7
+    - compiler: clang-3.8
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - clang-3.8
+            - gcc-multilib
+    - compiler: clang-3.8
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - clang-3.8
+    - compiler: clang-3.9
+      env: PLATFORM=x86
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - clang-3.9
+            - gcc-multilib
+    - compiler: clang-3.9
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          packages:
+            - clang-3.9
+    - compiler: clang-4.0
+      env: PLATFORM=x86
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-4.0
+          packages:
+            - libc6-dev:i386
+            - clang-4.0
+            - gcc-multilib
+    - compiler: clang-4.0
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-4.0
+          packages:
+            - clang-4.0
+    - compiler: clang-5.0
+      env: PLATFORM=x86
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - libc6-dev:i386
+            - clang-5.0
+            - gcc-multilib
+    - compiler: clang-5.0
+      env: PLATFORM=x86_64
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+    - compiler: gcc
+      dist: precise
+      env: PLATFORM=x86
+           DIST=precise
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - gcc-multilib
+    - compiler: gcc
+      dist: precise
+      env: PLATFORM=x86_64
+           DIST=precise
+    - compiler: gcc
+      dist: trusty
+      env: PLATFORM=x86
+           DIST=trusty
+      addons:
+        apt:
+          packages:
+            - libc6-dev:i386
+            - gcc-multilib
+    - compiler: gcc
+      dist: trusty
+      env: PLATFORM=x86_64
+           DIST=trusty
+    - compiler: tcc
+      dist: precise
+      env: PLATFORM=x86_64
+           DIST=precise
+      addons:
+        apt:
+          packages:
+            - tcc
+    - compiler: tcc
+      dist: trusty
+      env: PLATFORM=x86_64
+           DIST=trusty
+      addons:
+        apt:
+          packages:
+            - tcc
 
 before_script:
-  - export CFLAGS="-W -Wall -O2 -g"
+  - if ! which "$CC" &>/dev/null; then export CC=${CC%%-*}; fi
+  - CFLAGS="-W -Wall -O2 -g"
+  - if [ "$PLATFORM" = "x86" ]; then CFLAGS="-m32 $CFLAGS"; fi
+  - export CFLAGS
 
 script:
   - ./autogen.sh
