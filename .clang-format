@@ -1,0 +1,12 @@
+BasedOnStyle: LLVM
+Language: Cpp
+
+IndentWidth: 4
+ContinuationIndentWidth: 8
+
+ColumnLimit: 120
+
+MaxEmptyLinesToKeep: 2
+
+AllowShortFunctionsOnASingleLine: Empty
+AlwaysBreakBeforeMultilineStrings: true
