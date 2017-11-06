@@ -40,19 +40,19 @@
 
 // Structure to keep configuration for VIFs...
 struct vifconfig {
-    char*               name;
-    short               state;
-    int                 ratelimit;
-    int                 threshold;
+    char *name;
+    short state;
+    int   ratelimit;
+    int   threshold;
 
     // Keep allowed nets for VIF.
-    struct SubnetList*  allowednets;
+    struct SubnetList *allowednets;
 
     // Allowed Groups
-    struct SubnetList*  allowedgroups;
+    struct SubnetList *allowedgroups;
 
     // Next config in list...
-    struct vifconfig*   next;
+    struct vifconfig *next;
 };
 
 // Structure to keep vif configuration
@@ -62,20 +62,21 @@ struct vifconfig *vifconf;
 static struct Config commonConfig;
 
 // Prototypes...
-struct vifconfig *parsePhyintToken(void);
-struct SubnetList *parseSubnetAddress(char *addrstr);
+struct vifconfig * parsePhyintToken( void );
+struct SubnetList *parseSubnetAddress( char *addrstr );
 
 /**
 *   Initializes common config..
 */
-static void initCommonConfig(void) {
-    commonConfig.robustnessValue = DEFAULT_ROBUSTNESS;
-    commonConfig.queryInterval = INTERVAL_QUERY;
+static void initCommonConfig( void )
+{
+    commonConfig.robustnessValue       = DEFAULT_ROBUSTNESS;
+    commonConfig.queryInterval         = INTERVAL_QUERY;
     commonConfig.queryResponseInterval = INTERVAL_QUERY_RESPONSE;
 
     // The defaults are calculated from other settings.
-    commonConfig.startupQueryInterval = (unsigned int)(INTERVAL_QUERY / 4);
-    commonConfig.startupQueryCount = DEFAULT_ROBUSTNESS;
+    commonConfig.startupQueryInterval = (unsigned int) ( INTERVAL_QUERY / 4 );
+    commonConfig.startupQueryCount    = DEFAULT_ROBUSTNESS;
 
     // Default values for leave intervals...
     commonConfig.lastMemberQueryInterval = INTERVAL_QUERY_RESPONSE;
@@ -86,13 +87,14 @@ static void initCommonConfig(void) {
 
     // aimwang: default value
     commonConfig.defaultInterfaceState = IF_STATE_DISABLED;
-    commonConfig.rescanVif = 0;
+    commonConfig.rescanVif             = 0;
 }
 
 /**
 *   Returns a pointer to the common config...
 */
-struct Config *getCommonConfig(void) {
+struct Config *getCommonConfig( void )
+{
     return &commonConfig;
 }
 
@@ -100,81 +102,84 @@ struct Config *getCommonConfig(void) {
 *   Loads the configuration from file, and stores the config in
 *   respective holders...
 */
-int loadConfig(char *configFile) {
-    struct vifconfig  *tmpPtr;
-    struct vifconfig  **currPtr = &vifconf;
-    char *token;
+int loadConfig( char *configFile )
+{
+    struct vifconfig * tmpPtr;
+    struct vifconfig **currPtr = &vifconf;
+    char *             token;
 
     // Initialize common config
     initCommonConfig();
 
     // Test config file reader...
-    if(!openConfigFile(configFile)) {
-        my_log(LOG_ERR, 0, "Unable to open configfile from %s", configFile);
+    if ( !openConfigFile( configFile ) ) {
+        my_log( LOG_ERR, 0, "Unable to open configfile from %s", configFile );
     }
 
     // Get first token...
     token = nextConfigToken();
-    if(token == NULL) {
-        my_log(LOG_ERR, 0, "Config file was empty.");
+    if ( token == NULL ) {
+        my_log( LOG_ERR, 0, "Config file was empty." );
     }
 
     // Loop until all configuration is read.
     while ( token != NULL ) {
         // Check token...
-        if(strcmp("phyint", token)==0) {
+        if ( strcmp( "phyint", token ) == 0 ) {
             // Got a phyint token... Call phyint parser
-            my_log(LOG_DEBUG, 0, "Config: Got a phyint token.");
+            my_log( LOG_DEBUG, 0, "Config: Got a phyint token." );
             tmpPtr = parsePhyintToken();
-            if(tmpPtr == NULL) {
+            if ( tmpPtr == NULL ) {
                 // Unparsable token... Exit...
                 closeConfigFile();
-                my_log(LOG_WARNING, 0, "Unknown token '%s' in configfile", token);
+                my_log( LOG_WARNING, 0, "Unknown token '%s' in configfile", token );
                 return 0;
-            } else {
+            }
+            else {
 
-                my_log(LOG_DEBUG, 0, "IF name : %s", tmpPtr->name);
-                my_log(LOG_DEBUG, 0, "Next ptr : %x", tmpPtr->next);
-                my_log(LOG_DEBUG, 0, "Ratelimit : %d", tmpPtr->ratelimit);
-                my_log(LOG_DEBUG, 0, "Threshold : %d", tmpPtr->threshold);
-                my_log(LOG_DEBUG, 0, "State : %d", tmpPtr->state);
-                my_log(LOG_DEBUG, 0, "Allowednet ptr : %x", tmpPtr->allowednets);
+                my_log( LOG_DEBUG, 0, "IF name : %s", tmpPtr->name );
+                my_log( LOG_DEBUG, 0, "Next ptr : %x", tmpPtr->next );
+                my_log( LOG_DEBUG, 0, "Ratelimit : %d", tmpPtr->ratelimit );
+                my_log( LOG_DEBUG, 0, "Threshold : %d", tmpPtr->threshold );
+                my_log( LOG_DEBUG, 0, "State : %d", tmpPtr->state );
+                my_log( LOG_DEBUG, 0, "Allowednet ptr : %x", tmpPtr->allowednets );
 
                 // Insert config, and move temppointer to next location...
                 *currPtr = tmpPtr;
-                currPtr = &tmpPtr->next;
+                currPtr  = &tmpPtr->next;
             }
         }
-        else if(strcmp("quickleave", token)==0) {
+        else if ( strcmp( "quickleave", token ) == 0 ) {
             // Got a quickleave token....
-            my_log(LOG_DEBUG, 0, "Config: Quick leave mode enabled.");
+            my_log( LOG_DEBUG, 0, "Config: Quick leave mode enabled." );
             commonConfig.fastUpstreamLeave = 1;
 
             // Read next token...
             token = nextConfigToken();
             continue;
         }
-        else if(strcmp("defaultdown", token)==0) {
+        else if ( strcmp( "defaultdown", token ) == 0 ) {
             // Got a defaultdown token...
-            my_log(LOG_DEBUG, 0, "Config: interface Default as down stream.");
+            my_log( LOG_DEBUG, 0, "Config: interface Default as down stream." );
             commonConfig.defaultInterfaceState = IF_STATE_DOWNSTREAM;
 
             // Read next token...
             token = nextConfigToken();
             continue;
         }
-        else if(strcmp("rescanvif", token)==0) {
+        else if ( strcmp( "rescanvif", token ) == 0 ) {
             // Got a defaultdown token...
-            my_log(LOG_DEBUG, 0, "Config: Need detect new interace.");
+            my_log( LOG_DEBUG, 0, "Config: Need detect new interace." );
             commonConfig.rescanVif = 1;
 
             // Read next token...
             token = nextConfigToken();
             continue;
-        } else {
+        }
+        else {
             // Unparsable token... Exit...
             closeConfigFile();
-            my_log(LOG_WARNING, 0, "Unknown token '%s' in configfile", token);
+            my_log( LOG_WARNING, 0, "Unknown token '%s' in configfile", token );
             return 0;
         }
         // Get token that was not recognized by phyint parser.
@@ -190,29 +195,29 @@ int loadConfig(char *configFile) {
 /**
 *   Appends extra VIF configuration from config file.
 */
-void configureVifs(void) {
-    unsigned Ix;
-    struct IfDesc *Dp;
+void configureVifs( void )
+{
+    unsigned          Ix;
+    struct IfDesc *   Dp;
     struct vifconfig *confPtr;
 
     // If no config is available, just return...
-    if(vifconf == NULL) {
+    if ( vifconf == NULL ) {
         return;
     }
 
     // Loop through all VIFs...
-    for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
-        if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
+    for ( Ix = 0; ( Dp = getIfByIx( Ix ) ); Ix++ ) {
+        if ( Dp->InAdr.s_addr && !( Dp->Flags & IFF_LOOPBACK ) ) {
 
             // Now try to find a matching config...
-            for( confPtr = vifconf; confPtr; confPtr = confPtr->next) {
+            for ( confPtr = vifconf; confPtr; confPtr = confPtr->next ) {
 
                 // I the VIF names match...
-                if(strcmp(Dp->Name, confPtr->name)==0) {
+                if ( strcmp( Dp->Name, confPtr->name ) == 0 ) {
                     struct SubnetList *vifLast;
 
-                    my_log(LOG_DEBUG, 0, "Found config for %s", Dp->Name);
-
+                    my_log( LOG_DEBUG, 0, "Found config for %s", Dp->Name );
 
                     // Set the VIF state
                     Dp->state = confPtr->state;
@@ -221,7 +226,8 @@ void configureVifs(void) {
                     Dp->ratelimit = confPtr->ratelimit;
 
                     // Go to last allowed net on VIF...
-                    for(vifLast = Dp->allowednets; vifLast->next; vifLast = vifLast->next);
+                    for ( vifLast = Dp->allowednets; vifLast->next; vifLast = vifLast->next )
+                        ;
 
                     // Insert the configured nets...
                     vifLast->next = confPtr->allowednets;
@@ -235,42 +241,44 @@ void configureVifs(void) {
     }
 }
 
-
 /**
 *   Internal function to parse phyint config
 */
-struct vifconfig *parsePhyintToken(void) {
-    struct vifconfig  *tmpPtr;
+struct vifconfig *parsePhyintToken( void )
+{
+    struct vifconfig *  tmpPtr;
     struct SubnetList **anetPtr, **agrpPtr;
-    char *token;
-    short parseError = 0;
+    char *              token;
+    short               parseError = 0;
 
     // First token should be the interface name....
     token = nextConfigToken();
 
     // Sanitycheck the name...
-    if(token == NULL) return NULL;
-    if(strlen(token) >= IF_NAMESIZE) return NULL;
-    my_log(LOG_DEBUG, 0, "Config: IF: Config for interface %s.", token);
+    if ( token == NULL )
+        return NULL;
+    if ( strlen( token ) >= IF_NAMESIZE )
+        return NULL;
+    my_log( LOG_DEBUG, 0, "Config: IF: Config for interface %s.", token );
 
     // Allocate memory for configuration...
-    tmpPtr = (struct vifconfig*)malloc(sizeof(struct vifconfig));
-    if(tmpPtr == NULL) {
-        my_log(LOG_ERR, 0, "Out of memory.");
+    tmpPtr = (struct vifconfig *) malloc( sizeof( struct vifconfig ) );
+    if ( tmpPtr == NULL ) {
+        my_log( LOG_ERR, 0, "Out of memory." );
     }
 
     // Set default values...
-    tmpPtr->next = NULL;    // Important to avoid seg fault...
-    tmpPtr->ratelimit = 0;
-    tmpPtr->threshold = 1;
-    tmpPtr->state = commonConfig.defaultInterfaceState;
-    tmpPtr->allowednets = NULL;
+    tmpPtr->next          = NULL; // Important to avoid seg fault...
+    tmpPtr->ratelimit     = 0;
+    tmpPtr->threshold     = 1;
+    tmpPtr->state         = commonConfig.defaultInterfaceState;
+    tmpPtr->allowednets   = NULL;
     tmpPtr->allowedgroups = NULL;
 
     // Make a copy of the token to store the IF name
     tmpPtr->name = strdup( token );
-    if(tmpPtr->name == NULL) {
-        my_log(LOG_ERR, 0, "Out of memory.");
+    if ( tmpPtr->name == NULL ) {
+        my_log( LOG_ERR, 0, "Out of memory." );
     }
 
     // Set the altnet pointer to the allowednets pointer.
@@ -279,68 +287,70 @@ struct vifconfig *parsePhyintToken(void) {
 
     // Parse the rest of the config..
     token = nextConfigToken();
-    while(token != NULL) {
-        if(strcmp("altnet", token)==0) {
+    while ( token != NULL ) {
+        if ( strcmp( "altnet", token ) == 0 ) {
             // Altnet...
             token = nextConfigToken();
-            my_log(LOG_DEBUG, 0, "Config: IF: Got altnet token %s.",token);
+            my_log( LOG_DEBUG, 0, "Config: IF: Got altnet token %s.", token );
 
-            *anetPtr = parseSubnetAddress(token);
-            if(*anetPtr == NULL) {
+            *anetPtr = parseSubnetAddress( token );
+            if ( *anetPtr == NULL ) {
                 parseError = 1;
-                my_log(LOG_WARNING, 0, "Unable to parse subnet address.");
+                my_log( LOG_WARNING, 0, "Unable to parse subnet address." );
                 break;
-            } else {
-                anetPtr = &(*anetPtr)->next;
+            }
+            else {
+                anetPtr = &( *anetPtr )->next;
             }
         }
-        else if(strcmp("whitelist", token)==0) {
+        else if ( strcmp( "whitelist", token ) == 0 ) {
             // Whitelist
             token = nextConfigToken();
-            my_log(LOG_DEBUG, 0, "Config: IF: Got whitelist token %s.", token);
+            my_log( LOG_DEBUG, 0, "Config: IF: Got whitelist token %s.", token );
 
-            *agrpPtr = parseSubnetAddress(token);
-            if(*agrpPtr == NULL) {
+            *agrpPtr = parseSubnetAddress( token );
+            if ( *agrpPtr == NULL ) {
                 parseError = 1;
-                my_log(LOG_WARNING, 0, "Unable to parse subnet address.");
+                my_log( LOG_WARNING, 0, "Unable to parse subnet address." );
                 break;
-            } else {
-                agrpPtr = &(*agrpPtr)->next;
+            }
+            else {
+                agrpPtr = &( *agrpPtr )->next;
             }
         }
-        else if(strcmp("upstream", token)==0) {
+        else if ( strcmp( "upstream", token ) == 0 ) {
             // Upstream
-            my_log(LOG_DEBUG, 0, "Config: IF: Got upstream token.");
+            my_log( LOG_DEBUG, 0, "Config: IF: Got upstream token." );
             tmpPtr->state = IF_STATE_UPSTREAM;
         }
-        else if(strcmp("downstream", token)==0) {
+        else if ( strcmp( "downstream", token ) == 0 ) {
             // Downstream
-            my_log(LOG_DEBUG, 0, "Config: IF: Got downstream token.");
+            my_log( LOG_DEBUG, 0, "Config: IF: Got downstream token." );
             tmpPtr->state = IF_STATE_DOWNSTREAM;
         }
-        else if(strcmp("disabled", token)==0) {
+        else if ( strcmp( "disabled", token ) == 0 ) {
             // Disabled
-            my_log(LOG_DEBUG, 0, "Config: IF: Got disabled token.");
+            my_log( LOG_DEBUG, 0, "Config: IF: Got disabled token." );
             tmpPtr->state = IF_STATE_DISABLED;
         }
-        else if(strcmp("ratelimit", token)==0) {
+        else if ( strcmp( "ratelimit", token ) == 0 ) {
             // Ratelimit
             token = nextConfigToken();
-            my_log(LOG_DEBUG, 0, "Config: IF: Got ratelimit token '%s'.", token);
+            my_log( LOG_DEBUG, 0, "Config: IF: Got ratelimit token '%s'.", token );
             tmpPtr->ratelimit = atoi( token );
-            if(tmpPtr->ratelimit < 0) {
-                my_log(LOG_WARNING, 0, "Ratelimit must be 0 or more.");
+            if ( tmpPtr->ratelimit < 0 ) {
+                my_log( LOG_WARNING, 0, "Ratelimit must be 0 or more." );
                 parseError = 1;
                 break;
             }
         }
-        else if(strcmp("threshold", token)==0) {
+        else if ( strcmp( "threshold", token ) == 0 ) {
             // Threshold
             token = nextConfigToken();
-            my_log(LOG_DEBUG, 0, "Config: IF: Got threshold token '%s'.", token);
+            my_log( LOG_DEBUG, 0, "Config: IF: Got threshold token '%s'.", token );
             tmpPtr->threshold = atoi( token );
-            if(tmpPtr->threshold <= 0 || tmpPtr->threshold > 255) {
-                my_log(LOG_WARNING, 0, "Threshold must be between 1 and 255.");
+            if ( tmpPtr->threshold <= 0 || tmpPtr->threshold > 255 ) {
+                my_log( LOG_WARNING, 0, "Threshold must be between 1 and 255." );
                 parseError = 1;
                 break;
             }
@@ -353,9 +363,9 @@ struct vifconfig *parsePhyintToken(void) {
     }
 
     // Clean up after a parseerror...
-    if(parseError) {
-        free(tmpPtr->name);
-        free(tmpPtr);
+    if ( parseError ) {
+        free( tmpPtr->name );
+        free( tmpPtr );
         tmpPtr = NULL;
     }
 
@@ -366,42 +376,43 @@ struct vifconfig *parsePhyintToken(void) {
 *   Parses a subnet address string on the format
 *   a.b.c.d/n into a SubnetList entry.
 */
-struct SubnetList *parseSubnetAddress(char *addrstr) {
-    struct SubnetList   *tmpSubnet;
-    char                *tmpStr;
-    uint32_t            addr = 0x00000000;
-    uint32_t            mask = 0xFFFFFFFF;
+struct SubnetList *parseSubnetAddress( char *addrstr )
+{
+    struct SubnetList *tmpSubnet;
+    char *             tmpStr;
+    uint32_t           addr = 0x00000000;
+    uint32_t           mask = 0xFFFFFFFF;
 
     // First get the network part of the address...
-    tmpStr = strtok(addrstr, "/");
-    addr = inet_addr(tmpStr);
+    tmpStr = strtok( addrstr, "/" );
+    addr   = inet_addr( tmpStr );
 
-    tmpStr = strtok(NULL, "/");
-    if(tmpStr != NULL) {
-        int bitcnt = atoi(tmpStr);
-        if(bitcnt < 0 || bitcnt > 32) {
-            my_log(LOG_WARNING, 0, "The bits part of the address is invalid : %d.",tmpStr);
+    tmpStr = strtok( NULL, "/" );
+    if ( tmpStr != NULL ) {
+        int bitcnt = atoi( tmpStr );
+        if ( bitcnt < 0 || bitcnt > 32 ) {
+            my_log( LOG_WARNING, 0, "The bits part of the address is invalid : %d.", tmpStr );
             return NULL;
         }
 
-        if (bitcnt == 0)
+        if ( bitcnt == 0 )
             mask = 0;
         else
-            mask <<= (32 - bitcnt);
+            mask <<= ( 32 - bitcnt );
     }
 
-    if(addr == -1) {
-        my_log(LOG_WARNING, 0, "Unable to parse address token '%s'.", addrstr);
+    if ( addr == -1 ) {
+        my_log( LOG_WARNING, 0, "Unable to parse address token '%s'.", addrstr );
         return NULL;
     }
 
-    tmpSubnet = (struct SubnetList*) malloc(sizeof(struct SubnetList));
+    tmpSubnet              = (struct SubnetList *) malloc( sizeof( struct SubnetList ) );
     tmpSubnet->subnet_addr = addr;
-    tmpSubnet->subnet_mask = ntohl(mask);
-    tmpSubnet->next = NULL;
+    tmpSubnet->subnet_mask = ntohl( mask );
+    tmpSubnet->next        = NULL;
 
-    my_log(LOG_DEBUG, 0, "Config: IF: Altnet: Parsed altnet to %s.",
-            inetFmts(tmpSubnet->subnet_addr, tmpSubnet->subnet_mask,s1));
+    my_log( LOG_DEBUG, 0, "Config: IF: Altnet: Parsed altnet to %s.",
+            inetFmts( tmpSubnet->subnet_addr, tmpSubnet->subnet_mask, s1 ) );
 
     return tmpSubnet;
 }

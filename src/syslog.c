@@ -33,31 +33,76 @@
 */
 
 #include "igmpproxy.h"
+#include <sys/time.h>
 
-int LogLevel = LOG_WARNING;
+int  LogLevel   = LOG_WARNING;
 bool Log2Stderr = false;
 
-void my_log( int Severity, int Errno, const char *FmtSt, ... )
-{
-    char LogMsg[ 128 ];
+// Prototypes
+#ifdef DEVEL_LOGGING
+void print_log_prefix( int Severity, const char *func, int line );
+#else
+void print_log_prefix( int Severity );
+#endif
 
-    va_list ArgPt;
+#ifdef DEVEL_LOGGING
+void __my_log( int Severity, int Errno, char *func, int line, char *FmtSt, ... )
+#else
+void _my_log( int Severity, int Errno, char *FmtSt, ... )
+#endif
+{
+    char LogMsg[128];
+
+    va_list  ArgPt;
     unsigned Ln;
     va_start( ArgPt, FmtSt );
     Ln = vsnprintf( LogMsg, sizeof( LogMsg ), FmtSt, ArgPt );
-    if( Errno > 0 )
-        snprintf( LogMsg + Ln, sizeof( LogMsg ) - Ln,
-                "; Errno(%d): %s", Errno, strerror(Errno) );
+    if ( Errno > 0 )
+        snprintf( LogMsg + Ln, sizeof( LogMsg ) - Ln, "; Errno(%d): %s", Errno, strerror( Errno ) );
     va_end( ArgPt );
 
-    if (Severity <= LogLevel) {
-        if (Log2Stderr)
-            fprintf(stderr, "%s\n", LogMsg);
-        else {
-            syslog(Severity, "%s", LogMsg);
+    if ( Severity <= LogLevel ) {
+        if ( Log2Stderr ) {
+
+#ifdef DEVEL_LOGGING
+            print_log_prefix( Severity, func, line );
+#else
+            print_log_prefix( Severity );
+#endif
+            fprintf( stderr, "%s\n", LogMsg );
+        }
+        else if ( Severity <= LOG_DEBUG ) {
+            // we log only known severity levels to syslog
+            syslog( Severity, "%s", LogMsg );
         }
     }
 
-    if( Severity <= LOG_ERR )
+    if ( Severity <= LOG_ERR )
         exit( -1 );
+}
+
+#ifdef DEVEL_LOGGING
+void print_log_prefix( int Severity, char *func, int line )
+#else
+void print_log_prefix( int Severity )
+#endif
+{
+    const char SeverityVc[][6] = {
+            "EMERG", "ALERT", "CRITI", "ERROR", "Warn ", "Notic", "Info ", "Debug", "Trace", "Init "};
+
+    const char *SeverityPt = Severity < 0 || Severity >= (int) VCMC( SeverityVc ) ? "*****" : SeverityVc[Severity];
+
+    struct timeval curTime;
+    gettimeofday( &curTime, NULL );
+    int  milli           = curTime.tv_usec / 1000;
+    char currentTime[84] = "";
+    strftime( currentTime, 84, "%H:%M:%S", localtime( &curTime.tv_sec ) );
+
+    // now we have something like:
+    // [Trace] 14:37,628
+    fprintf( stderr, "[%5s] %s,%03d ", SeverityPt, currentTime, milli );
+#ifdef DEVEL_LOGGING
+    // print function_name():<line_number>
+    fprintf( stderr, "%s():%d: ", func, line );
+#endif
 }

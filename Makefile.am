@@ -8,3 +8,15 @@ ChangeLog:
 AUTHORS: ChangeLog
 	( echo "Authors and contributors, in alphabetical order: "; echo; \
 	sed -r "s/^Author: (.*)/\1/;t;d" $< | sort -u ) > $@
+
+if HAVE_CLANG_FORMAT
+
+.PHONY: reformat
+
+reformat:
+	@echo "Reformatting header files..."
+	@CLANG_FORMAT@ -style=file -i `find . -name "*.h"`
+	@echo "Reformatting C files..."
+	@CLANG_FORMAT@ -style=file -i `find . -name "*.c"`
+
+endif
