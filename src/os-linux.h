@@ -1,9 +1,11 @@
 #define _LINUX_IN_H
-#include <linux/types.h>
-#include <linux/mroute.h>
+#define _BSD_SOURCE
+#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/igmp.h>
 #include <sys/types.h>
+#include <linux/types.h>
+#include <linux/mroute.h>
 
 #define IGMP_V3_MEMBERSHIP_REPORT 0x22
 
