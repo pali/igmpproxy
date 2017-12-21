@@ -309,7 +309,7 @@ matrix:
 
 before_script:
   - if ! which "$CC" &>/dev/null; then export CC=${CC%%-*}; fi
-  - CFLAGS="-W -Wall -Werror -std=c99 -O2 -g"
+  - CFLAGS="-W -Wall -Werror -Wno-error=unused-but-set-variable -O2 -g"
   - if [ "$PLATFORM" = "x86" ]; then CFLAGS="-m32 $CFLAGS"; fi
   - export CFLAGS
 
