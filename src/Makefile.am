@@ -17,6 +17,7 @@ igmpproxy_SOURCES = \
 	os-linux.h \
 	os-netbsd.h \
 	os-openbsd.h \
+	os-qnxnto.h \
 	request.c \
 	rttable.c \
 	syslog.c \
