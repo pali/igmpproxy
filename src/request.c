@@ -160,7 +160,6 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
 void sendGroupSpecificMemberQuery(void *argument) {
     struct  Config  *conf = getCommonConfig();
     struct  IfDesc  *Dp;
-    struct  RouteTable  *croute;
     int     Ix;
 
     // Cast argument to correct type...

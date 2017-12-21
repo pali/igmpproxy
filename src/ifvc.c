@@ -49,7 +49,7 @@ void rebuildIfVc () {
     struct IfDesc *Dp;
     struct ifreq  *IfPt, *IfNext;
     uint32_t addr, subnet, mask;
-    int Sock, Ix;
+    int Sock;
 
     // Get the config.
     struct Config *config = getCommonConfig();

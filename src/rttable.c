@@ -363,8 +363,6 @@ int insertRoute(uint32_t group, int ifx) {
     // Send join message upstream, if the route has no joined flag...
     if(croute->upstrState != ROUTESTATE_JOINED) {
         // Send Join request upstream
-        struct IfDesc*      downstrIf;
-        downstrIf = getIfByIx(ifx);
         sendJoinLeaveUpstream(croute, 1);
     }
 
@@ -663,7 +661,6 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate) {
     struct   MRouteDesc mrDesc;
     struct   IfDesc     *Dp;
     unsigned            Ix;
-    int                 i;
 
     for (int i = 0; i < MAX_ORIGINS; i++) {
         if (route->originAddrs[i] == 0 || route->upstrVif == -1) {
