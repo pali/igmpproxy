@@ -1,5 +1,5 @@
 SUBDIRS = doc src
-EXTRA_DIST = GPL.txt Stanford.txt
+EXTRA_DIST = autogen.sh GPL.txt Stanford.txt
 dist_sysconf_DATA = igmpproxy.conf
 
 ChangeLog:
