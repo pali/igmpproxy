@@ -35,6 +35,9 @@
 *   igmpproxy.h - Header file for common includes.
 */
 
+#include "config.h"
+#include "os.h"
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -56,9 +59,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#include "os.h"
-#include "config.h"
 
 /*
  * Limit on length of route data
