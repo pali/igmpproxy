@@ -34,6 +34,13 @@
 
 #include "igmpproxy.h"
 
+/* We need a temporary copy to not break strict aliasing rules */
+static inline uint32_t s_addr_from_sockaddr(const struct sockaddr *addr) {
+    struct sockaddr_in addr_in;
+    memcpy(&addr_in, addr, sizeof(addr_in));
+    return addr_in.sin_addr.s_addr;
+}
+
 struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
 
 /* aimwang: add for detect interface and rebuild IfVc record */
@@ -105,17 +112,15 @@ void rebuildIfVc () {
         }
 
         // Get the interface adress...
-        Dp->InAdr = ((struct sockaddr_in *)&IfPt->ifr_addr)->sin_addr;
+        Dp->InAdr.s_addr = s_addr_from_sockaddr(&IfPt->ifr_addr);
         addr = Dp->InAdr.s_addr;
 
         memcpy( IfReq.ifr_name, Dp->Name, sizeof( IfReq.ifr_name ) );
-        IfReq.ifr_addr.sa_family = AF_INET;
-        ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr = addr;
 
         // Get the subnet mask...
         if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0)
             my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
-        mask = ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr;
+        mask = s_addr_from_sockaddr(&IfReq.ifr_netmask);
         subnet = addr & mask;
 
         if ( ioctl( Sock, SIOCGIFFLAGS, &IfReq ) < 0 )
@@ -126,7 +131,7 @@ void rebuildIfVc () {
         {
             if ( ioctl( Sock, SIOCGIFDSTADDR, &IfReq ) < 0 )
                 my_log(LOG_ERR, errno, "ioctl SIOCGIFDSTADDR for %s", IfReq.ifr_name);
-            addr = ((struct sockaddr_in *)&IfReq.ifr_dstaddr)->sin_addr.s_addr;
+            addr = s_addr_from_sockaddr(&IfReq.ifr_dstaddr);
             subnet = addr & mask;
         }
 
@@ -258,17 +263,15 @@ void buildIfVc(void) {
             }
 
             // Get the interface adress...
-            IfDescEp->InAdr = ((struct sockaddr_in *)&IfPt->ifr_addr)->sin_addr;
+            IfDescEp->InAdr.s_addr = s_addr_from_sockaddr(&IfPt->ifr_addr);
             addr = IfDescEp->InAdr.s_addr;
 
             memcpy( IfReq.ifr_name, IfDescEp->Name, sizeof( IfReq.ifr_name ) );
-            IfReq.ifr_addr.sa_family = AF_INET;
-            ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr = addr;
 
             // Get the subnet mask...
             if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0)
                 my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
-            mask = ((struct sockaddr_in *)&IfReq.ifr_addr)->sin_addr.s_addr;
+            mask = s_addr_from_sockaddr(&IfReq.ifr_netmask);
             subnet = addr & mask;
 
             /* get if flags
@@ -290,7 +293,7 @@ void buildIfVc(void) {
             {
                 if ( ioctl( Sock, SIOCGIFDSTADDR, &IfReq ) < 0 )
                     my_log(LOG_ERR, errno, "ioctl SIOCGIFDSTADDR for %s", IfReq.ifr_name);
-                addr = ((struct sockaddr_in *)&IfReq.ifr_dstaddr)->sin_addr.s_addr;
+                addr = s_addr_from_sockaddr(&IfReq.ifr_dstaddr);
                 subnet = addr & mask;
             }
 
