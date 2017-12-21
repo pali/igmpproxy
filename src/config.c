@@ -390,7 +390,7 @@ struct SubnetList *parseSubnetAddress(char *addrstr) {
             mask <<= (32 - bitcnt);
     }
 
-    if(addr == -1) {
+    if(addr == (uint32_t)-1) {
         my_log(LOG_WARNING, 0, "Unable to parse address token '%s'.", addrstr);
         return NULL;
     }

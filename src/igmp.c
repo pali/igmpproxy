@@ -111,7 +111,7 @@ void acceptIgmp(int recvlen) {
     struct igmpv3_grec *grec;
     int ipdatalen, iphdrlen, ngrec, nsrcs, i;
 
-    if (recvlen < sizeof(struct ip)) {
+    if (recvlen < (int)sizeof(struct ip)) {
         my_log(LOG_WARNING, 0,
             "received packet too short (%u bytes) for IP header", recvlen);
         return;

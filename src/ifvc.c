@@ -247,7 +247,7 @@ void buildIfVc(void) {
             //IfDescEp->allowednets = NULL;
 
             // Set the index to -1 by default.
-            IfDescEp->index = -1;
+            IfDescEp->index = (unsigned int)-1;
 
             /* don't retrieve more info for non-IP interfaces
              */
