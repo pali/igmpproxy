@@ -238,8 +238,8 @@ void buildIfVc(void) {
                     sizeof(struct sockaddr_in)
 #endif
             );
-        if (IfNext < IfPt + 1)
-            IfNext = IfPt + 1;
+            if (IfNext < IfPt + 1)
+                IfNext = IfPt + 1;
 
             strncpy( IfDescEp->Name, IfPt->ifr_name, sizeof( IfDescEp->Name ) );
 
