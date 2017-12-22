@@ -105,7 +105,7 @@ threshols value will be ignored. This setting is optional, and by default the th
 
 .B altnet
 .I networkaddr
-...
+\&...
 .RS
 Defines alternate sources for multicasting and IGMP data. The network address must be on the 
 following format 'a.b.c.d/n'. By default the router will accept data from sources on the same
