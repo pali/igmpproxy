@@ -1,5 +1,5 @@
 #define _LINUX_IN_H
-#define _BSD_SOURCE
+#define _GNU_SOURCE
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/igmp.h>
