@@ -136,7 +136,7 @@ response times. Often used or large groups should be defined first, as parsing e
 a group matches an entry.
 
 You may also specify whitelist entries for the upstream interface. Only igmp membership reports
-for explicitely whitelisted multicast groups will be sent out on the upstream interface. This
+for explicitly whitelisted multicast groups will be sent out on the upstream interface. This
 is useful if you want to use multicast groups only between your downstream interfaces, like SSDP
 from a UPnP server.
 .RE
