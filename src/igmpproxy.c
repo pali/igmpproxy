@@ -45,10 +45,11 @@
 #include "igmpproxy.h"
 
 static const char Usage[] =
-"Usage: igmpproxy [-h] [-d] [-v [-v]] <configfile>\n"
+"Usage: igmpproxy [-h] [-n] [-d] [-v [-v]] <configfile>\n"
 "\n"
 "   -h   Display this help screen\n"
-"   -d   Run in debug mode. Output all messages on stderr\n"
+"   -n   Do not run as a daemon\n"
+"   -d   Run in debug mode. Output all messages on stderr. Implies -n.\n"
 "   -v   Be verbose. Give twice to see even debug messages.\n"
 "\n"
 PACKAGE_STRING "\n"
@@ -78,12 +79,17 @@ int     upStreamIfIdx[MAX_UPS_VIFS];
 int main( int ArgCn, char *ArgVc[] ) {
 
     int c;
+    bool NotAsDaemon = true;
 
     // Parse the commandline options and setup basic settings..
-    while ((c = getopt(ArgCn, ArgVc, "vdh")) != -1) {
+    while ((c = getopt(ArgCn, ArgVc, "vdnh")) != -1) {
         switch (c) {
+        case 'n':
+            NotAsDaemon = true;
+            break;
         case 'd':
             Log2Stderr = true;
+            NotAsDaemon = true;
             break;
         case 'v':
             if (LogLevel == LOG_INFO)
@@ -132,7 +138,7 @@ int main( int ArgCn, char *ArgVc[] ) {
             break;
         }
 
-        if ( !Log2Stderr ) {
+        if ( !NotAsDaemon ) {
 
             // Only daemon goes past this line...
             if (fork()) exit(0);
