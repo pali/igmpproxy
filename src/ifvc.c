@@ -120,7 +120,7 @@ void rebuildIfVc () {
         // Get the subnet mask...
         if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0)
             my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
-        mask = s_addr_from_sockaddr(&IfReq.ifr_netmask);
+        mask = s_addr_from_sockaddr(&IfReq.ifr_addr); // Do not use ifr_netmask as it is not available on freebsd
         subnet = addr & mask;
 
         if ( ioctl( Sock, SIOCGIFFLAGS, &IfReq ) < 0 )
@@ -271,7 +271,7 @@ void buildIfVc(void) {
             // Get the subnet mask...
             if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0)
                 my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
-            mask = s_addr_from_sockaddr(&IfReq.ifr_netmask);
+            mask = s_addr_from_sockaddr(&IfReq.ifr_addr); // Do not use ifr_netmask as it is not available on freebsd
             subnet = addr & mask;
 
             /* get if flags
