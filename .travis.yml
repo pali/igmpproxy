@@ -336,15 +336,47 @@ matrix:
         apt:
           packages:
             - tcc
+    - compiler: gcc
+      dist: trusty
+      env: PLATFORM=x32
+      addons:
+        apt:
+          packages:
+            - libc6-dev-x32
+            - gcc-multilib
+    - compiler: powerpc-linux-gnu-gcc
+      dist: trusty
+      env: PLATFORM=powerpc
+      addons:
+        apt:
+          packages:
+            - gcc-powerpc-linux-gnu
+            - libc6-dev-powerpc-cross
+            - qemu-user
+    - compiler: arm-linux-gnueabi-gcc
+      dist: trusty
+      env: PLATFORM=arm
+      addons:
+        apt:
+          packages:
+            - gcc-arm-linux-gnueabi
+            - libc6-dev-armel-cross
+            - qemu-user
 
 before_script:
   - if ! which "$CC" &>/dev/null; then export CC=${CC%%-*}; fi
-  - CFLAGS="-W -Wall -Werror -g"
-  - if [ -z "$NOOPT" ]; then CFLAGS="$CFLAGS -O2"; fi
-  - if [ "$PLATFORM" = "x86" ]; then CFLAGS="-m32 $CFLAGS"; fi
-  - export CFLAGS
+  - export CFLAGS="-W -Wall -Werror -g"
+  - if [ -z "$NOOPT" ]; then export CFLAGS="$CFLAGS -O2"; fi
+  - case "$PLATFORM" in
+      "x86")       export CFLAGS="-m32 $CFLAGS" ;;
+      "x86_64"|"") ;;
+      "x32")       export CFLAGS="-mx32 $CFLAGS"; export LDFLAGS="--static" ;;
+      "powerpc")   export CONFIGURE_FLAGS="--host=powerpc-linux-gnu"; export LDFLAGS="--static" ;;
+      "arm")       export CONFIGURE_FLAGS="--host=arm-linux-gnueabi"; export LDFLAGS="--static" ;;
+      *)           echo "Unsupported platform '$PLATFORM'"; exit 1 ;;
+    esac
 
 script:
   - ./autogen.sh
-  - ./configure
+  - ./configure $CONFIGURE_FLAGS
   - make
