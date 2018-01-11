@@ -79,7 +79,7 @@ int     upStreamIfIdx[MAX_UPS_VIFS];
 int main( int ArgCn, char *ArgVc[] ) {
 
     int c;
-    bool NotAsDaemon = true;
+    bool NotAsDaemon = false;
 
     // Parse the commandline options and setup basic settings..
     while ((c = getopt(ArgCn, ArgVc, "vdnh")) != -1) {
