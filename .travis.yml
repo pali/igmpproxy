@@ -367,6 +367,7 @@ before_script:
   - if ! which "$CC" &>/dev/null; then export CC=${CC%%-*}; fi
   - export CFLAGS="-W -Wall -Werror -g"
   - if [ -z "$NOOPT" ]; then export CFLAGS="$CFLAGS -O2"; fi
+  - if [[ "$CC" =~ "gcc" ]]; then export CFLAGS="$CFLAGS -Wno-error=unused-but-set-variable"; fi # needed for AC_PROG_CC_C99
   - case "$PLATFORM" in
       "x86")       export CFLAGS="-m32 $CFLAGS" ;;
       "x86_64"|"") ;;
