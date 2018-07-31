@@ -396,7 +396,7 @@ struct SubnetList *parseSubnetAddress(char *addrstr) {
     }
 
     tmpSubnet = (struct SubnetList*) malloc(sizeof(struct SubnetList));
-    tmpSubnet->subnet_addr = addr;
+    tmpSubnet->subnet_addr = (addr & mask);
     tmpSubnet->subnet_mask = ntohl(mask);
     tmpSubnet->next = NULL;
 
