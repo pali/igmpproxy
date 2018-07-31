@@ -186,7 +186,7 @@ extern int upStreamIfIdx[MAX_UPS_VIFS];
  */
 void rebuildIfVc( void );
 void buildIfVc( void );
-struct IfDesc *getIfByName( const char *IfName );
+struct IfDesc *getIfByName( const char *IfName, int iponly );
 struct IfDesc *getIfByIx( unsigned Ix );
 struct IfDesc *getIfByAddress( uint32_t Ix );
 struct IfDesc *getIfByVifIndex( unsigned vifindex );
