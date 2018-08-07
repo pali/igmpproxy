@@ -53,14 +53,14 @@ static void debugQueue(void);
 /**
 *   Initializes the callout queue
 */
-void callout_init(void) {
+void timer_init(void) {
     queue = NULL;
 }
 
 /**
 *   Clears all scheduled timeouts...
 */
-void free_all_callouts(void) {
+void timer_destroy(void) {
     struct timeOutQueue *p;
 
     while (queue) {
@@ -75,7 +75,7 @@ void free_all_callouts(void) {
  * elapsed_time seconds have passed; perform all the events that should
  * happen.
  */
-void age_callout_queue(int elapsed_time) {
+void timer_executePassedTimers(int elapsed_time) {
     struct timeOutQueue *ptr;
     struct timeOutQueue *_queue = NULL;
     struct timeOutQueue *last = NULL;

@@ -1,6 +1,6 @@
 sbin_PROGRAMS = igmpproxy
 igmpproxy_SOURCES = \
-	callout.c \
+	timer.c \
 	config.c \
 	confread.c \
 	ifvc.c \
