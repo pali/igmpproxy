@@ -71,20 +71,6 @@ void logRouteTable(const char *header);
 int internAgeRoute(struct RouteTable *croute);
 int internUpdateKernelRoute(struct RouteTable *route, int activate);
 
-// Socket for sending join or leave requests.
-int mcGroupSock = 0;
-
-
-/**
-*   Function for retrieving the Multicast Group socket.
-*/
-int getMcGroupSock(void) {
-    if( ! mcGroupSock ) {
-        mcGroupSock = openUdpSocket( INADDR_ANY, 0 );;
-    }
-    return mcGroupSock;
-}
-
 /**
 *   Initializes the routing table.
 */
@@ -102,12 +88,11 @@ void initRouteTable(void) {
             my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
                          inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
 
-            //k_join(allrouters_group, Dp->InAdr.s_addr);
-            joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
+            mcgroup_sendJoin(Dp, allrouters_group);
 
             my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
                          inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-            joinMcGroup( getMcGroupSock(), Dp, alligmp3_group );
+            mcgroup_sendJoin(Dp, alligmp3_group);
         }
     }
 }
@@ -155,8 +140,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
                                  inetFmt(route->group, s1),
                                  inetFmt(upstrIf->InAdr.s_addr, s2));
 
-                    //k_join(route->group, upstrIf->InAdr.s_addr);
-                    joinMcGroup( getMcGroupSock(), upstrIf, route->group );
+                    mcgroup_sendJoin(upstrIf, route->group);
 
                     route->upstrState = ROUTESTATE_JOINED;
                 } else {
@@ -170,8 +154,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
                                  inetFmt(route->group, s1),
                                  inetFmt(upstrIf->InAdr.s_addr, s2));
 
-                    //k_leave(route->group, upstrIf->InAdr.s_addr);
-                    leaveMcGroup( getMcGroupSock(), upstrIf, route->group );
+                    mcgroup_sendLeave(upstrIf, route->group);
 
                     route->upstrState = ROUTESTATE_NOTJOINED;
                 }

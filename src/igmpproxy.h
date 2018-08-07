@@ -252,9 +252,8 @@ int openUdpSocket( uint32_t PeerInAdr, uint16_t PeerPort );
 
 /* mcgroup.c
  */
-int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
-int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
-
+int mcgroup_sendJoin(struct IfDesc *IfDp, uint32_t mcastaddr);
+int mcgroup_sendLeave(struct IfDesc *IfDp, uint32_t mcastaddr);
 
 /* rttable.c
  */
@@ -266,7 +265,6 @@ void ageActiveRoutes(void);
 void setRouteLastMemberMode(uint32_t group);
 int lastMemberGroupAge(uint32_t group);
 int interfaceInRoute(int32_t group, int Ix);
-int getMcGroupSock(void);
 
 /* request.c
  */
