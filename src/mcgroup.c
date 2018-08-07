@@ -39,27 +39,30 @@
 #include "igmpproxy.h"
 
 
+// Socket for sending join or leave requests.
+static int mcGroupSock = 0;
+
 /**
 *   Common function for joining or leaving a MCast group.
 */
-static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr ) {
+static int sendJoinLeave(struct IfDesc *IfDp, int optname, uint32_t mcastaddr) {
     struct ip_mreq CtlReq;
-    const char *CmdSt = Cmd == 'j' ? "join" : "leave";
 
     memset(&CtlReq, 0, sizeof(CtlReq));
     CtlReq.imr_multiaddr.s_addr = mcastaddr;
     CtlReq.imr_interface.s_addr = IfDp->InAdr.s_addr;
 
-    {
-        my_log( LOG_NOTICE, 0, "%sMcGroup: %s on %s", CmdSt,
-            inetFmt( mcastaddr, s1 ), IfDp ? IfDp->Name : "<any>" );
+    my_log(LOG_NOTICE, 0, "mcgroup_send%s: %s on %s",
+            optname == IP_ADD_MEMBERSHIP ? "Join" : "Leave", inetFmt( mcastaddr, s1 ), IfDp->Name);
+
+    if (!mcGroupSock) {
+        mcGroupSock = openUdpSocket(INADDR_ANY, 0);
     }
 
-    if( setsockopt( UdpSock, IPPROTO_IP,
-          Cmd == 'j' ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP,
-          (void *)&CtlReq, sizeof( CtlReq ) ) )
+    if (setsockopt(mcGroupSock, IPPROTO_IP, optname, (void *)&CtlReq, sizeof( CtlReq )))
     {
-        my_log( LOG_WARNING, errno, "MRT_%s_MEMBERSHIP failed", Cmd == 'j' ? "ADD" : "DROP" );
+        my_log( LOG_WARNING, errno, "MRT_%s_MEMBERSHIP failed",
+                optname == IP_ADD_MEMBERSHIP ? "ADD" : "DROP" );
         return 1;
     }
 
@@ -68,13 +71,11 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcasta
 
 /**
 *   Joins the MC group with the address 'McAdr' on the interface 'IfName'.
-*   The join is bound to the UDP socket 'UdpSock', so if this socket is
-*   closed the membership is dropped.
 *
 *   @return 0 if the function succeeds, 1 if parameters are wrong or the join fails
 */
-int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr ) {
-    return joinleave( 'j', UdpSock, IfDp, mcastaddr );
+int mcgroup_sendJoin(struct IfDesc *IfDp, uint32_t mcastaddr) {
+    return sendJoinLeave(IfDp, IP_ADD_MEMBERSHIP, mcastaddr);
 }
 
 /**
@@ -82,6 +83,6 @@ int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr ) {
 *
 *   @return 0 if the function succeeds, 1 if parameters are wrong or the join fails
 */
-int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr ) {
-    return joinleave( 'l', UdpSock, IfDp, mcastaddr );
+int mcgroup_sendLeave(struct IfDesc *IfDp, uint32_t mcastaddr) {
+    return sendJoinLeave(IfDp, IP_DROP_MEMBERSHIP, mcastaddr);
 }

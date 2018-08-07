@@ -162,7 +162,7 @@ void rebuildIfVc () {
             my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
             Dp->state = IF_STATE_DOWNSTREAM;
             addVIF(Dp);
-            joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
+            mcgroup_sendJoin(Dp, allrouters_group);
         }
 
         // addVIF when found new IF
@@ -170,7 +170,7 @@ void rebuildIfVc () {
             my_log(LOG_NOTICE, 0, "%s [New]", Dp->Name);
             Dp->state = config->defaultInterfaceState;
             addVIF(Dp);
-            joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
+            mcgroup_sendJoin(Dp, allrouters_group);
             IfDescEp++;
         }
 
@@ -187,7 +187,7 @@ void rebuildIfVc () {
         if (IF_STATE_LOST == Dp->state) {
             my_log(LOG_NOTICE, 0, "%s [Downstream -> Hidden]", Dp->Name);
             Dp->state = IF_STATE_HIDDEN;
-            leaveMcGroup( getMcGroupSock(), Dp, allrouters_group );
+            mcgroup_sendLeave(Dp, allrouters_group);
             delVIF(Dp);
         }
     }
