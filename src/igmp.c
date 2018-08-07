@@ -103,7 +103,7 @@ static const char *igmpPacketKind(unsigned int type, unsigned int code) {
  * Process a newly received IGMP packet that is sitting in the input
  * packet buffer.
  */
-void igmp_accept(int recvlen) {
+static void acceptIgmp(int recvlen) {
     register uint32_t src, dst, group;
     struct ip *ip;
     struct igmp *igmp;
@@ -260,6 +260,24 @@ void igmp_accept(int recvlen) {
             inetFmt(dst, s2));
         return;
     }
+}
+
+/*   Receive IGMP packet
+ *
+ *   @return 0 if the function succeeds, 1 if recvfrom fails
+ */
+int igmp_receive(void)
+{
+    socklen_t dummy = 0;
+    int recvlen = recvfrom(MRouterFD, recv_buf, RECV_BUF_SIZE, 0, NULL, &dummy);
+    if (recvlen < 0) {
+        if (errno != EINTR) my_log(LOG_ERR, errno, "recvfrom");
+        return 1;
+    }
+
+    acceptIgmp(recvlen);
+
+    return 0;
 }
 
 
