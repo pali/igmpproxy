@@ -66,14 +66,13 @@ struct RouteTable {
 // Keeper for the routing table...
 static struct RouteTable   *routing_table;
 
-// Prototypes
-void logRouteTable(const char *header);
-int internAgeRoute(struct RouteTable *croute);
-int internUpdateKernelRoute(struct RouteTable *route, int activate);
-
 // Socket for sending join or leave requests.
-int mcGroupSock = 0;
+static int mcGroupSock = 0;
 
+// Prototypes
+static void logRouteTable(const char *header);
+static int internAgeRoute(struct RouteTable *croute);
+static int internUpdateKernelRoute(struct RouteTable *route, int activate);
 
 /**
 *   Function for retrieving the Multicast Group socket.
@@ -586,7 +585,7 @@ static int removeRoute(struct RouteTable*  croute) {
 /**
 *   Ages a specific route
 */
-int internAgeRoute(struct RouteTable*  croute) {
+static int internAgeRoute(struct RouteTable*  croute) {
     struct Config *conf = getCommonConfig();
     int result = 0;
 
@@ -657,7 +656,7 @@ int internAgeRoute(struct RouteTable*  croute) {
 *   Updates the Kernel routing table. If activate is 1, the route
 *   is (re-)activated. If activate is false, the route is removed.
 */
-int internUpdateKernelRoute(struct RouteTable *route, int activate) {
+static int internUpdateKernelRoute(struct RouteTable *route, int activate) {
     struct   MRouteDesc mrDesc;
     struct   IfDesc     *Dp;
     unsigned            Ix;
@@ -708,7 +707,7 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate) {
 *   Debug function that writes the routing table entries
 *   to the log.
 */
-void logRouteTable(const char *header) {
+static void logRouteTable(const char *header) {
         struct RouteTable   *croute = routing_table;
         unsigned            rcount = 0;
 

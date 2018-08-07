@@ -51,12 +51,14 @@
     #define MAX_TOKEN_LENGTH  30    // Default max token length
 #endif
 
-FILE            *confFilePtr;       // File handle pointer
-char            *iBuffer;           // Inputbuffer for reading...
-unsigned int    bufPtr;             // Buffer position pointer.
-unsigned int    readSize;           // Number of bytes in buffer after last read...
-char    cToken[MAX_TOKEN_LENGTH];   // Token buffer...
-short   validToken;
+static struct {
+    FILE            *confFilePtr;       // File handle pointer
+    char            *iBuffer;           // Inputbuffer for reading...
+    unsigned int    bufPtr;             // Buffer position pointer.
+    unsigned int    readSize;           // Number of bytes in buffer after last read...
+    char    cToken[MAX_TOKEN_LENGTH];   // Token buffer...
+    short   validToken;
+} conf;
 
 /**
 *   Opens config file specified by filename.
@@ -64,27 +66,27 @@ short   validToken;
 int openConfigFile(char *filename) {
 
     // Set the buffer to null initially...
-    iBuffer = NULL;
+    conf.iBuffer = NULL;
 
     // Open the file for reading...
-    confFilePtr = fopen(filename, "r");
+    conf.confFilePtr = fopen(filename, "r");
 
     // On error, return false
-    if(confFilePtr == NULL) {
+    if(conf.confFilePtr == NULL) {
         return 0;
     }
 
     // Allocate memory for inputbuffer...
-    iBuffer = (char*) malloc( sizeof(char) * READ_BUFFER_SIZE );
+    conf.iBuffer = (char*) malloc( sizeof(char) * READ_BUFFER_SIZE );
 
-    if(iBuffer == NULL) {
+    if(conf.iBuffer == NULL) {
         closeConfigFile();
         return 0;
     }
 
     // Reset bufferpointer and readsize
-    bufPtr = 0;
-    readSize = 0;
+    conf.bufPtr = 0;
+    conf.readSize = 0;
 
     return 1;
 }
@@ -94,12 +96,12 @@ int openConfigFile(char *filename) {
 */
 void closeConfigFile(void) {
     // Close the file.
-    if(confFilePtr!=NULL) {
-        fclose(confFilePtr);
+    if(conf.confFilePtr != NULL) {
+        fclose(conf.confFilePtr);
     }
     // Free input buffer memory...
-    if(iBuffer != NULL) {
-        free(iBuffer);
+    if(conf.iBuffer != NULL) {
+        free(conf.iBuffer);
     }
 }
 
@@ -109,10 +111,10 @@ void closeConfigFile(void) {
 */
 char *nextConfigToken(void) {
 
-    validToken = 0;
+    conf.validToken = 0;
 
     // If no file or buffer, return NULL
-    if(confFilePtr == NULL || iBuffer == NULL) {
+    if(conf.confFilePtr == NULL || conf.iBuffer == NULL) {
         return NULL;
     }
 
@@ -124,35 +126,35 @@ char *nextConfigToken(void) {
         // Outer buffer fill loop...
         while ( !finished ) {
             // If readpointer is at the end of the buffer, we should read next chunk...
-            if(bufPtr == readSize) {
+            if(conf.bufPtr == conf.readSize) {
                 // Fill up the buffer...
-                readSize = fread (iBuffer, sizeof(char), READ_BUFFER_SIZE, confFilePtr);
-                bufPtr = 0;
+                conf.readSize = fread (conf.iBuffer, sizeof(char), READ_BUFFER_SIZE, conf.confFilePtr);
+                conf.bufPtr = 0;
 
                 // If the readsize is 0, we should just return...
-                if(readSize == 0) {
+                if(conf.readSize == 0) {
                     return NULL;
                 }
             }
 
             // Inner char loop...
-            while ( bufPtr < readSize && !finished ) {
+            while ( conf.bufPtr < conf.readSize && !finished ) {
 
                 //printf("Char %s", iBuffer[bufPtr]);
 
                 // Break loop on \0
-                if(iBuffer[bufPtr] == '\0') {
+                if(conf.iBuffer[conf.bufPtr] == '\0') {
                     break;
                 }
 
                 if( commentFound ) {
-                    if( iBuffer[bufPtr] == '\n' ) {
+                    if( conf.iBuffer[conf.bufPtr] == '\n' ) {
                         commentFound = 0;
                     }
                 } else {
 
                     // Check current char...
-                    switch(iBuffer[bufPtr]) {
+                    switch(conf.iBuffer[conf.bufPtr]) {
                     case '#':
                         // Found a comment start...
                         commentFound = 1;
@@ -164,14 +166,14 @@ char *nextConfigToken(void) {
                     case ' ':
                         // Newline, CR, Tab and space are end of token, or ignored.
                         if(tokenPtr > 0) {
-                            cToken[tokenPtr] = '\0';    // EOL
+                            conf.cToken[tokenPtr] = '\0';    // EOL
                             finished = 1;
                         }
                         break;
 
                     default:
                         // Append char to token...
-                        cToken[tokenPtr++] = iBuffer[bufPtr];
+                        conf.cToken[tokenPtr++] = conf.iBuffer[conf.bufPtr];
                         break;
                     }
                 }
@@ -179,15 +181,15 @@ char *nextConfigToken(void) {
                 // Check end of token buffer !!!
                 if(tokenPtr == MAX_TOKEN_LENGTH - 1) {
                     // Prevent buffer overrun...
-                    cToken[tokenPtr] = '\0';
+                    conf.cToken[tokenPtr] = '\0';
                     finished = 1;
                 }
 
                 // Next char...
-                bufPtr++;
+                conf.bufPtr++;
             }
             // If the readsize is less than buffersize, we assume EOF.
-            if(readSize < READ_BUFFER_SIZE && bufPtr == readSize) {
+            if(conf.readSize < READ_BUFFER_SIZE && conf.bufPtr == conf.readSize) {
                 if (tokenPtr > 0)
                     finished = 1;
                 else
@@ -195,8 +197,8 @@ char *nextConfigToken(void) {
             }
         }
         if(tokenPtr>0) {
-            validToken = 1;
-            return cToken;
+            conf.validToken = 1;
+            return conf.cToken;
         }
     }
     return NULL;
@@ -208,5 +210,5 @@ char *nextConfigToken(void) {
 *   if no tokens are available.
 */
 char *getCurrentConfigToken(void) {
-    return validToken ? cToken : NULL;
+    return conf.validToken ? conf.cToken : NULL;
 }
