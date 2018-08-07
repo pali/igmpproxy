@@ -266,8 +266,7 @@ static void acceptIgmp(int recvlen) {
  *
  *   @return 0 if the function succeeds, 1 if recvfrom fails
  */
-int igmp_receive(void)
-{
+int igmp_receive(void) {
     socklen_t dummy = 0;
     int recvlen = recvfrom(MRouterFD, recv_buf, RECV_BUF_SIZE, 0, NULL, &dummy);
     if (recvlen < 0) {
