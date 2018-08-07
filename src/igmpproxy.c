@@ -232,7 +232,7 @@ int igmpProxyInit(void) {
     }
 
     // Initialize IGMP
-    initIgmp();
+    igmp_init();
     // Initialize Routing table
     initRouteTable();
     // Initialize timer
@@ -326,7 +326,7 @@ void igmpProxyRun(void) {
                     continue;
                 }
 
-                acceptIgmp(recvlen);
+                igmp_accept(recvlen);
             }
         }
 

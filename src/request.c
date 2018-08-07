@@ -188,7 +188,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
                 if (interfaceInRoute(gvDesc->group ,Dp->index)) {
 
                     // Send a group specific membership query...
-                    sendIgmp(Dp->InAdr.s_addr, gvDesc->group,
+                    igmp_send(Dp->InAdr.s_addr, gvDesc->group,
                             IGMP_MEMBERSHIP_QUERY,
                             conf->lastMemberQueryInterval * IGMP_TIMER_SCALE,
                             gvDesc->group, 0);
@@ -219,7 +219,7 @@ void sendGeneralMembershipQuery(void) {
         if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
             if(Dp->state == IF_STATE_DOWNSTREAM) {
                 // Send the membership query...
-                sendIgmp(Dp->InAdr.s_addr, allhosts_group,
+                igmp_send(Dp->InAdr.s_addr, allhosts_group,
                          IGMP_MEMBERSHIP_QUERY,
                          conf->queryResponseInterval * IGMP_TIMER_SCALE, 0, 0);
 

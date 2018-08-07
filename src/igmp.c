@@ -32,7 +32,7 @@
 **
 */
 /**
-*   igmp.h - Recieves IGMP requests, and handle them
+*   igmp.c - Receives IGMP requests, and handle them
 *            appropriately...
 */
 
@@ -50,7 +50,7 @@ extern int MRouterFD;
  * Open and initialize the igmp socket, and fill in the non-changing
  * IP header fields in the output packet buffer.
  */
-void initIgmp(void) {
+void igmp_init(void) {
     struct ip *ip;
 
     recv_buf = malloc(RECV_BUF_SIZE);
@@ -103,7 +103,7 @@ static const char *igmpPacketKind(unsigned int type, unsigned int code) {
  * Process a newly received IGMP packet that is sitting in the input
  * packet buffer.
  */
-void acceptIgmp(int recvlen) {
+void igmp_accept(int recvlen) {
     register uint32_t src, dst, group;
     struct ip *ip;
     struct igmp *igmp;
@@ -304,7 +304,7 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
  * Then send the message from the interface with IP address 'src' to
  * destination 'dst'.
  */
-void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
+void igmp_send(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
     struct sockaddr_in sdst;
     int setloop = 0, setigmpsource = 0;
 
