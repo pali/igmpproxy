@@ -283,8 +283,6 @@ void timer_destroy(void);
 void timer_executePassedTimers(int);
 int timer_nextTimer(void);
 int timer_setTimer(int, timer_f, void *);
-int timer_clearTimer(int);
-int timer_leftTimer(int);
 
 /* confread.c
  */
