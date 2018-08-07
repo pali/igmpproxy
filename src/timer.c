@@ -47,20 +47,29 @@ struct timeOutQueue {
     int                     time;   // Time offset for next event
 };
 
-// Method for dumping the Queue to the log.
-static void debugQueue(void);
+
+/**
+ * debugging utility
+ */
+static void debugQueue(void) {
+    struct timeOutQueue  *ptr;
+
+    for (ptr = queue; ptr; ptr = ptr->next) {
+        my_log(LOG_DEBUG, 0, "(Id:%d, Time:%d) ", ptr->id, ptr->time);
+    }
+}
 
 /**
 *   Initializes the callout queue
 */
-void callout_init(void) {
+void timer_init(void) {
     queue = NULL;
 }
 
 /**
 *   Clears all scheduled timeouts...
 */
-void free_all_callouts(void) {
+void timer_destroy(void) {
     struct timeOutQueue *p;
 
     while (queue) {
@@ -75,7 +84,7 @@ void free_all_callouts(void) {
  * elapsed_time seconds have passed; perform all the events that should
  * happen.
  */
-void age_callout_queue(int elapsed_time) {
+void timer_executePassedTimers(int elapsed_time) {
     struct timeOutQueue *ptr;
     struct timeOutQueue *_queue = NULL;
     struct timeOutQueue *last = NULL;
@@ -187,83 +196,4 @@ int timer_setTimer(int delay, timer_f action, void *data) {
     debugQueue();
 
     return node->id;
-}
-
-/**
-*   returns the time until the timer is scheduled
-*/
-int timer_leftTimer(int timer_id) {
-    struct timeOutQueue *ptr;
-    int left = 0;
-
-    if (!timer_id)
-        return -1;
-
-    for (ptr = queue; ptr; ptr = ptr->next) {
-        left += ptr->time;
-        if (ptr->id == timer_id) {
-            return left;
-        }
-    }
-    return -1;
-}
-
-/**
-*   clears the associated timer.  Returns 1 if succeeded.
-*/
-int timer_clearTimer(int  timer_id) {
-    struct timeOutQueue  *ptr, *prev;
-    int i = 0;
-
-    if (!timer_id)
-        return 0;
-
-    prev = ptr = queue;
-
-    /*
-     * find the right node, delete it. the subsequent node's time
-     * gets bumped up
-     */
-
-    debugQueue();
-    while (ptr) {
-        if (ptr->id == timer_id) {
-            /* got the right node */
-
-            /* unlink it from the queue */
-            if (ptr == queue)
-                queue = queue->next;
-            else
-                prev->next = ptr->next;
-
-            /* increment next node if any */
-            if (ptr->next != 0)
-                (ptr->next)->time += ptr->time;
-
-            if (ptr->data)
-                free(ptr->data);
-            my_log(LOG_DEBUG, 0, "deleted timer %d (#%d)", ptr->id, i);
-            free(ptr);
-            debugQueue();
-            return 1;
-        }
-        prev = ptr;
-        ptr = ptr->next;
-        i++;
-    }
-    // If we get here, the timer was not deleted.
-    my_log(LOG_DEBUG, 0, "failed to delete timer %d (#%d)", timer_id, i);
-    debugQueue();
-    return 0;
-}
-
-/**
- * debugging utility
- */
-static void debugQueue(void) {
-    struct timeOutQueue  *ptr;
-
-    for (ptr = queue; ptr; ptr = ptr->next) {
-        my_log(LOG_DEBUG, 0, "(Id:%d, Time:%d) ", ptr->id, ptr->time);
-    }
 }

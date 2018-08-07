@@ -274,17 +274,15 @@ void acceptGroupReport(uint32_t src, uint32_t group);
 void acceptLeaveMessage(uint32_t src, uint32_t group);
 void sendGeneralMembershipQuery(void);
 
-/* callout.c 
+/* timer.c
 */
 typedef void (*timer_f)(void *);
 
-void callout_init(void);
-void free_all_callouts(void);
-void age_callout_queue(int);
+void timer_init(void);
+void timer_destroy(void);
+void timer_executePassedTimers(int);
 int timer_nextTimer(void);
 int timer_setTimer(int, timer_f, void *);
-int timer_clearTimer(int);
-int timer_leftTimer(int);
 
 /* confread.c
  */

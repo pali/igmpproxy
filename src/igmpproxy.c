@@ -236,7 +236,7 @@ int igmpProxyInit(void) {
     // Initialize Routing table
     initRouteTable();
     // Initialize timer
-    callout_init();
+    timer_init();
 
     return 1;
 }
@@ -247,7 +247,7 @@ int igmpProxyInit(void) {
 void igmpProxyCleanUp(void) {
     my_log( LOG_DEBUG, 0, "clean handler called" );
 
-    free_all_callouts();    // No more timeouts.
+    timer_destroy();        // No more timeouts.
     clearAllRoutes();       // Remove all routes.
     disableMRouter();       // Disable the multirout API
 }
@@ -356,7 +356,7 @@ void igmpProxyRun(void) {
             }
             lasttime = curtime;
             if (secs == 0 || difftime.tv_sec > 0)
-                age_callout_queue(difftime.tv_sec);
+                timer_executePassedTimers(difftime.tv_sec);
             secs = -1;
         } while (difftime.tv_sec > 0);
 
