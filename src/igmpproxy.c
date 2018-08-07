@@ -232,7 +232,7 @@ int igmpProxyInit(void) {
     }
 
     // Initialize IGMP
-    initIgmp();
+    igmp_init();
     // Initialize Routing table
     initRouteTable();
     // Initialize timer
@@ -259,10 +259,8 @@ void igmpProxyRun(void) {
     // Get the config.
     struct Config *config = getCommonConfig();
     // Set some needed values.
-    register int recvlen;
     int     MaxFD, Rt, secs;
     fd_set  ReadFDS;
-    socklen_t dummy = 0;
     struct  timespec  curtime, lasttime, difftime, tv;
     // The timeout is a pointer in order to set it to NULL if nessecary.
     struct  timespec  *timeout = &tv;
@@ -318,15 +316,9 @@ void igmpProxyRun(void) {
 
             // Read IGMP request, and handle it...
             if( FD_ISSET( MRouterFD, &ReadFDS ) ) {
-
-                recvlen = recvfrom(MRouterFD, recv_buf, RECV_BUF_SIZE,
-                                   0, NULL, &dummy);
-                if (recvlen < 0) {
-                    if (errno != EINTR) my_log(LOG_ERR, errno, "recvfrom");
+                if (igmp_receive()) {
                     continue;
                 }
-
-                acceptIgmp(recvlen);
             }
         }
 
