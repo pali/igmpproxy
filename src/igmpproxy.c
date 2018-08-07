@@ -316,8 +316,7 @@ void igmpProxyRun(void) {
 
             // Read IGMP request, and handle it...
             if( FD_ISSET( MRouterFD, &ReadFDS ) ) {
-                if (igmp_receive())
-                {
+                if (igmp_receive()) {
                     continue;
                 }
             }
