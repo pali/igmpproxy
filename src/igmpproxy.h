@@ -270,9 +270,9 @@ int getMcGroupSock(void);
 
 /* request.c
  */
-void acceptGroupReport(uint32_t src, uint32_t group);
-void acceptLeaveMessage(uint32_t src, uint32_t group);
-void sendGeneralMembershipQuery(void);
+void request_acceptGroupReport(uint32_t src, uint32_t group);
+void request_acceptLeaveMessage(uint32_t src, uint32_t group);
+void request_sendGeneralMembershipQuery(void);
 
 /* callout.c 
 */
