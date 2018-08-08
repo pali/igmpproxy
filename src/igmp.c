@@ -207,7 +207,7 @@ void acceptIgmp(int recvlen) {
     case IGMP_V1_MEMBERSHIP_REPORT:
     case IGMP_V2_MEMBERSHIP_REPORT:
         group = igmp->igmp_group.s_addr;
-        acceptGroupReport(src, group);
+        request_acceptGroupReport(src, group);
         return;
 
     case IGMP_V3_MEMBERSHIP_REPORT:
@@ -223,13 +223,13 @@ void acceptIgmp(int recvlen) {
             case IGMPV3_MODE_IS_INCLUDE:
             case IGMPV3_CHANGE_TO_INCLUDE:
                 if (nsrcs == 0) {
-                    acceptLeaveMessage(src, group);
+                    request_acceptLeaveMessage(src, group);
                     break;
                 } /* else fall through */
             case IGMPV3_MODE_IS_EXCLUDE:
             case IGMPV3_CHANGE_TO_EXCLUDE:
             case IGMPV3_ALLOW_NEW_SOURCES:
-                acceptGroupReport(src, group);
+                request_acceptGroupReport(src, group);
                 break;
             case IGMPV3_BLOCK_OLD_SOURCES:
                 break;
@@ -247,7 +247,7 @@ void acceptIgmp(int recvlen) {
 
     case IGMP_V2_LEAVE_GROUP:
         group = igmp->igmp_group.s_addr;
-        acceptLeaveMessage(src, group);
+        request_acceptLeaveMessage(src, group);
         return;
 
     case IGMP_MEMBERSHIP_QUERY:

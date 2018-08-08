@@ -34,7 +34,7 @@
 /**
 *   request.c
 *
-*   Functions for recieveing and processing IGMP requests.
+*   Functions for receiving and processing IGMP requests.
 *
 */
 
@@ -54,7 +54,7 @@ typedef struct {
 *   Handles incoming membership reports, and
 *   appends them to the routing table.
 */
-void acceptGroupReport(uint32_t src, uint32_t group) {
+void request_acceptGroupReport(uint32_t src, uint32_t group) {
     struct IfDesc  *sourceVif;
 
     // Sanitycheck the group adress...
@@ -98,7 +98,7 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
                 insertRoute(group, sourceVif->index);
                 return;
         }
-    my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
+        my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
     } else {
         // Log the state of the interface the report was received on.
         my_log(LOG_INFO, 0, "Mebership report was received on %s. Ignoring.",
@@ -109,14 +109,14 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
 /**
 *   Recieves and handles a group leave message.
 */
-void acceptLeaveMessage(uint32_t src, uint32_t group) {
+void request_acceptLeaveMessage(uint32_t src, uint32_t group) {
     struct IfDesc   *sourceVif;
 
     my_log(LOG_DEBUG, 0,
         "Got leave message from %s to %s. Starting last member detection.",
         inetFmt(src, s1), inetFmt(group, s2));
 
-    // Sanitycheck the group adress...
+    // Sanity check the group address...
     if(!IN_MULTICAST( ntohl(group) )) {
         my_log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group.",
             inetFmt(group, s1));
@@ -140,7 +140,7 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
         // Tell the route table that we are checking for remaining members...
         setRouteLastMemberMode(group);
 
-        // Call the group spesific membership querier...
+        // Call the group specific membership querier...
         gvDesc->group = group;
         // gvDesc->vifAddr = sourceVif->InAdr.s_addr;
         gvDesc->started = 0;
@@ -209,7 +209,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
 /**
 *   Sends a general membership query on downstream VIFs
 */
-void sendGeneralMembershipQuery(void) {
+void request_sendGeneralMembershipQuery(void) {
     struct  Config  *conf = getCommonConfig();
     struct  IfDesc  *Dp;
     int             Ix;
@@ -238,12 +238,12 @@ void sendGeneralMembershipQuery(void) {
     // Install timer for next general query...
     if(conf->startupQueryCount>0) {
         // Use quick timer...
-        timer_setTimer(conf->startupQueryInterval, (timer_f)sendGeneralMembershipQuery, NULL);
+        timer_setTimer(conf->startupQueryInterval, (timer_f)request_sendGeneralMembershipQuery, NULL);
         // Decrease startup counter...
         conf->startupQueryCount--;
     }
     else {
         // Use slow timer...
-        timer_setTimer(conf->queryInterval, (timer_f)sendGeneralMembershipQuery, NULL);
+        timer_setTimer(conf->queryInterval, (timer_f)request_sendGeneralMembershipQuery, NULL);
     }
 }
