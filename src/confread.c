@@ -46,10 +46,7 @@
 #include "igmpproxy.h"
 
 #define READ_BUFFER_SIZE    512     // Inputbuffer size...
-
-#ifndef MAX_TOKEN_LENGTH
-    #define MAX_TOKEN_LENGTH  30    // Default max token length
-#endif
+#define MAX_TOKEN_LENGTH    30      // Default max token length
 
 static FILE            *confFilePtr;       // File handle pointer
 static char            *iBuffer;           // Inputbuffer for reading...

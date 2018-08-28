@@ -288,8 +288,6 @@ int timer_leftTimer(int);
 
 /* confread.c
  */
-#define MAX_TOKEN_LENGTH    30
-
 int openConfigFile(char *filename);
 void closeConfigFile(void);
 char* nextConfigToken(void);
