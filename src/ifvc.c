@@ -41,7 +41,8 @@ static inline uint32_t s_addr_from_sockaddr(const struct sockaddr *addr) {
     return addr_in.sin_addr.s_addr;
 }
 
-struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
+static struct IfDesc IfDescVc[ MAX_IF ];
+static struct IfDesc *IfDescEp = IfDescVc;
 
 /* aimwang: add for detect interface and rebuild IfVc record */
 /***************************************************

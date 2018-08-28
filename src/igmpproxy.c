@@ -57,9 +57,9 @@ PACKAGE_STRING "\n"
 
 // Local function Prototypes
 static void signalHandler(int);
-int     igmpProxyInit(void);
-void    igmpProxyCleanUp(void);
-void    igmpProxyRun(void);
+static int igmpProxyInit(void);
+static void igmpProxyCleanUp(void);
+static void igmpProxyRun(void);
 
 // Global vars...
 static int sighandled = 0;
@@ -169,7 +169,7 @@ int main( int ArgCn, char *ArgVc[] ) {
 /**
 *   Handles the initial startup of the daemon.
 */
-int igmpProxyInit(void) {
+static int igmpProxyInit(void) {
     struct sigaction sa;
     int Err;
 
@@ -244,7 +244,7 @@ int igmpProxyInit(void) {
 /**
 *   Clean up all on exit...
 */
-void igmpProxyCleanUp(void) {
+static void igmpProxyCleanUp(void) {
     my_log( LOG_DEBUG, 0, "clean handler called" );
 
     free_all_callouts();    // No more timeouts.
@@ -255,7 +255,7 @@ void igmpProxyCleanUp(void) {
 /**
 *   Main daemon loop.
 */
-void igmpProxyRun(void) {
+static void igmpProxyRun(void) {
     // Get the config.
     struct Config *config = getCommonConfig();
     // Set some needed values.

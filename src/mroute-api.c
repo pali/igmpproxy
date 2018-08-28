@@ -48,9 +48,6 @@
 // need an IGMP socket as interface for the mrouted API
 // - receives the IGMP messages
 int         MRouterFD;          /* socket for all network I/O  */
-char        *recv_buf;          /* input packet buffer         */
-char        *send_buf;          /* output packet buffer        */
-
 
 // my internal virtual interfaces descriptor vector
 static struct VifDesc {

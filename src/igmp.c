@@ -44,7 +44,8 @@ uint32_t     allhosts_group;            /* All hosts addr in net order */
 uint32_t     allrouters_group;          /* All hosts addr in net order */
 uint32_t     alligmp3_group;            /* IGMPv3 addr in net order */
 
-extern int MRouterFD;
+char        *recv_buf;                  /* input packet buffer         */
+char        *send_buf;                  /* output packet buffer        */
 
 /*
  * Open and initialize the igmp socket, and fill in the non-changing
