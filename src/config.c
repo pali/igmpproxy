@@ -62,8 +62,8 @@ struct vifconfig *vifconf;
 static struct Config commonConfig;
 
 // Prototypes...
-struct vifconfig *parsePhyintToken(void);
-struct SubnetList *parseSubnetAddress(char *addrstr);
+static struct vifconfig *parsePhyintToken(void);
+static struct SubnetList *parseSubnetAddress(char *addrstr);
 
 /**
 *   Initializes common config..
@@ -239,7 +239,7 @@ void configureVifs(void) {
 /**
 *   Internal function to parse phyint config
 */
-struct vifconfig *parsePhyintToken(void) {
+static struct vifconfig *parsePhyintToken(void) {
     struct vifconfig  *tmpPtr;
     struct SubnetList **anetPtr, **agrpPtr;
     char *token;
@@ -366,7 +366,7 @@ struct vifconfig *parsePhyintToken(void) {
 *   Parses a subnet address string on the format
 *   a.b.c.d/n into a SubnetList entry.
 */
-struct SubnetList *parseSubnetAddress(char *addrstr) {
+static struct SubnetList *parseSubnetAddress(char *addrstr) {
     struct SubnetList   *tmpSubnet;
     char                *tmpStr;
     uint32_t            addr = 0x00000000;
