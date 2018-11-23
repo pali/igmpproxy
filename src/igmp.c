@@ -251,6 +251,7 @@ void acceptIgmp(int recvlen) {
         return;
 
     case IGMP_MEMBERSHIP_QUERY:
+		acceptMembershipQuery(src);
         return;
 
     default:

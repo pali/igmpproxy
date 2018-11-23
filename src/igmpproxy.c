@@ -273,7 +273,7 @@ void igmpProxyRun(void) {
     lasttime = curtime;
 
     // First thing we send a membership query in downstream VIF's...
-    sendGeneralMembershipQuery();
+    sendGeneralMembershipQuery(1);
 
     // Loop until the end...
     for (;;) {
