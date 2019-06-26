@@ -5,9 +5,7 @@ AC_CONFIG_SRCDIR([src/igmpproxy.c])
 AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC_C99
 
-if test "$ac_cv_prog_cc_c99" = "no"; then
-	AC_MSG_ERROR([Your C compiler does not support ISO C99.])
-fi
+AS_IF([test "$ac_cv_prog_cc_c99" = "no"], [AC_MSG_ERROR([Your C compiler does not support ISO C99.])])
 
 AC_CANONICAL_HOST
 case $host_os in
