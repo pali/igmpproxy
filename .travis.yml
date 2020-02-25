@@ -106,6 +106,8 @@ matrix:
       env: PLATFORM=x86
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - libc6-dev:i386
             - gcc-7-multilib
@@ -114,6 +116,8 @@ matrix:
       env: PLATFORM=x86_64
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - gcc-7
     - compiler: gcc-8
@@ -344,7 +348,8 @@ matrix:
       addons:
         apt:
           sources:
-            - llvm-toolchain-xenial-9
+            - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
           packages:
             - libc6-dev:i386
             - clang-9
@@ -355,7 +360,8 @@ matrix:
       addons:
         apt:
           sources:
-            - llvm-toolchain-xenial-9
+            - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
           packages:
             - clang-9
     - compiler: gcc
