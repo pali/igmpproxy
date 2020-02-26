@@ -59,7 +59,14 @@ static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcasta
           Cmd == 'j' ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP,
           (void *)&CtlReq, sizeof( CtlReq ) ) )
     {
+        int mcastGroupExceeded = (Cmd == 'j' && errno == ENOBUFS);
         my_log( LOG_WARNING, errno, "MRT_%s_MEMBERSHIP failed", Cmd == 'j' ? "ADD" : "DROP" );
+        if (mcastGroupExceeded) {
+            my_log(LOG_WARNING, 0, "Maximum number of multicast groups were exceeded");
+#ifdef __linux__
+            my_log(LOG_WARNING, 0, "Check settings of '/sbin/sysctl net.ipv4.igmp_max_memberships'");
+#endif
+        }
         return 1;
     }
 
