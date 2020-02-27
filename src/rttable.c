@@ -41,6 +41,7 @@
 #include "igmpproxy.h"
 
 #define MAX_ORIGINS 4
+#define MAX_DOWNSTREAM_HOSTS 20
 
 /**
 *   Routing table structure definition. Double linked list...
@@ -60,6 +61,9 @@ struct RouteTable {
     uint32_t            ageVifBits;     // Bits representing aging VIFs.
     int                 ageValue;       // Downcounter for death.
     int                 ageActivity;    // Records any acitivity that notes there are still listeners.
+
+    // Keeps the number of downstream hosts
+    uint32_t            dwnstrHosts[MAX_DOWNSTREAM_HOSTS];    // The downstream hosts the route is active for
 };
 
 
@@ -217,6 +221,44 @@ void clearAllRoutes(void) {
 }
 
 /**
+*	Function which return the number of active dowsnstream hosts
+*/
+int countDownstreamHosts(struct RouteTable *croute) {
+    int result = 0;
+
+    for (int i = 0; i < MAX_DOWNSTREAM_HOSTS; i++) {
+        if(croute->dwnstrHosts[i] != 0) {
+            result++;
+        }
+    }
+    return result;
+}
+
+/**
+*	Function to find first downstream host slot
+*/
+size_t findFreeDownstreamSlot(struct RouteTable *croute) {
+    for (size_t i = 0; i < MAX_DOWNSTREAM_HOSTS; i++) {
+        if(croute->dwnstrHosts[i] == 0) {
+            return i;
+        }
+    }
+    return (size_t)0;
+}
+
+/**
+*	Function to find downstream slot for host
+*/
+size_t findDownstreamSlot(struct RouteTable *croute, uint32_t dstrHost) {
+    for (size_t i = 0; i < MAX_DOWNSTREAM_HOSTS; i++) {
+        if(croute->dwnstrHosts[i] == dstrHost) {
+            return i;
+        }
+    }
+    return (size_t)-1;
+}
+
+/**
 *   Private access function to find a route from a given
 *   Route Descriptor.
 */
@@ -237,7 +279,7 @@ static struct RouteTable *findRoute(uint32_t group) {
 *   If the route already exists, the existing route
 *   is updated...
 */
-int insertRoute(uint32_t group, int ifx) {
+int insertRoute(uint32_t group, int ifx, uint32_t src) {
 
     struct Config *conf = getCommonConfig();
     struct RouteTable*  croute;
@@ -273,6 +315,11 @@ int insertRoute(uint32_t group, int ifx) {
         newroute->nextroute  = NULL;
         newroute->prevroute  = NULL;
         newroute->upstrVif   = -1;
+
+        // Downstream host can always be set at first slot for host tracking in fastleave mode
+        if(conf->fastUpstreamLeave) {
+            newroute->dwnstrHosts[0] = src;
+        }
 
         // The group is not joined initially.
         newroute->upstrState = ROUTESTATE_NOTJOINED;
@@ -349,6 +396,14 @@ int insertRoute(uint32_t group, int ifx) {
         // Register the VIF activity for the aging routine
         BIT_SET(croute->ageVifBits, ifx);
 
+        // Register dwnstrHosts for host tracking if fastleave is enabled
+        if(conf->fastUpstreamLeave) {
+            if(findDownstreamSlot(croute, src) == (size_t)-1){
+                size_t hostIdx = findFreeDownstreamSlot(croute);
+                croute->dwnstrHosts[hostIdx] = src;
+            }
+        }
+
         // Log the cleanup in debugmode...
         my_log(LOG_INFO, 0, "Updated route entry for %s on VIF #%d",
             inetFmt(croute->group, s1), ifx);
@@ -388,7 +443,7 @@ int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
             inetFmt(group, s1),inetFmt(originAddr, s2));
 
         // Insert route, but no interfaces have yet requested it downstream.
-        insertRoute(group, -1);
+        insertRoute(group, -1, 0);
 
         // Retrieve the route from table...
         croute = findRoute(group);
@@ -485,7 +540,7 @@ int numberOfInterfaces(struct RouteTable *croute) {
 *   Should be called when a leave message is received, to
 *   mark a route for the last member probe state.
 */
-void setRouteLastMemberMode(uint32_t group) {
+void setRouteLastMemberMode(uint32_t group, uint32_t src) {
     struct Config       *conf = getCommonConfig();
     struct RouteTable   *croute;
 
@@ -493,18 +548,30 @@ void setRouteLastMemberMode(uint32_t group) {
     if(croute!=NULL) {
         // Check for fast leave mode...
         if(croute->upstrState == ROUTESTATE_JOINED && conf->fastUpstreamLeave) {
-            // Send a leave message right away only when the route has been active on only one interface
-            if (numberOfInterfaces(croute) <= 1) {
-                my_log(LOG_DEBUG, 0, "Leaving group %d now", group);
-                sendJoinLeaveUpstream(croute, 0);
+
+            // Remove downstreamhost from route
+            size_t hostIdx = findDownstreamSlot(croute, src);
+            if(hostIdx != (size_t)-1){
+                croute->dwnstrHosts[hostIdx] = 0;
             }
+
+            // Send a leave message right away but only when the route is not active anymore on any downstream host
+            if (countDownstreamHosts(croute) < 1) {
+                my_log(LOG_DEBUG, 0, "Fastleave is enabled and this was the last downstream host, leaving group %s now", inetFmt(croute->group, s1));
+                sendJoinLeaveUpstream(croute, 0);
+            } else {
+                my_log(LOG_DEBUG, 0, "Fast leave enabled but there are still %d downstream hosts left, not leaving group %s", countDownstreamHosts(croute), inetFmt(croute->group, s1));
+            }
+
         }
 
-        // Set the routingstate to Last member check...
-        croute->upstrState = ROUTESTATE_CHECK_LAST_MEMBER;
+        // Set the routingstate to last member check if we have no known downstream host left or if fast leave mode is disabled...
+        if(countDownstreamHosts(croute) < 1 || !conf->fastUpstreamLeave) {
+            croute->upstrState = ROUTESTATE_CHECK_LAST_MEMBER;
 
-        // Set the count value for expiring... (-1 since first aging)
-        croute->ageValue = conf->lastMemberQueryCount;
+            // Set the count value for expiring... (-1 since first aging)
+            croute->ageValue = conf->lastMemberQueryCount;
+        }
     }
 }
 
@@ -732,10 +799,10 @@ void logRouteTable(const char *header) {
                     sprintf(src + strlen(src), "Src%d: %s, ", i, inetFmt(croute->originAddrs[i], s1));
                 }
 
-                my_log(LOG_DEBUG, 0, "#%d: %sDst: %s, Age:%d, St: %c, OutVifs: 0x%08x",
+                my_log(LOG_DEBUG, 0, "#%d: %sDst: %s, Age:%d, St: %c, OutVifs: 0x%08x, dHosts: %d",
                     rcount, src, inetFmt(croute->group, s2),
                     croute->ageValue, st,
-                    croute->vifBits);
+                    croute->vifBits, countDownstreamHosts(croute));
 
                 croute = croute->nextroute;
 

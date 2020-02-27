@@ -260,10 +260,10 @@ int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
  */
 void initRouteTable(void);
 void clearAllRoutes(void);
-int insertRoute(uint32_t group, int ifx);
+int insertRoute(uint32_t group, int ifx, uint32_t src);
 int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif);
 void ageActiveRoutes(void);
-void setRouteLastMemberMode(uint32_t group);
+void setRouteLastMemberMode(uint32_t group, uint32_t src);
 int lastMemberGroupAge(uint32_t group);
 int interfaceInRoute(int32_t group, int Ix);
 int getMcGroupSock(void);

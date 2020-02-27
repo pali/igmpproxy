@@ -86,7 +86,7 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
         // If we don't have a whitelist we insertRoute and done
         if(sourceVif->allowedgroups == NULL)
         {
-            insertRoute(group, sourceVif->index);
+            insertRoute(group, sourceVif->index, src);
             return;
         }
         // Check if this Request is legit on this interface
@@ -95,7 +95,7 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
             if((group & sn->subnet_mask) == sn->subnet_addr)
             {
                 // The membership report was OK... Insert it into the route table..
-                insertRoute(group, sourceVif->index);
+                insertRoute(group, sourceVif->index, src);
                 return;
         }
     my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
@@ -138,7 +138,7 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
         gvDesc = (GroupVifDesc*) malloc(sizeof(GroupVifDesc));
 
         // Tell the route table that we are checking for remaining members...
-        setRouteLastMemberMode(group);
+        setRouteLastMemberMode(group, src);
 
         // Call the group spesific membership querier...
         gvDesc->group = group;
