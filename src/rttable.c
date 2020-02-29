@@ -41,7 +41,6 @@
 #include "igmpproxy.h"
 
 #define MAX_ORIGINS 4
-#define MAX_DOWNSTREAM_HOSTS 20
 
 /**
 *   Routing table structure definition. Double linked list...
@@ -62,8 +61,10 @@ struct RouteTable {
     int                 ageValue;       // Downcounter for death.
     int                 ageActivity;    // Records any acitivity that notes there are still listeners.
 
-    // Keeps the number of downstream hosts
-    uint32_t            dwnstrHosts[MAX_DOWNSTREAM_HOSTS];    // The downstream hosts the route is active for
+    // Keeps downstream hosts information
+    uint32_t            *dwnstrHosts;    // The downstream hosts the route is active for
+    int                 dwnstrHostsCapacity; // Current capacity of the downstream hosts array
+    int                 dwnstrHostsSize; // Current size of the downstream hosts array
 };
 
 
@@ -226,7 +227,7 @@ void clearAllRoutes(void) {
 int countDownstreamHosts(struct RouteTable *croute) {
     int result = 0;
 
-    for (int i = 0; i < MAX_DOWNSTREAM_HOSTS; i++) {
+    for (int i = 0; i < croute->dwnstrHostsCapacity; i++) {
         if(croute->dwnstrHosts[i] != 0) {
             result++;
         }
@@ -238,7 +239,7 @@ int countDownstreamHosts(struct RouteTable *croute) {
 *	Function to find first downstream host slot
 */
 size_t findFreeDownstreamSlot(struct RouteTable *croute) {
-    for (size_t i = 0; i < MAX_DOWNSTREAM_HOSTS; i++) {
+    for (size_t i = 0; i < (size_t)croute->dwnstrHostsCapacity; i++) {
         if(croute->dwnstrHosts[i] == 0) {
             return i;
         }
@@ -250,12 +251,34 @@ size_t findFreeDownstreamSlot(struct RouteTable *croute) {
 *	Function to find downstream slot for host
 */
 size_t findDownstreamSlot(struct RouteTable *croute, uint32_t dstrHost) {
-    for (size_t i = 0; i < MAX_DOWNSTREAM_HOSTS; i++) {
+    for (size_t i = 0; i < (size_t)croute->dwnstrHostsCapacity; i++) {
         if(croute->dwnstrHosts[i] == dstrHost) {
             return i;
         }
     }
     return (size_t)-1;
+}
+
+/**
+*	Function to add downstream hosts to route
+*/
+void addDownStreamHost(struct RouteTable *croute, uint32_t dstrHost){
+    croute->dwnstrHostsSize = croute->dwnstrHostsSize + 1;
+
+    if(croute->dwnstrHostsSize > croute->dwnstrHostsCapacity){
+        int newcapacity = croute->dwnstrHostsCapacity * 2;
+
+        uint32_t* newptr = (uint32_t*)realloc(croute->dwnstrHosts, newcapacity * sizeof(uint32_t));
+        if(newptr == NULL) {
+            croute->dwnstrHostsSize = croute->dwnstrHostsSize - 1;
+            my_log(LOG_WARNING, 0, "Failed to realloc dwnstrHosts, quickleave last host tracking may not work properly");
+        } else {
+            croute->dwnstrHosts = newptr;
+            croute->dwnstrHostsCapacity = newcapacity;
+        }
+    }
+    size_t idx = findFreeDownstreamSlot(croute);
+    croute->dwnstrHosts[idx] = dstrHost;
 }
 
 /**
@@ -316,9 +339,14 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
         newroute->prevroute  = NULL;
         newroute->upstrVif   = -1;
 
-        // Downstream host can always be set at first slot for host tracking in fastleave mode
+        // Init downstream hosts dynamic array
+        newroute->dwnstrHostsSize = 0;
+        newroute->dwnstrHostsCapacity = 2;
+        newroute->dwnstrHosts = malloc(2 * sizeof(uint32_t));
+
+        // Add downstream hosts
         if(conf->fastUpstreamLeave) {
-            newroute->dwnstrHosts[0] = src;
+            addDownStreamHost(newroute, src);
         }
 
         // The group is not joined initially.
@@ -399,8 +427,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
         // Register dwnstrHosts for host tracking if fastleave is enabled
         if(conf->fastUpstreamLeave) {
             if(findDownstreamSlot(croute, src) == (size_t)-1){
-                size_t hostIdx = findFreeDownstreamSlot(croute);
-                croute->dwnstrHosts[hostIdx] = src;
+                addDownStreamHost(croute, src);
             }
         }
 
@@ -553,6 +580,7 @@ void setRouteLastMemberMode(uint32_t group, uint32_t src) {
             size_t hostIdx = findDownstreamSlot(croute, src);
             if(hostIdx != (size_t)-1){
                 croute->dwnstrHosts[hostIdx] = 0;
+                croute->dwnstrHostsSize = croute->dwnstrHostsSize - 1;
             }
 
             // Send a leave message right away but only when the route is not active anymore on any downstream host
