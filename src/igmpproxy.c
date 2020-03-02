@@ -338,7 +338,7 @@ void igmpProxyRun(void) {
              * call gettimeofday.
              */
             if (Rt == 0) {
-                curtime.tv_sec = lasttime.tv_sec + secs;
+                curtime.tv_sec = lasttime.tv_sec + secs;// secs must less than 3
                 curtime.tv_nsec = lasttime.tv_nsec;
                 Rt = -1; /* don't do this next time through the loop */
             } else {
