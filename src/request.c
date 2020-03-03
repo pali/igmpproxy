@@ -163,7 +163,7 @@ void acceptMembershipQuery(uint32_t src) {
         "Got MembershipQuery from %s.",
         inetFmt(src, s1));
 
-	sourceVif = getIfByAddress( src );
+    sourceVif = getIfByAddress( src );
     if(sourceVif == NULL) {
         my_log(LOG_WARNING, 0, "No interfaces found for source %s",
             inetFmt(src,s1));
@@ -171,8 +171,8 @@ void acceptMembershipQuery(uint32_t src) {
     }
 
     if(sourceVif->state == IF_STATE_UPSTREAM) {
-		sendGeneralMembershipQuery(0);
-	}
+        doSendGeneralMembershipQuery();
+    }
 }
 
 
@@ -232,7 +232,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
 /**
 *   Sends a general membership query on downstream VIFs
 */
-void sendGeneralMembershipQuery(int routine) {
+void doSendGeneralMembershipQuery(void) {
     struct  Config  *conf = getCommonConfig();
     struct  IfDesc  *Dp;
     int             Ix;
@@ -254,21 +254,27 @@ void sendGeneralMembershipQuery(int routine) {
             }
         }
     }
+}
+
+void sendGeneralMembershipQuery(void) {
+    struct  Config  *conf = getCommonConfig();
+    struct  IfDesc  *Dp;
+    int             Ix;
+
+    doSendGeneralMembershipQuery();
 
     // Install timer for aging active routes.
     timer_setTimer(conf->queryResponseInterval, (timer_f)ageActiveRoutes, NULL);
 
-	if (routine) {
-		// Install timer for next general query...
-		if(conf->startupQueryCount>0) {
-			// Use quick timer...
-			timer_setTimer(conf->startupQueryInterval, (timer_f)sendGeneralMembershipQuery, (void*) &routine);
-			// Decrease startup counter...
-			conf->startupQueryCount--;
-		}
-		else {
-			// Use slow timer...
-			timer_setTimer(conf->queryInterval, (timer_f)sendGeneralMembershipQuery, (void*) &routine);
-		}
-	}
+    // Install timer for next general query...
+    if(conf->startupQueryCount>0) {
+        // Use quick timer...
+        timer_setTimer(conf->startupQueryInterval, (timer_f)sendGeneralMembershipQuery, NULL);
+        // Decrease startup counter...
+        conf->startupQueryCount--;
+    }
+    else {
+        // Use slow timer...
+        timer_setTimer(conf->queryInterval, (timer_f)sendGeneralMembershipQuery, NULL);
+    }
 }
