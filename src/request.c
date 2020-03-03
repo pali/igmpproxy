@@ -258,8 +258,6 @@ void doSendGeneralMembershipQuery(void) {
 
 void sendGeneralMembershipQuery(void) {
     struct  Config  *conf = getCommonConfig();
-    struct  IfDesc  *Dp;
-    int             Ix;
 
     doSendGeneralMembershipQuery();
 
