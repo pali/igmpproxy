@@ -81,6 +81,8 @@ int main( int ArgCn, char *ArgVc[] ) {
     int c;
     bool NotAsDaemon = false;
 
+    srand(time(NULL) * getpid());
+
     // Parse the commandline options and setup basic settings..
     while ((c = getopt(ArgCn, ArgVc, "vdnh")) != -1) {
         switch (c) {

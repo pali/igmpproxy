@@ -84,6 +84,10 @@ static void initCommonConfig(void) {
     // If 1, a leave message is sent upstream on leave messages from downstream.
     commonConfig.fastUpstreamLeave = 0;
 
+    // Default size of hash table is 32 bytes (= 256 bits) and can store
+    // up to the 256 non-collision hosts, approximately half of /24 subnet
+    commonConfig.downstreamHostsHashTableSize = 32;
+
     // aimwang: default value
     commonConfig.defaultInterfaceState = IF_STATE_DISABLED;
     commonConfig.rescanVif = 0;
@@ -149,6 +153,27 @@ int loadConfig(char *configFile) {
             // Got a quickleave token....
             my_log(LOG_DEBUG, 0, "Config: Quick leave mode enabled.");
             commonConfig.fastUpstreamLeave = 1;
+
+            // Read next token...
+            token = nextConfigToken();
+            continue;
+        }
+        else if(strcmp("hashtablesize", token)==0) {
+            // Got a hashtablesize token...
+            token = nextConfigToken();
+            my_log(LOG_DEBUG, 0, "Config: hashtablesize for quickleave is %s.", token);
+            if(!commonConfig.fastUpstreamLeave) {
+                closeConfigFile();
+                my_log(LOG_ERR, 0, "Config: hashtablesize is specified but quickleave not enabled.");
+                return 0;
+            }
+            int intToken = atoi(token);
+            if(intToken < 1 || intToken > 536870912) {
+                closeConfigFile();
+                my_log(LOG_ERR, 0, "Config: hashtablesize must be between 1 and 536870912 bytes.");
+                return 0;
+            }
+            commonConfig.downstreamHostsHashTableSize = intToken;
 
             // Read next token...
             token = nextConfigToken();

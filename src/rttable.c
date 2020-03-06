@@ -60,6 +60,10 @@ struct RouteTable {
     uint32_t            ageVifBits;     // Bits representing aging VIFs.
     int                 ageValue;       // Downcounter for death.
     int                 ageActivity;    // Records any acitivity that notes there are still listeners.
+
+    // Keeps downstream hosts information
+    uint32_t            downstreamHostsHashSeed;
+    uint8_t             downstreamHostsHashTable[];
 };
 
 
@@ -74,6 +78,43 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate);
 // Socket for sending join or leave requests.
 int mcGroupSock = 0;
 
+
+/**
+*   Functions for downstream hosts hash table
+*/
+
+// MurmurHash3 32bit hash function by Austin Appleby, public domain
+static uint32_t murmurhash3(uint32_t x) {
+    x ^= x >> 16;
+    x *= 0x85ebca6b;
+    x ^= x >> 13;
+    x *= 0xc2b2ae35;
+    x ^= x >> 16;
+    return x;
+}
+
+static inline void setDownstreamHost(struct Config *conf, struct RouteTable *croute, uint32_t src) {
+    uint32_t hash = murmurhash3(src ^ croute->downstreamHostsHashSeed) % (conf->downstreamHostsHashTableSize*8);
+    BIT_SET(croute->downstreamHostsHashTable[hash/8], hash%8);
+}
+
+static inline void clearDownstreamHost(struct Config *conf, struct RouteTable *croute, uint32_t src) {
+    uint32_t hash = murmurhash3(src ^ croute->downstreamHostsHashSeed) % (conf->downstreamHostsHashTableSize*8);
+    BIT_CLR(croute->downstreamHostsHashTable[hash/8], hash%8);
+}
+
+static inline void zeroDownstreamHosts(struct Config *conf, struct RouteTable *croute) {
+    croute->downstreamHostsHashSeed = ((uint32_t)rand() << 16) | (uint32_t)rand();
+    memset(croute->downstreamHostsHashTable, 0, conf->downstreamHostsHashTableSize);
+}
+
+static inline int testNoDownstreamHost(struct Config *conf, struct RouteTable *croute) {
+    for (size_t i = 0; i < conf->downstreamHostsHashTableSize; i++) {
+        if (croute->downstreamHostsHashTable[i])
+            return 0;
+    }
+    return 1;
+}
 
 /**
 *   Function for retrieving the Multicast Group socket.
@@ -237,7 +278,7 @@ static struct RouteTable *findRoute(uint32_t group) {
 *   If the route already exists, the existing route
 *   is updated...
 */
-int insertRoute(uint32_t group, int ifx) {
+int insertRoute(uint32_t group, int ifx, uint32_t src) {
 
     struct Config *conf = getCommonConfig();
     struct RouteTable*  croute;
@@ -266,13 +307,21 @@ int insertRoute(uint32_t group, int ifx) {
 
 
         // Create and initialize the new route table entry..
-        newroute = (struct RouteTable*)malloc(sizeof(struct RouteTable));
+        newroute = (struct RouteTable*)malloc(sizeof(struct RouteTable) + (conf->fastUpstreamLeave ? conf->downstreamHostsHashTableSize : 0));
         // Insert the route desc and clear all pointers...
         newroute->group      = group;
         memset(newroute->originAddrs, 0, MAX_ORIGINS * sizeof(newroute->originAddrs[0]));
         newroute->nextroute  = NULL;
         newroute->prevroute  = NULL;
         newroute->upstrVif   = -1;
+
+        if(conf->fastUpstreamLeave) {
+            // Init downstream hosts bit hash table
+            zeroDownstreamHosts(conf, newroute);
+
+            // Add downstream host
+            setDownstreamHost(conf, newroute, src);
+        }
 
         // The group is not joined initially.
         newroute->upstrState = ROUTESTATE_NOTJOINED;
@@ -349,6 +398,11 @@ int insertRoute(uint32_t group, int ifx) {
         // Register the VIF activity for the aging routine
         BIT_SET(croute->ageVifBits, ifx);
 
+        // Register dwnstrHosts for host tracking if fastleave is enabled
+        if(conf->fastUpstreamLeave) {
+            setDownstreamHost(conf, croute, src);
+        }
+
         // Log the cleanup in debugmode...
         my_log(LOG_INFO, 0, "Updated route entry for %s on VIF #%d",
             inetFmt(croute->group, s1), ifx);
@@ -388,7 +442,7 @@ int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
             inetFmt(group, s1),inetFmt(originAddr, s2));
 
         // Insert route, but no interfaces have yet requested it downstream.
-        insertRoute(group, -1);
+        insertRoute(group, -1, 0);
 
         // Retrieve the route from table...
         croute = findRoute(group);
@@ -485,22 +539,40 @@ int numberOfInterfaces(struct RouteTable *croute) {
 *   Should be called when a leave message is received, to
 *   mark a route for the last member probe state.
 */
-void setRouteLastMemberMode(uint32_t group) {
+void setRouteLastMemberMode(uint32_t group, uint32_t src) {
     struct Config       *conf = getCommonConfig();
     struct RouteTable   *croute;
+    int                 routeStateCheck = 1;
 
     croute = findRoute(group);
-    if(croute!=NULL) {
-        // Check for fast leave mode...
-        if(croute->upstrState == ROUTESTATE_JOINED && conf->fastUpstreamLeave) {
-            // Send a leave message right away only when the route has been active on only one interface
-            if (numberOfInterfaces(croute) <= 1) {
-                my_log(LOG_DEBUG, 0, "Leaving group %d now", group);
-                sendJoinLeaveUpstream(croute, 0);
-            }
+    if(!croute)
+        return;
+
+    // Check for fast leave mode...
+    if(conf->fastUpstreamLeave) {
+        if(croute->upstrState == ROUTESTATE_JOINED) {
+            // Remove downstream host from route
+            clearDownstreamHost(conf, croute, src);
         }
 
-        // Set the routingstate to Last member check...
+        // Do route state check if there is no downstream host in hash table
+        // This host does not have to been the last downstream host if hash collision occurred
+        routeStateCheck = testNoDownstreamHost(conf, croute);
+
+        if(croute->upstrState == ROUTESTATE_JOINED) {
+            // Send a leave message right away but only when the route is not active anymore on any downstream host
+            // It is possible that there are still some interfaces active but no downstream host in hash table due to hash collision
+            if (routeStateCheck && numberOfInterfaces(croute) <= 1) {
+                my_log(LOG_DEBUG, 0, "quickleave is enabled and this was the last downstream host, leaving group %s now", inetFmt(croute->group, s1));
+                sendJoinLeaveUpstream(croute, 0);
+            } else {
+                my_log(LOG_DEBUG, 0, "quickleave is enabled but there are still some downstream hosts left, not leaving group %s", inetFmt(croute->group, s1));
+            }
+        }
+    }
+
+    // Set the routingstate to last member check if we have no known downstream host left or if fast leave mode is disabled...
+    if(routeStateCheck) {
         croute->upstrState = ROUTESTATE_CHECK_LAST_MEMBER;
 
         // Set the count value for expiring... (-1 since first aging)
@@ -709,6 +781,7 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate) {
 *   to the log.
 */
 void logRouteTable(const char *header) {
+        struct Config       *conf = getCommonConfig();
         struct RouteTable   *croute = routing_table;
         unsigned            rcount = 0;
 
@@ -732,10 +805,11 @@ void logRouteTable(const char *header) {
                     sprintf(src + strlen(src), "Src%d: %s, ", i, inetFmt(croute->originAddrs[i], s1));
                 }
 
-                my_log(LOG_DEBUG, 0, "#%d: %sDst: %s, Age:%d, St: %c, OutVifs: 0x%08x",
+                my_log(LOG_DEBUG, 0, "#%d: %sDst: %s, Age:%d, St: %c, OutVifs: 0x%08x, dHosts: %s",
                     rcount, src, inetFmt(croute->group, s2),
                     croute->ageValue, st,
-                    croute->vifBits);
+                    croute->vifBits,
+                    !conf->fastUpstreamLeave ? "not tracked" : testNoDownstreamHost(conf, croute) ? "no" : "yes");
 
                 croute = croute->nextroute;
 
