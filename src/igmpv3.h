@@ -21,6 +21,21 @@
 *   igmpv3.h - Header file for common IGMPv3 includes.
 */
 
+/*
+ * IGMP v3 query format.
+ */
+struct igmpv3 {
+	u_int8_t		igmp_type;	/* version & type of IGMP message  */
+	u_int8_t		igmp_code;	/* subtype for routing msgs        */
+	u_int16_t		igmp_cksum;	/* IP-style checksum               */
+	struct in_addr	igmp_group;	/* group address being reported    */
+					/*  (zero for queries)             */
+	u_int8_t		igmp_misc;	/* reserved/suppress/robustness    */
+	u_int8_t		igmp_qqi;	/* querier's query interval        */
+	u_int16_t		igmp_numsrc;	/* number of sources               */
+	/*struct in_addr	igmp_sources[1];*/ /* source addresses */
+};
+
 struct igmpv3_grec {
     u_int8_t grec_type;
     u_int8_t grec_auxwords;
