@@ -37,7 +37,6 @@
 */
 
 #include "igmpproxy.h"
-#include "igmp.h"
 
 // Globals
 uint32_t     allhosts_group;            /* All hosts addr in net order */
@@ -211,7 +210,7 @@ void acceptIgmp(int recvlen) {
         return;
 
     case IGMP_V3_MEMBERSHIP_REPORT:
-        igmpv3 = (struct igmpv_report *)(recv_buf + iphdrlen);
+        igmpv3 = (struct igmp_report *)(recv_buf + iphdrlen);
         grec = &igmpv3->ir_groups[0];
         ngrec = ntohs(igmpv3->ir_numgrps);
         while (ngrec--) {

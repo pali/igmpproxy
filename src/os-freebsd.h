@@ -2,7 +2,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/ip.h>
-/*#include <netinet/igmp.h>*/
+#include "igmp.h"
 
 #if __FreeBSD_version >= 800069 && defined BURN_BRIDGES \
     || __FreeBSD_version >= 800098
