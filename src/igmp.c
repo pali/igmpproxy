@@ -37,7 +37,7 @@
 */
 
 #include "igmpproxy.h"
-#include "igmpv3.h"
+#include "igmp.h"
 
 // Globals
 uint32_t     allhosts_group;            /* All hosts addr in net order */
@@ -107,8 +107,8 @@ void acceptIgmp(int recvlen) {
     register uint32_t src, dst, group;
     struct ip *ip;
     struct igmp *igmp;
-    struct igmpv3_report *igmpv3;
-    struct igmpv3_grec *grec;
+    struct igmp_report *igmpv3;
+    struct igmp_grouprec *grec;
     int ipdatalen, iphdrlen, ngrec, nsrcs, i;
 
     if (recvlen < (int)sizeof(struct ip)) {
@@ -192,7 +192,7 @@ void acceptIgmp(int recvlen) {
 
     igmp = (struct igmp *)(recv_buf + iphdrlen);
     if ((ipdatalen < IGMP_MINLEN) ||
-        (igmp->igmp_type == IGMP_V3_MEMBERSHIP_REPORT && ipdatalen <= IGMPV3_MINLEN)) {
+        (igmp->igmp_type == IGMP_V3_MEMBERSHIP_REPORT && ipdatalen <= IGMP_V3_REPORT_MINLEN)) {
         my_log(LOG_WARNING, 0,
             "received IP data field too short (%u bytes) for IGMP, from %s",
             ipdatalen, inetFmt(src, s1));
@@ -211,37 +211,37 @@ void acceptIgmp(int recvlen) {
         return;
 
     case IGMP_V3_MEMBERSHIP_REPORT:
-        igmpv3 = (struct igmpv3_report *)(recv_buf + iphdrlen);
-        grec = &igmpv3->igmp_grec[0];
-        ngrec = ntohs(igmpv3->igmp_ngrec);
+        igmpv3 = (struct igmpv_report *)(recv_buf + iphdrlen);
+        grec = &igmpv3->ir_groups[0];
+        ngrec = ntohs(igmpv3->ir_numgrps);
         while (ngrec--) {
             if ((uint8_t *)igmpv3 + ipdatalen < (uint8_t *)grec + sizeof(*grec))
                 break;
-            group = grec->grec_mca.s_addr;
-            nsrcs = ntohs(grec->grec_nsrcs);
-            switch (grec->grec_type) {
-            case IGMPV3_MODE_IS_INCLUDE:
-            case IGMPV3_CHANGE_TO_INCLUDE:
+            group = grec->ig_group.s_addr;
+            nsrcs = ntohs(grec->ig_numsrc);
+            switch (grec->ig_type) {
+            case IGMP_MODE_IS_INCLUDE:
+            case IGMP_CHANGE_TO_INCLUDE_MODE:
                 if (nsrcs == 0) {
                     acceptLeaveMessage(src, group);
                     break;
                 } /* else fall through */
-            case IGMPV3_MODE_IS_EXCLUDE:
-            case IGMPV3_CHANGE_TO_EXCLUDE:
-            case IGMPV3_ALLOW_NEW_SOURCES:
+            case IGMP_MODE_IS_EXCLUDE:
+            case IGMP_CHANGE_TO_EXCLUDE_MODE:
+            case IGMP_ALLOW_NEW_SOURCES:
                 acceptGroupReport(src, group);
                 break;
-            case IGMPV3_BLOCK_OLD_SOURCES:
+            case IGMP_BLOCK_OLD_SOURCES:
                 break;
             default:
                 my_log(LOG_INFO, 0,
                     "ignoring unknown IGMPv3 group record type %x from %s to %s for %s",
-                    grec->grec_type, inetFmt(src, s1), inetFmt(dst, s2),
+                    grec->ig_type, inetFmt(src, s1), inetFmt(dst, s2),
                     inetFmt(group, s3));
                 break;
             }
-            grec = (struct igmpv3_grec *)
-                (&grec->grec_src[nsrcs] + grec->grec_auxwords * 4);
+            grec = (struct igmp_grouprec *)
+                (&grec->ig_sources[nsrcs] + grec->ig_datalen * 4);
         }
         return;
 
@@ -276,7 +276,7 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
     ip->ip_dst.s_addr       = dst;
-    ip_set_len(ip, IP_HEADER_RAOPT_LEN + IGMPV3_MINLEN + datalen);
+    ip_set_len(ip, IP_HEADER_RAOPT_LEN + IGMP_V3_QUERY_MINLEN + datalen);
 
     if (IN_MULTICAST(ntohl(dst))) {
         ip->ip_ttl = curttl;
@@ -330,7 +330,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
 #endif
     sdst.sin_addr.s_addr = dst;
     if (sendto(MRouterFD, send_buf,
-               IP_HEADER_RAOPT_LEN + IGMPV3_MINLEN + datalen, 0,
+               IP_HEADER_RAOPT_LEN + IGMP_V3_QUERY_MINLEN + datalen, 0,
                (struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
         if (errno == ENETDOWN)
             my_log(LOG_ERR, errno, "Sender VIF was down.");
