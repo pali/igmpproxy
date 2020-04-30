@@ -85,13 +85,13 @@ void rebuildIfVc () {
         if ( TmpIfDescC == IfDescC+NrInt ) {
             addVIF(Dp);
             if( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) && Dp->state == IF_STATE_DOWNSTREAM) {
-                my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
+                my_log(LOG_DEBUG, 0, "rebuildIfVc: Joining all-routers group %s on vif %s",
                     inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
 
                 // k_join(allrouters_group, Dp->InAdr.s_addr);
                 joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
 
-                my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
+                my_log(LOG_DEBUG, 0, "reBuildIfvc: Joining all igmpv3 multicast routers group %s on vif %s",
                     inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
                 joinMcGroup( getMcGroupSock(), Dp, alligmp3_group );
             }
@@ -209,6 +209,8 @@ void buildIfVc() {
         IfDescP.E++;
         TmpIfAddrsP = TmpIfAddrsP->ifa_next;
     }
+    
+    // Free the getifadds struct.
     free (IfAddrsP);
 }
 
