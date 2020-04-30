@@ -3,7 +3,7 @@
 .\" .I  - green or kursive (on HTML)
 .\" .TP - paragraph ? (header line, followed by indented lines)
 .\"
-.TH igmpproxy.conf 5 "" "@PACKAGE_STRING@"
+.TH igmpproxy.conf 5 "" "igmpproxy 0.2.1"
 .SH NAME
 igmpproxy.conf \- Configuration file for
 .BR igmpproxy (8)
@@ -11,7 +11,7 @@ multicast daemon
 
 .SH DESCRIPTION
 .B igmpproxy.conf
-contains the configuration for the 
+contains the configuration for the
 .B igmpproxy
 multicast daemon. It defines which network interfaces should be
 used by the routing daemon. Each interface must be give one of the following roles:
@@ -28,7 +28,7 @@ network interface is the outgoing interface which is responsible for communicati
 to available multicast data sources. There can only be one upstream interface.
 
 .B Downstream
-network interfaces are the distribution interfaces to the destination networks, 
+network interfaces are the distribution interfaces to the destination networks,
 where multicast clients can join groups and receive multicast data. One or more
 downstream interfaces must be configured.
 
@@ -44,10 +44,10 @@ is treated as a comment. Keywords and parameters can be distributed over many li
 The configuration file has two main keywords:
 
 .B quickleave
-.RS 
+.RS
 Enables quickleave mode. In this mode the daemon will send a Leave IGMP message
 upstream as soon as it receives a Leave message for any downstream interface.
-The daemon will then ask for Membership reports on the downstream interfaces, 
+The daemon will then ask for Membership reports on the downstream interfaces,
 and if a report is received the group is joined again upstream. Normally this
 is not noticed at all by clients on the downstream networks. If it's vital
 that the daemon should act exactly as a real multicast client on the upstream
@@ -55,16 +55,21 @@ interface, this function should not be used. Disabling this function increases
 the risk of bandwidth saturation.
 .RE
 
+.B rescanvif
+.RS
+Enables periodic rescanning of interfaces in system. Interfaces which have
+dissapeared are removed and new interfaces added to the proxy interfaces.
+.RE
 
-.B phyint 
+.B phyint
 .I interface
-.I role 
-[ ratelimit 
+.I role
+[ ratelimit
 .I limit
-] [ threshold 
+] [ threshold
 .I ttl
-] [ altnet 
-.I networkaddr ... 
+] [ altnet
+.I networkaddr ...
 ]
 .RS
 Defines the state and settings of a network interface.
@@ -99,7 +104,7 @@ no ratelimit will be applied. This setting is optional.
 .B threshold
 .I ttl
 .RS
-Defines the TTL threshold for the network interface. Packets with a lower TTL than the 
+Defines the TTL threshold for the network interface. Packets with a lower TTL than the
 threshols value will be ignored. This setting is optional, and by default the threshold is 1.
 .RE
 
@@ -107,10 +112,10 @@ threshols value will be ignored. This setting is optional, and by default the th
 .I networkaddr
 \&...
 .RS
-Defines alternate sources for multicasting and IGMP data. The network address must be on the 
+Defines alternate sources for multicasting and IGMP data. The network address must be on the
 following format 'a.b.c.d/n'. By default the router will accept data from sources on the same
 network as configured on an interface. If the multicast source lies on a remote network, one
-must define from where traffic should be accepted. 
+must define from where traffic should be accepted.
 
 This is especially useful for the upstream interface, since the source for multicast
 traffic is often from a remote location. Any number of altnet parameters can be specified.
@@ -121,7 +126,7 @@ traffic is often from a remote location. Any number of altnet parameters can be 
 .RS
 Defines a whitelist for multicast groups. The network address must be in the following
 format 'a.b.c.d/n'. If you want to allow one single group use a network mask of /32,
-i.e. 'a.b.c.d/32'. 
+i.e. 'a.b.c.d/32'.
 
 By default all multicast groups are allowed on any downstream interface. If at least one
 whitelist entry is defined, all igmp membership reports for not explicitly whitelisted
@@ -147,9 +152,9 @@ quickleave
 .br
 ## Define settings for eth0 (upstream)
 .br
-phyint eth0 upstream 
+phyint eth0 upstream
        altnet 10.0.0.0/8
-       
+
 ## Disable alternate IP on eth0 (eth0:0)
 .br
 phyint eth0:0 disabled
