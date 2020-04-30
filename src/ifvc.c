@@ -71,7 +71,7 @@ void rebuildIfVc () {
 
     // Check for dissappeared interfaces and call delVif
     for (struct IfDesc *TmpIfDescC=IfDescC;TmpIfDescC<IfDescC+NrInt;TmpIfDescC++) {
-        for (Dp=IfDescP.S; Dp<IfDescP.E; Dp++) if ( strcmp ( Dp->Name, TmpIfDescC->Name ) ) break;
+        for (Dp=IfDescP.S; Dp<IfDescP.E; Dp++) if ( ! strcmp ( Dp->Name, TmpIfDescC->Name ) ) break;
         if ( Dp == IfDescP.E && (TmpIfDescC->state == IF_STATE_DOWNSTREAM || TmpIfDescC->state == IF_STATE_UPSTREAM) ) delVIF(TmpIfDescC);
     }
 
@@ -81,7 +81,7 @@ void rebuildIfVc () {
     // Check for new interfaces, call addVIF and join mc routers groups if downstream
     for (Dp=IfDescP.S; Dp<IfDescP.E; Dp++) {
         struct IfDesc *TmpIfDescC;
-        for (TmpIfDescC=IfDescC;TmpIfDescC<IfDescC+NrInt;TmpIfDescC++) if ( strcmp ( Dp->Name, TmpIfDescC->Name ) ) break;
+        for (TmpIfDescC=IfDescC;TmpIfDescC<IfDescC+NrInt;TmpIfDescC++) if ( ! strcmp ( Dp->Name, TmpIfDescC->Name ) ) break;
         if ( TmpIfDescC == IfDescC+NrInt && (TmpIfDescC->state == IF_STATE_DOWNSTREAM || TmpIfDescC->state == IF_STATE_UPSTREAM) ) {
             addVIF(Dp);
             if( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) && Dp->state == IF_STATE_DOWNSTREAM) {
