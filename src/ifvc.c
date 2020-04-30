@@ -145,7 +145,7 @@ void buildIfVc() {
         uint32_t addr, subnet, mask;
         char FmtBu[ 32 ];
 
-        strncpy( IfDescP.E->Name, TmpIfAddrsP->ifa_name, sizeof( IfDescP.E->Name ) );
+        memcpy( IfDescP.E->Name, TmpIfAddrsP->ifa_name, sizeof( IfDescP.E->Name ) );
 
         // Set the index to -1 by default.
         IfDescP.E->index = (unsigned int)-1;
