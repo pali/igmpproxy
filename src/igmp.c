@@ -206,7 +206,7 @@ void acceptIgmp(int recvlen) {
     case IGMP_V1_MEMBERSHIP_REPORT:
     case IGMP_V2_MEMBERSHIP_REPORT:
         group = igmp->igmp_group.s_addr;
-        acceptGroupReport(src, group);
+        acceptGroupReport(src, group, NULL, 0, 0);
         return;
 
     case IGMP_V3_MEMBERSHIP_REPORT:
@@ -222,16 +222,18 @@ void acceptIgmp(int recvlen) {
             case IGMP_MODE_IS_INCLUDE:
             case IGMP_CHANGE_TO_INCLUDE_MODE:
                 if (nsrcs == 0) {
-                    acceptLeaveMessage(src, group);
+                    acceptLeaveMessage(src, group, NULL, 0);
                     break;
-                } /* else fall through */
+                }
             case IGMP_MODE_IS_EXCLUDE:
             case IGMP_CHANGE_TO_EXCLUDE_MODE:
             case IGMP_ALLOW_NEW_SOURCES:
-                acceptGroupReport(src, group);
+                acceptGroupReport(src, group, grec->ig_sources, nsrcs, grec->ig_type);
                 break;
             case IGMP_BLOCK_OLD_SOURCES:
+                acceptLeaveMessage(src, group, grec->ig_sources, nsrcs);
                 break;
+
             default:
                 my_log(LOG_INFO, 0,
                     "ignoring unknown IGMPv3 group record type %x from %s to %s for %s",
@@ -246,7 +248,7 @@ void acceptIgmp(int recvlen) {
 
     case IGMP_V2_LEAVE_GROUP:
         group = igmp->igmp_group.s_addr;
-        acceptLeaveMessage(src, group);
+        acceptLeaveMessage(src, group, NULL, 0);
         return;
 
     case IGMP_MEMBERSHIP_QUERY:
@@ -269,7 +271,7 @@ void acceptIgmp(int recvlen) {
 static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
     struct ip *ip;
     struct igmpv3 *igmp;
-    struct  Config  *conf = getCommonConfig();
+    struct Config  *conf = getCommonConfig();
     extern int curttl;
 
     ip                      = (struct ip *)send_buf;
