@@ -38,8 +38,10 @@
 */
 
 /* getopt() and clock_getime() */
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200112L
+#ifndef __FreeBSD__
+    #ifndef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 200112L
+    #endif
 #endif
 
 #include "igmpproxy.h"
@@ -212,11 +214,11 @@ int igmpProxyInit(void) {
                 if(Dp->state == IF_STATE_UPSTREAM) {
                     if (upsvifcount < MAX_UPS_VIFS -1)
                     {
-                        my_log(LOG_DEBUG, 0, "Found upstrem IF #%d, will assing as upstream Vif %d",
+                        my_log(LOG_DEBUG, 0, "Found upstream IF #%d, will assign as upstream Vif %d",
                             upsvifcount, Ix);
                         upStreamIfIdx[upsvifcount++] = Ix;
                     } else {
-                        my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Mac upstream Vif count is %d",
+                        my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Max upstream Vif count is %d",
                             Ix, MAX_UPS_VIFS);
                     }
                 }
