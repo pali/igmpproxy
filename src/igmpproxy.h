@@ -254,6 +254,7 @@ int openUdpSocket( uint32_t PeerInAdr, uint16_t PeerPort );
 
 /* mcgroup.c
  */
+int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr, uint32_t originAddr );
 int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr, uint32_t originAddr );
 int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr, uint32_t originAddr );
 

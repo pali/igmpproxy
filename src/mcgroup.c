@@ -42,7 +42,7 @@
 /**
 *   Common function for joining or leaving a MCast group.
 */
-static int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr, uint32_t originAddr ) {
+int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr, uint32_t originAddr ) {
     struct ip_mreq_source CtlReq;
     const char *CmdSt = Cmd == 'j' ? "join" : "leave";
 
