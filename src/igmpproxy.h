@@ -35,8 +35,10 @@
 *   igmpproxy.h - Header file for common includes.
 */
 
-#include "config.h"
-#include "os.h"
+#ifndef __FreeBSD__
+    #include "config.h"
+    #include "os.h"
+#endif
 
 #include <errno.h>
 #include <stdarg.h>
@@ -59,14 +61,20 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
+
+#ifdef __FreeBSD__
+    #include "config.h"
+    #include "os.h"
+#endif
 
 /*
  * Limit on length of route data
  */
-#define MAX_IP_PACKET_LEN	576
-#define MIN_IP_HEADER_LEN	20
-#define MAX_IP_HEADER_LEN	60
-#define IP_HEADER_RAOPT_LEN	24
+#define MAX_IP_PACKET_LEN       576
+#define MIN_IP_HEADER_LEN       20
+#define MAX_IP_HEADER_LEN       60
+#define IP_HEADER_RAOPT_LEN     24
 
 #define MAX_MC_VIFS    32     // !!! check this const in the specific includes
 #define MAX_UPS_VIFS    8
@@ -95,8 +103,8 @@ extern char     *send_buf;
 
 extern char     s1[];
 extern char     s2[];
-extern char		s3[];
-extern char		s4[];
+extern char             s3[];
+extern char             s4[];
 
 
 
@@ -113,7 +121,6 @@ void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 
 /* ifvc.c
  */
-#define MAX_IF         40     // max. number of interfaces recognized
 
 // Interface states
 #define IF_STATE_DISABLED      0   // Interface should be ignored.
@@ -175,9 +182,9 @@ struct Config {
     unsigned int        downstreamHostsHashTableSize;
     //~ aimwang added
     // Set if nneed to detect new interface.
-    unsigned short	rescanVif;
+    unsigned short      rescanVif;
     // Set if not detect new interface for down stream.
-    unsigned short	defaultInterfaceState;	// 0: disable, 2: downstream
+    unsigned short      defaultInterfaceState;  // 0: disable, 2: downstream
     //~ aimwang added done
 };
 
@@ -276,7 +283,7 @@ void acceptGroupReport(uint32_t src, uint32_t group);
 void acceptLeaveMessage(uint32_t src, uint32_t group);
 void sendGeneralMembershipQuery(void);
 
-/* callout.c 
+/* callout.c
 */
 typedef void (*timer_f)(void *);
 
