@@ -56,7 +56,7 @@ struct IfDescP IfDescP = { NULL, NULL, 0 };
  ***************************************************/
 void rebuildIfVc () {
     struct IfDesc *Dp;
-    unsigned int NrInt=IfDescP.nrint, If;
+    unsigned int NrInt=IfDescP.nrint;
 
     my_log(LOG_DEBUG, 0, "rebuildIfVc: Starting rebuild");
 
