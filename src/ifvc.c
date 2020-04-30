@@ -164,7 +164,7 @@ void buildIfVc() {
 
 
         // Get the subnet mask...
-        mask = s_addr_from_sockaddr(TmpIfAddrsP->ifa_netmask); // Do not use ifr_netmask as it is not available on freebsd
+        mask = s_addr_from_sockaddr(TmpIfAddrsP->ifa_netmask);
         subnet = addr & mask;
 
         /* get if flags
