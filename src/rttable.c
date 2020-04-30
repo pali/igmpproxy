@@ -228,7 +228,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join, struct in_
                 int u;
                 for(u = 0; u < numOriginAddr; u++) {
                     //k_leave(route->group, upstrIf->InAdr.s_addr);
-                    joinleave( cmd, getMcGroupSock(), upstrIf, route->group, originAddr[u] );
+                    joinleave( cmd, getMcGroupSock(), upstrIf, route->group, originAddr[u].s_addr );
                 }
             }
         }
