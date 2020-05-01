@@ -54,7 +54,7 @@ typedef struct {
 *   Handles incoming membership reports, and
 *   appends them to the routing table.
 */
-void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr, uint16_t numOriginAddr, u_char type) {
+void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr, u_short numOriginAddr, u_char mode) {
     struct IfDesc  *sourceVif;
 
     // Sanitycheck the group adress...
@@ -86,7 +86,7 @@ void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr,
         // If we don't have a whitelist we insertRoute and done
         if(sourceVif->allowedgroups == NULL)
         {
-            insertRoute(group, sourceVif->index, src, originAddr, numOriginAddr, type);
+            insertRoute(group, sourceVif->index, src, originAddr, numOriginAddr, mode);
             return;
         }
         // Check if this Request is legit on this interface
@@ -95,7 +95,7 @@ void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr,
             if((group & sn->subnet_mask) == sn->subnet_addr)
             {
                 // The membership report was OK... Insert it into the route table..
-                insertRoute(group, sourceVif->index, src, originAddr, numOriginAddr, type);
+                insertRoute(group, sourceVif->index, src, originAddr, numOriginAddr, mode);
                 return;
         }
     my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
@@ -109,7 +109,7 @@ void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr,
 /**
 *   Recieves and handles a group leave message.
 */
-void acceptLeaveMessage(uint32_t src, uint32_t group, struct in_addr *originAddr, uint16_t numOriginAddr ) {
+void acceptLeaveMessage(uint32_t src, uint32_t group, struct in_addr *originAddr, u_short numOriginAddr ) {
     struct IfDesc   *sourceVif;
 
     my_log(LOG_DEBUG, 0,

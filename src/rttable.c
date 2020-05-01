@@ -51,6 +51,7 @@ struct RouteTable {
     uint32_t            group;          // The group to route
     uint32_t            originAddrs[MAX_ORIGINS]; // The origin adresses (only set on activated routes)
     uint32_t            vifBits;        // Bits representing recieving VIFs.
+    u_char              mode;           // IGMPv3 filter mode
 
     // Keeps the upstream membership state...
     short               upstrState;     // Upstream membership state.
@@ -157,7 +158,7 @@ void initRouteTable(void) {
 *   Internal function to send join or leave requests for
 *   a specified route upstream...
 */
-static void sendJoinLeaveUpstream(struct RouteTable* route, int join, struct in_addr *originAddr, uint16_t numOriginAddr ) {
+static void sendJoinLeaveUpstream(struct RouteTable* route, int join, struct in_addr *originAddr, u_short numOriginAddr ) {
     struct IfDesc*      upstrIf;
     int i, cmd;
 
@@ -292,7 +293,7 @@ static struct RouteTable *findRoute(uint32_t group) {
 *   If the route already exists, the existing route
 *   is updated...
 */
-int insertRoute(uint32_t group, int ifx, uint32_t src, struct in_addr *originAddr, uint16_t numOriginAddr, u_char type) {
+int insertRoute(uint32_t group, int ifx, uint32_t src, struct in_addr *originAddr, u_short numOriginAddr, u_char mode) {
 
     struct Config *conf = getCommonConfig();
     struct RouteTable*  croute;
@@ -328,6 +329,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src, struct in_addr *originAdd
         newroute->nextroute  = NULL;
         newroute->prevroute  = NULL;
         newroute->upstrVif   = -1;
+        newroute->mode       =  0;
 
         if(conf->fastUpstreamLeave) {
             // Init downstream hosts bit hash table
@@ -428,20 +430,27 @@ int insertRoute(uint32_t group, int ifx, uint32_t src, struct in_addr *originAdd
         }
     }
 
-    switch(type) {
-        case IGMP_MODE_IS_INCLUDE:
-        case IGMP_MODE_IS_EXCLUDE:
-            // Send join message upstream, if the route has no joined flag...
-            if(croute->upstrState == ROUTESTATE_JOINED) {
-                break;
-            }
+    switch(mode) {
         case IGMP_CHANGE_TO_EXCLUDE_MODE:
         case IGMP_CHANGE_TO_INCLUDE_MODE:
+            // 
+            if(croute->mode == mode) {
+                break;
+            }
         case IGMP_ALLOW_NEW_SOURCES:
             // Send Join request upstream
             sendJoinLeaveUpstream(croute, 1, originAddr, numOriginAddr);
             break;
+        case IGMP_MODE_IS_INCLUDE:
+        case IGMP_MODE_IS_EXCLUDE:
+        default:
+            // Send join message upstream, if the route has no joined flag...
+            if(croute->upstrState != ROUTESTATE_JOINED) {
+                sendJoinLeaveUpstream(croute, 1, originAddr, numOriginAddr);
+            }
     }
+
+    croute->mode = mode;
 
     logRouteTable("Insert Route");
 
@@ -562,7 +571,7 @@ int numberOfInterfaces(struct RouteTable *croute) {
 *   Should be called when a leave message is received, to
 *   mark a route for the last member probe state.
 */
-void setRouteLastMemberMode(uint32_t group, uint32_t src, struct in_addr *originAddr, uint16_t numOriginAddr ) {
+void setRouteLastMemberMode(uint32_t group, uint32_t src, struct in_addr *originAddr, u_short numOriginAddr ) {
     struct Config       *conf = getCommonConfig();
     struct RouteTable   *croute;
     int                 routeStateCheck = 1;
