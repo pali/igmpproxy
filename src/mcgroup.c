@@ -43,13 +43,7 @@
 *   Common function for joining or leaving a MCast group.
 */
 int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr, uint32_t originAddr ) {
-    struct ip_mreq_source CtlReq;
     const char *CmdSt = Cmd == 'j' ? "join" : "leave";
-
-    memset(&CtlReq, 0, sizeof(CtlReq));
-    CtlReq.imr_multiaddr.s_addr = mcastaddr;
-    CtlReq.imr_interface.s_addr = IfDp->InAdr.s_addr;
-    CtlReq.imr_sourceaddr.s_addr = originAddr;
 
     {
         my_log( LOG_NOTICE, 0, "%sMcGroup: %s on %s from %s", CmdSt,
@@ -59,14 +53,25 @@ int joinleave( int Cmd, int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr, ui
     int ret;
 
     if(originAddr == 0) {
+        struct ip_mreq CtlReq;
+        memset(&CtlReq, 0, sizeof(CtlReq));
+        CtlReq.imr_multiaddr.s_addr = mcastaddr;
+        CtlReq.imr_interface.s_addr = IfDp->InAdr.s_addr;
+
         ret = setsockopt( UdpSock, IPPROTO_IP,
           Cmd == 'j' ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP,
-          (void *)&CtlReq, sizeof( struct ip_mreq ) );
+          (void *)&CtlReq, sizeof( CtlReq ) );
     }
     else {
+        struct ip_mreq_source CtlReq;
+        memset(&CtlReq, 0, sizeof(CtlReq));
+        CtlReq.imr_multiaddr.s_addr = mcastaddr;
+        CtlReq.imr_interface.s_addr = IfDp->InAdr.s_addr;
+        CtlReq.imr_sourceaddr.s_addr = originAddr;
+
         ret = setsockopt( UdpSock, IPPROTO_IP,
-          Cmd == 'j' ? IP_ADD_SOURCE_MEMBERSHIP : IP_BLOCK_SOURCE,
-          (void *)&CtlReq, sizeof( struct ip_mreq_source ) );
+          Cmd == 'j' ? IP_ADD_SOURCE_MEMBERSHIP : IP_DROP_SOURCE_MEMBERSHIP,
+          (void *)&CtlReq, sizeof( CtlReq ) );
     }
     
     if( ret )

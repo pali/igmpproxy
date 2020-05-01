@@ -225,10 +225,12 @@ void acceptIgmp(int recvlen) {
                     acceptLeaveMessage(src, group, NULL, 0);
                     break;
                 }
-            case IGMP_MODE_IS_EXCLUDE:
-            case IGMP_CHANGE_TO_EXCLUDE_MODE:
             case IGMP_ALLOW_NEW_SOURCES:
                 acceptGroupReport(src, group, grec->ig_sources, nsrcs, grec->ig_type);
+                break;
+            case IGMP_MODE_IS_EXCLUDE:
+            case IGMP_CHANGE_TO_EXCLUDE_MODE:
+                acceptGroupReport(src, group, NULL, 0, grec->ig_type);
                 break;
             case IGMP_BLOCK_OLD_SOURCES:
                 acceptLeaveMessage(src, group, grec->ig_sources, nsrcs);
