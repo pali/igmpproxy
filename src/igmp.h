@@ -127,6 +127,12 @@ struct igmp_report {
 #define IGMP_BLOCK_OLD_SOURCES      6   /* BLOCK_OLD */
 
 /*
+ * IGMPv3 filter modes
+ */
+#define IGMP_FILTER_MODE_EXCLUDE    1
+#define IGMP_FILTER_MODE_INCLUDE    2
+
+/*
  * IGMPv3 query types.
  */
 #define IGMP_V3_GENERAL_QUERY       1

@@ -98,7 +98,7 @@ void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr,
                 insertRoute(group, sourceVif->index, src, originAddr, numOriginAddr, mode);
                 return;
         }
-    my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
+        my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
     } else {
         // Log the state of the interface the report was received on.
         my_log(LOG_INFO, 0, "Mebership report was received on %s. Ignoring.",
