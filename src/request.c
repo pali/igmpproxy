@@ -77,6 +77,13 @@ void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr,
         return;
     }
 
+    /* filter local multicast 239.255.255.250 */
+    if (group == htonl(0xEFFFFFFA))
+    {
+        my_log(LOG_NOTICE, 0, "The IGMP message was local multicast. Ignoring.");
+        return;
+    }
+
     // We have a IF so check that it's an downstream IF.
     if(sourceVif->state == IF_STATE_DOWNSTREAM) {
 
