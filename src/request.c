@@ -78,8 +78,7 @@ void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr,
     }
 
     /* filter local multicast 239.255.255.250 */
-    if (group == htonl(0xEFFFFFFA))
-    {
+    if (group == htonl(0xEFFFFFFA)) {
         my_log(LOG_NOTICE, 0, "The IGMP message was local multicast. Ignoring.");
         return;
     }

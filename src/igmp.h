@@ -70,7 +70,7 @@ struct igmpv3 {
     u_char          igmp_misc;  /* reserved/suppress/robustness    */
     u_char          igmp_qqi;   /* querier's query interval        */
     u_short         igmp_numsrc;    /* number of sources               */
-    /*struct in_addr	igmp_sources[1];*/ /* source addresses */
+    /*struct in_addr	igmp_sources[];*/ /* source addresses */
 };
 #define IGMP_V3_QUERY_MINLEN    12
 #define IGMP_EXP(x)             (((x) >> 4) & 0x07)
@@ -84,7 +84,7 @@ struct igmp_grouprec {
     u_char          ig_datalen; /* length of auxiliary data */
     u_short         ig_numsrc;  /* number of sources */
     struct in_addr  ig_group;   /* group address being reported */
-    struct in_addr  ig_sources[1];  /* source addresses */
+    struct in_addr  ig_sources[];  /* source addresses */
 };
 #define IGMP_GRPREC_HDRLEN  8
 
@@ -97,7 +97,7 @@ struct igmp_report {
     u_short         ir_cksum;   /* checksum */
     u_short         ir_rsv2;    /* must be zero */
     u_short         ir_numgrps; /* number of group records */
-    struct	igmp_grouprec   ir_groups[1];   /* group records */
+    struct	igmp_grouprec   ir_groups[];   /* group records */
 };
 #define IGMP_V3_REPORT_MINLEN   8
 #define IGMP_V3_REPORT_MAXRECS  65535
