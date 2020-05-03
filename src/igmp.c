@@ -288,11 +288,11 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
     igmp->igmp_code         = code;
     igmp->igmp_group.s_addr = group;
     igmp->igmp_cksum        = 0;
-    igmp->igmp_cksum        = inetChksum((unsigned short *)igmp,
-                                         IP_HEADER_RAOPT_LEN + datalen);
     igmp->igmp_misc         = conf->robustnessValue & 0x7;
     igmp->igmp_qqi          = conf->queryInterval;
     igmp->igmp_numsrc       = 0;
+    igmp->igmp_cksum        = inetChksum((unsigned short *)igmp,
+                                IGMP_V3_QUERY_MINLEN + datalen);
 
 }
 
