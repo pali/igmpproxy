@@ -70,8 +70,9 @@ void initIgmp(void) {
      */
     ip->ip_v   = IPVERSION;
     ip->ip_hl  = (sizeof(struct ip) + 4) >> 2; /* +4 for Router Alert option */
-    ip->ip_tos = 0xc0;      /* Internet Control */
-    ip->ip_ttl = MAXTTL;    /* applies to unicasts only */
+    ip->ip_tos = 0xc0;          /* Internet Control */
+    ip->ip_off = htons(IP_DF);  /* set Don't Fragment flag */
+    ip->ip_ttl = MAXTTL;        /* applies to unicasts only */
     ip->ip_p   = IPPROTO_IGMP;
 
     allhosts_group   = htonl(INADDR_ALLHOSTS_GROUP);
