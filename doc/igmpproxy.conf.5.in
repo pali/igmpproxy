@@ -55,6 +55,23 @@ interface, this function should not be used. Disabling this function increases
 the risk of bandwidth saturation.
 .RE
 
+.B loglevel
+.RS
+Sets the loglevel for the daemon. Must be between 0-7 and corrsponds to unix syslog levels.
+.RE
+
+.B rescanvif
+.RS
+Enables periodic rescanning of interfaces in system. The value specifies the interval
+in seconds, with a minimum of 10 seconds. 0 is disabled. Currently only changes of downstream
+interfaces are supported.
+.RE
+
+.B rescanconf
+.RS
+Enables periodic rescanning of confiuration file. The value specifies the interval
+in seconds, with a minimum of 10 seconds. 0 is disabled. This implies and overrules rescanvif.
+.RE
 
 .B phyint 
 .I interface

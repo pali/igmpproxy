@@ -329,7 +329,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
                IP_HEADER_RAOPT_LEN + IGMP_MINLEN + datalen, 0,
                (struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
         if (errno == ENETDOWN)
-            my_log(LOG_ERR, errno, "Sender VIF was down.");
+            my_log(LOG_NOTICE, errno, "Sender VIF was down.");
         else
             my_log(LOG_INFO, errno,
                 "sendto to %s on %s",

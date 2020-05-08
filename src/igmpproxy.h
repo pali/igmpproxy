@@ -35,8 +35,10 @@
 *   igmpproxy.h - Header file for common includes.
 */
 
-#include "config.h"
-#include "os.h"
+#ifndef __FreeBSD__
+    #include "config.h"
+    #include "os.h"
+#endif
 
 #include <errno.h>
 #include <stdarg.h>
@@ -59,6 +61,12 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
+
+#ifdef __FreeBSD__
+    #include "config.h"
+    #include "os.h"
+#endif
 
 /*
  * Limit on length of route data
@@ -113,14 +121,11 @@ void my_log( int Serverity, int Errno, const char *FmtSt, ... );
 
 /* ifvc.c
  */
-#define MAX_IF         40     // max. number of interfaces recognized
 
 // Interface states
 #define IF_STATE_DISABLED      0   // Interface should be ignored.
 #define IF_STATE_UPSTREAM      1   // Interface is the upstream interface
 #define IF_STATE_DOWNSTREAM    2   // Interface is a downstream interface
-#define IF_STATE_LOST          3   // aimwang: Temp from downstream to hidden
-#define IF_STATE_HIDDEN        4   // aimwang: Interface is hidden
 
 // Multicast default values...
 #define DEFAULT_ROBUSTNESS     2
@@ -155,7 +160,13 @@ struct IfDesc {
     unsigned int        robustness;
     unsigned char       threshold;   /* ttl limit */
     unsigned int        ratelimit;
-    unsigned int        index;
+    signed int          index;
+};
+
+struct IfDescP {
+    struct IfDesc       *S;
+    struct IfDesc       *E;
+    unsigned int        nrint;
 };
 
 // Keeps common configuration settings
@@ -175,7 +186,9 @@ struct Config {
     unsigned int        downstreamHostsHashTableSize;
     //~ aimwang added
     // Set if nneed to detect new interface.
-    unsigned short	rescanVif;
+    unsigned short      rescanVif;
+    // Set if nneed to detect config change.
+    unsigned short      rescanConf;
     // Set if not detect new interface for down stream.
     unsigned short	defaultInterfaceState;	// 0: disable, 2: downstream
     //~ aimwang added done
@@ -208,7 +221,7 @@ extern int MRouterFD;
 
 int enableMRouter( void );
 void disableMRouter( void );
-void addVIF( struct IfDesc *Dp );
+void addVIF( struct IfDesc *Dp, struct IfDesc *oDp );
 void delVIF( struct IfDesc *Dp );
 int addMRoute( struct MRouteDesc * Dp );
 int delMRoute( struct MRouteDesc * Dp );
@@ -216,8 +229,11 @@ int getVifIx( struct IfDesc *IfDp );
 
 /* config.c
  */
+char *configFilePath;
+void reloadConfig();
 int loadConfig(char *configFile);
 void configureVifs(void);
+void createVifs(struct IfDescP *rebuildP);
 struct Config *getCommonConfig(void);
 
 /* igmp.c
@@ -261,7 +277,8 @@ int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
 /* rttable.c
  */
 void initRouteTable(void);
-void clearAllRoutes(void);
+void joinMcRoutersGroup(struct IfDesc *Dp);
+void clearRoutes(struct IfDesc *IfDp);
 int insertRoute(uint32_t group, int ifx, uint32_t src);
 int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif);
 void ageActiveRoutes(void);
@@ -276,16 +293,14 @@ void acceptGroupReport(uint32_t src, uint32_t group);
 void acceptLeaveMessage(uint32_t src, uint32_t group);
 void sendGeneralMembershipQuery(void);
 
-/* callout.c 
+/* callout.c
 */
 typedef void (*timer_f)(void *);
 
 void callout_init(void);
 void free_all_callouts(void);
-void age_callout_queue(int);
-int timer_nextTimer(void);
+void age_callout_queue(struct timespec curtime);
 int timer_setTimer(int, timer_f, void *);
-int timer_clearTimer(int);
 int timer_leftTimer(int);
 
 /* confread.c
