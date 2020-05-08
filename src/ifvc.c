@@ -227,7 +227,7 @@ struct IfDesc *getIfByAddress( uint32_t ipaddr ) {
 *   the supplied IP adress. The IP must match a interfaces
 *   subnet, or any configured allowed subnet on a interface.
 */
-struct IfDesc *getIfByVifIndex( unsigned vifindex ) {
+struct IfDesc *getIfByVifIndex( signed vifindex ) {
     struct IfDesc       *Dp;
     if(vifindex>0) {
         for ( Dp = IfDescP.S; Dp < IfDescP.E; Dp++ ) {
