@@ -280,7 +280,7 @@ void initRouteTable(void);
 void joinMcRoutersGroup(struct IfDesc *Dp);
 void clearRoutes(struct IfDesc *IfDp);
 int insertRoute(uint32_t group, int ifx, uint32_t src);
-int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif);
+int activateRoute(uint32_t group, uint32_t originAddr, unsigned upstrVif);
 void ageActiveRoutes(void);
 void setRouteLastMemberMode(uint32_t group, uint32_t src);
 int lastMemberGroupAge(uint32_t group);
