@@ -40,11 +40,6 @@
 
 #include "igmpproxy.h"
 
-// MAX_MC_VIFS from mclab.h must have same value as MAXVIFS from mroute.h
-#if MAX_MC_VIFS != MAXVIFS
-# error "constants don't match, correct mclab.h"
-#endif
-
 // need an IGMP socket as interface for the mrouted API
 // - receives the IGMP messages
 int         MRouterFD;          /* socket for all network I/O  */
