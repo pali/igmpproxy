@@ -299,7 +299,7 @@ void igmpProxyRun(void) {
             timeout = NULL;
         } else {
             timeout->tv_nsec = 0;
-            timeout->tv_sec = (secs > 3) ? 3 : secs; // aimwang: set max timeout
+            timeout->tv_sec = secs = (secs > 3) ? 3 : secs; // aimwang: set max timeout
         }
 
         // Prepare for select.

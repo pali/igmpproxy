@@ -199,7 +199,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
                             conf->lastMemberQueryInterval * IGMP_TIMER_SCALE,
                             gvDesc->group, 0);
 
-                    my_log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
+                    my_log(LOG_DEBUG, 0, "Sent group specific membership query from %s to %s. Delay: %d",
                             inetFmt(Dp->InAdr.s_addr,s1), inetFmt(gvDesc->group,s2),
                             conf->lastMemberQueryInterval);
                 }
@@ -230,7 +230,7 @@ void sendGeneralMembershipQuery(void) {
                          conf->queryResponseInterval * IGMP_TIMER_SCALE, 0, 0);
 
                 my_log(LOG_DEBUG, 0,
-                    "Sent membership query from %s to %s. Delay: %d",
+                    "Sent general membership query from %s to %s. Delay: %d",
                     inetFmt(Dp->InAdr.s_addr,s1),
                     inetFmt(allhosts_group,s2),
                     conf->queryResponseInterval);
