@@ -54,7 +54,7 @@ struct RouteTable {
 
     // Keeps the upstream membership state...
     short               upstrState;     // Upstream membership state.
-    int                 upstrVif;       // Upstream Vif Index.
+    unsigned            upstrVif;       // Upstream Vif Index.
 
     // These parameters contain aging details.
     uint32_t            ageVifBits;     // Bits representing aging VIFs.
@@ -438,7 +438,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
 *   activated, it's reinstalled in the kernel. If
 *   the route is activated, no originAddr is needed.
 */
-int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
+int activateRoute(uint32_t group, uint32_t originAddr, unsigned upstrVif) {
     struct RouteTable*  croute;
     int result = 0;
 
