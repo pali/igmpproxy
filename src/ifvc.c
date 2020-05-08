@@ -42,6 +42,7 @@ static inline uint32_t s_addr_from_sockaddr(const struct sockaddr *addr) {
 }
 
 struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
+struct IfDescP IfDescP = { NULL, NULL, 0 };
 
 /* aimwang: add for detect interface and rebuild IfVc record */
 /***************************************************
@@ -50,149 +51,22 @@ struct IfDesc IfDescVc[ MAX_IF ], *IfDescEp = IfDescVc;
  *          So I can check if the file exist then run me and delete the file.
  ***************************************************/
 void rebuildIfVc () {
-    struct ifreq IfVc[ sizeof( IfDescVc ) / sizeof( IfDescVc[ 0 ] )  ];
-    struct ifreq *IfEp;
-    struct ifconf IoCtlReq;
-    struct IfDesc *Dp;
-    struct ifreq  *IfPt, *IfNext;
-    uint32_t addr, subnet, mask;
-    int Sock;
+    // Build new IfDesc Table. Keep Copy of Old.
+    struct IfDescP OldIfDescP=IfDescP, TmpIfDescP=IfDescP;
+    buildIfVc();
 
-    // Get the config.
-    struct Config *config = getCommonConfig();
+    // Call configureVifs to link the new IfDesc table.
+    configureVifs();
 
-    if ( (Sock = socket( AF_INET, SOCK_DGRAM, 0 )) < 0 )
-        my_log( LOG_ERR, errno, "RAW socket open" );
+    // Call createvifs with pointer to old IfDesc table for relinking vifs and removing or adding interfaces if required.
+    my_log (LOG_DEBUG,0,"RebuildIfVc: creating vifs, Old IfDescP: %x, New: %x", OldIfDescP.S, IfDescP.S);
+    createVifs(&OldIfDescP);
 
-    // aimwang: set all downstream IF as lost, for check IF exist or gone.
-    for (Dp = IfDescVc; Dp < IfDescEp; Dp++) {
-        if (Dp->state == IF_STATE_DOWNSTREAM) {
-            Dp->state = IF_STATE_LOST;
-        }
+    // Free the old IfDesc Table.
+    if ( OldIfDescP.S != NULL ) {
+        for (struct IfDesc *Dp = TmpIfDescP.S; Dp < TmpIfDescP.E; Dp++) free(Dp->allowednets);
+        free(OldIfDescP.S);
     }
-
-    IoCtlReq.ifc_buf = (void *)IfVc;
-    IoCtlReq.ifc_len = sizeof( IfVc );
-
-    if ( ioctl( Sock, SIOCGIFCONF, &IoCtlReq ) < 0 )
-        my_log( LOG_ERR, errno, "ioctl SIOCGIFCONF" );
-
-    IfEp = (void *)((char *)IfVc + IoCtlReq.ifc_len);
-
-    for ( IfPt = IfVc; IfPt < IfEp; IfPt = IfNext ) {
-        struct ifreq IfReq;
-        char FmtBu[ 32 ];
-
-        IfNext = (struct ifreq *)((char *)&IfPt->ifr_addr +
-#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-                IfPt->ifr_addr.sa_len
-#else
-                sizeof(struct sockaddr_in)
-#endif
-        );
-        if (IfNext < IfPt + 1)
-            IfNext = IfPt + 1;
-
-        for (Dp = IfDescVc; Dp < IfDescEp; Dp++) {
-            if (0 == strcmp(Dp->Name, IfPt->ifr_name)) {
-                break;
-            }
-        }
-
-        if (Dp == IfDescEp) {
-            strncpy( Dp->Name, IfPt->ifr_name, sizeof( IfDescEp->Name ) );
-        }
-
-        if ( IfPt->ifr_addr.sa_family != AF_INET ) {
-            if (Dp == IfDescEp) {
-                IfDescEp++;
-            }
-            Dp->InAdr.s_addr = 0;  /* mark as non-IP interface */
-            continue;
-        }
-
-        // Get the interface adress...
-        Dp->InAdr.s_addr = s_addr_from_sockaddr(&IfPt->ifr_addr);
-        addr = Dp->InAdr.s_addr;
-
-        memcpy( IfReq.ifr_name, Dp->Name, sizeof( IfReq.ifr_name ) );
-
-        // Get the subnet mask...
-        if (ioctl(Sock, SIOCGIFNETMASK, &IfReq ) < 0)
-            my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
-        mask = s_addr_from_sockaddr(&IfReq.ifr_addr); // Do not use ifr_netmask as it is not available on freebsd
-        subnet = addr & mask;
-
-        if ( ioctl( Sock, SIOCGIFFLAGS, &IfReq ) < 0 )
-            my_log( LOG_ERR, errno, "ioctl SIOCGIFFLAGS" );
-        Dp->Flags = IfReq.ifr_flags;
-
-        if (0x10d1 == Dp->Flags)
-        {
-            if ( ioctl( Sock, SIOCGIFDSTADDR, &IfReq ) < 0 )
-                my_log(LOG_ERR, errno, "ioctl SIOCGIFDSTADDR for %s", IfReq.ifr_name);
-            addr = s_addr_from_sockaddr(&IfReq.ifr_dstaddr);
-            subnet = addr & mask;
-        }
-
-        if (Dp == IfDescEp) {
-            // Insert the verified subnet as an allowed net...
-            Dp->allowednets = (struct SubnetList *)malloc(sizeof(struct SubnetList));
-            if(IfDescEp->allowednets == NULL) {
-                my_log(LOG_ERR, 0, "Out of memory !");
-            }
-            Dp->allowednets->next = NULL;
-            Dp->state         = IF_STATE_DOWNSTREAM;
-            Dp->robustness    = DEFAULT_ROBUSTNESS;
-            Dp->threshold     = DEFAULT_THRESHOLD;   /* ttl limit */
-            Dp->ratelimit     = DEFAULT_RATELIMIT;
-        }
-
-        // Set the network address for the IF..
-        Dp->allowednets->subnet_mask = mask;
-        Dp->allowednets->subnet_addr = subnet;
-
-        // Set the state for the IF...
-        if (Dp->state == IF_STATE_LOST) {
-            Dp->state         = IF_STATE_DOWNSTREAM;
-        }
-
-        // when IF become enabeld from downstream, addVIF to enable its VIF
-        if (Dp->state == IF_STATE_HIDDEN) {
-            my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
-            Dp->state = IF_STATE_DOWNSTREAM;
-            addVIF(Dp);
-            joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
-        }
-
-        // addVIF when found new IF
-        if (Dp == IfDescEp) {
-            my_log(LOG_NOTICE, 0, "%s [New]", Dp->Name);
-            Dp->state = config->defaultInterfaceState;
-            addVIF(Dp);
-            joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
-            IfDescEp++;
-        }
-
-        // Debug log the result...
-        my_log( LOG_DEBUG, 0, "rebuildIfVc: Interface %s Addr: %s, Flags: 0x%04x, Network: %s",
-            Dp->Name,
-            fmtInAdr( FmtBu, Dp->InAdr ),
-            Dp->Flags,
-            inetFmts(subnet, mask, s1));
-    }
-
-    // aimwang: search not longer exist IF, set as hidden and call delVIF
-    for (Dp = IfDescVc; Dp < IfDescEp; Dp++) {
-        if (IF_STATE_LOST == Dp->state) {
-            my_log(LOG_NOTICE, 0, "%s [Downstream -> Hidden]", Dp->Name);
-            Dp->state = IF_STATE_HIDDEN;
-            leaveMcGroup( getMcGroupSock(), Dp, allrouters_group );
-            delVIF(Dp);
-        }
-    }
-
-    close( Sock );
 }
 
 /*

@@ -38,8 +38,10 @@
 */
 
 /* getopt() and clock_getime() */
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200112L
+#ifndef __FreeBSD__
+    #ifndef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 200112L
+    #endif
 #endif
 
 #include "igmpproxy.h"
@@ -113,7 +115,7 @@ int main( int ArgCn, char *ArgVc[] ) {
         fputs("You must specify the configuration file.\n", stderr);
         exit(1);
     }
-    char *configFilePath = ArgVc[optind];
+    configFilePath = ArgVc[optind];
 
     // Chech that we are root
     if (geteuid() != 0) {
@@ -238,7 +240,7 @@ int igmpProxyInit(void) {
     // Initialize Routing table
     initRouteTable();
     // Initialize timer
-    callout_init();
+    free_all_callouts();
 
     return 1;
 }
@@ -250,7 +252,7 @@ void igmpProxyCleanUp(void) {
     my_log( LOG_DEBUG, 0, "clean handler called" );
 
     free_all_callouts();    // No more timeouts.
-    clearAllRoutes();       // Remove all routes.
+    clearRoutes(NULL);      // Remove all routes.
     disableMRouter();       // Disable the multirout API
 }
 
@@ -265,17 +267,15 @@ void igmpProxyRun(void) {
     int     MaxFD, Rt, secs;
     fd_set  ReadFDS;
     socklen_t dummy = 0;
-    struct  timespec  curtime, lasttime, difftime, tv;
-    // The timeout is a pointer in order to set it to NULL if nessecary.
-    struct  timespec  *timeout = &tv;
+    struct  timespec  curtime, lasttime, difftime, *timeout = &difftime;
+
+    // First thing we send a membership query in downstream VIF's...
+    sendGeneralMembershipQuery();
 
     // Initialize timer vars
     difftime.tv_nsec = 0;
     clock_gettime(CLOCK_MONOTONIC, &curtime);
     lasttime = curtime;
-
-    // First thing we send a membership query in downstream VIF's...
-    sendGeneralMembershipQuery();
 
     // Loop until the end...
     for (;;) {
@@ -289,17 +289,21 @@ void igmpProxyRun(void) {
             }
         }
 
-        /* aimwang: call rebuildIfVc */
-        if (config->rescanVif)
-            rebuildIfVc();
-
-        // Prepare timeout...
-        secs = timer_nextTimer();
-        if(secs == -1) {
-            timeout = NULL;
+        // Timeout = 1s - difference between current and last time age_callout queue with .01s grace.
+        // This will make sure age_callout_queue is run once every s (timer resolution) +- 0.01s.
+        // If aging queues takes > .01s on very slow systems or when queue is very large,
+        // this will become less accurate by about the time it takes to age the queue + time to process a request.
+        clock_gettime(CLOCK_MONOTONIC, &curtime);
+        difftime.tv_sec = curtime.tv_sec - lasttime.tv_sec;
+        if (curtime.tv_nsec >= lasttime.tv_nsec ) {
+            timeout->tv_nsec = 999999999 - (curtime.tv_nsec - lasttime.tv_nsec);
         } else {
-            timeout->tv_nsec = 0;
-            timeout->tv_sec = (secs > 3) ? 3 : secs; // aimwang: set max timeout
+            timeout->tv_nsec = 999999999 - (1000000000 - lasttime.tv_nsec + curtime.tv_nsec); difftime.tv_sec--;
+        }
+        if ( difftime.tv_sec > 0 || timeout->tv_nsec < 10000000 ) {
+            timeout->tv_nsec = 999999999; timeout->tv_sec = 0;
+            lasttime = curtime;
+            age_callout_queue(curtime);
         }
 
         // Prepare for select.
@@ -331,39 +335,7 @@ void igmpProxyRun(void) {
                 acceptIgmp(recvlen);
             }
         }
-
-        // At this point, we can handle timeouts...
-        do {
-            /*
-             * If the select timed out, then there's no other
-             * activity to account for and we don't need to
-             * call gettimeofday.
-             */
-            if (Rt == 0) {
-                curtime.tv_sec = lasttime.tv_sec + secs;
-                curtime.tv_nsec = lasttime.tv_nsec;
-                Rt = -1; /* don't do this next time through the loop */
-            } else {
-                clock_gettime(CLOCK_MONOTONIC, &curtime);
-            }
-            difftime.tv_sec = curtime.tv_sec - lasttime.tv_sec;
-            difftime.tv_nsec += curtime.tv_nsec - lasttime.tv_nsec;
-            while (difftime.tv_nsec > 1000000000) {
-                difftime.tv_sec++;
-                difftime.tv_nsec -= 1000000000;
-            }
-            if (difftime.tv_nsec < 0) {
-                difftime.tv_sec--;
-                difftime.tv_nsec += 1000000000;
-            }
-            lasttime = curtime;
-            if (secs == 0 || difftime.tv_sec > 0)
-                age_callout_queue(difftime.tv_sec);
-            secs = -1;
-        } while (difftime.tv_sec > 0);
-
     }
-
 }
 
 /*

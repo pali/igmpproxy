@@ -100,6 +100,38 @@ struct Config *getCommonConfig(void) {
     return &commonConfig;
 }
 
+// Reloads the configuration file and removes interfaces which were removed from config.
+void reloadConfig() {
+    struct IfDesc *Dp;
+    struct vifconfig *OldConfPtr, *NewConfPtr, *TmpConfPtr;
+
+    // Load the new configuration keep reference to the old.
+    OldConfPtr = vifconf;
+    if ( ! loadConfig(configFilePath) ) my_log(LOG_ERR, 0, "reloadConfig: Unable to load config file.");
+
+    // Rebuild the interfaces config.
+    rebuildIfVc();
+
+    my_log(LOG_DEBUG, 0, "reloadConfig: Config Reloaded. OldConfPtr %x, NewConfPtr, %x", OldConfPtr, vifconf);
+    // Free all the old mallocd subnetlists and vifconf list.
+    while ( OldConfPtr ) {
+        TmpConfPtr=OldConfPtr->next; // Increment before free or pointers may be invalid.
+        struct SubnetList *TmpNetPtr;
+        for ( ; OldConfPtr->allowednets;  ) {
+            TmpNetPtr = OldConfPtr->allowednets->next;
+            free (OldConfPtr->allowednets);
+            OldConfPtr->allowednets = TmpNetPtr;
+        }
+        for ( ; OldConfPtr->allowedgroups; ) {
+            TmpNetPtr = OldConfPtr->allowedgroups->next;
+            free (OldConfPtr->allowedgroups);
+            OldConfPtr->allowedgroups = TmpNetPtr;
+        }
+        free (OldConfPtr);
+        OldConfPtr = TmpConfPtr;
+    }
+}
+
 /**
 *   Loads the configuration from file, and stores the config in
 *   respective holders...
@@ -260,6 +292,97 @@ void configureVifs(void) {
     }
 }
 
+/* create VIFs for all IP, non-loop interfaces.
+   When argument is not NULL rebuild the interface table.
+*/
+void createVifs(struct IfDescP *RebuildP) {
+    struct IfDesc *Dp, *oDp = NULL;
+    int    vifcount = 0, upsvifcount = 0, Ix = 0;
+    bool   join = 0;
+
+    // init array to "not set"
+    for ( Ix = 0; Ix < MAX_UPS_VIFS; Ix++) upStreamIfIdx[Ix] = -1;
+
+    if ( RebuildP != NULL ) {
+        // When rebuild, check if interfaces have dissapeared and call delVIF if necessary.
+        for ( oDp=RebuildP->S; oDp<RebuildP->E; oDp++ ) {
+            for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) if ( ! strcmp (oDp->Name, Dp->Name) ) break;
+            if ( Dp == NULL ) {
+                my_log(LOG_DEBUG, 0, "Interface %s disappeared from system", oDp->Name );
+                if ( oDp->index != -1 ) delVIF(oDp);
+            }
+        }
+    }
+
+    for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
+        if ( RebuildP == NULL ) {
+            // Only add vif for valid interfaces on start-up.
+            if ( (Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM) ) continue;
+        } else {
+            /* Need rebuild, check if interface is new or already exists (check table below).
+                             old: disabled    new: disabled    -> do nothing
+                             old: disabled    new: downstream  -> addVIF(new), joinmcroutergroups
+                             old: disabled    new: upstream    -> addVIF(new)
+                             old: downstream  new: disabled    -> delVIF(old)
+               state table   old: downstream  new: downstream  -> addvif(new,old)
+                             old: downstream  new: upstream    -> delvif(old), addvif(new)
+                             old: upstream    new: disabled    -> clear routes oldvif, delVIF(old)
+                             old: upstream    new: downstream  -> clear routes oldvif, delvif(old)),addvif(new), joinmcroutergroup
+                             old: upstream    new: upstream    -> addvif(new,old)
+            */
+            for ( oDp=RebuildP->S; oDp<RebuildP->E; oDp++ ) if ( ! strcmp (oDp->Name, Dp->Name) ) break;
+            if ( oDp < RebuildP->E ) {
+                switch (oDp->state) {
+                case IF_STATE_DISABLED:
+                    switch (Dp->state) {
+                    case IF_STATE_DISABLED:   {                                                      continue; }
+                    case IF_STATE_DOWNSTREAM: {                                  oDp=NULL;  join=1;  break; }
+                    case IF_STATE_UPSTREAM:   {                                  oDp=NULL;           break; }
+                    }
+                    break;
+                case IF_STATE_DOWNSTREAM:
+                    switch (Dp->state) {
+                    case IF_STATE_DISABLED:   {                    delVIF(oDp);                      continue; }
+                    case IF_STATE_DOWNSTREAM: {                                                      break; }
+                    case IF_STATE_UPSTREAM:   {                    delVIF(oDp);  oDp=NULL;           break; }
+                    }
+                    break;
+                case IF_STATE_UPSTREAM:
+                    switch (Dp->state) {
+                    case IF_STATE_DISABLED:   { clearRoutes(oDp);  delVIF(oDp);                      continue; }
+                    case IF_STATE_DOWNSTREAM: { clearRoutes(oDp);  delVIF(oDp);  oDp=NULL;  join=1;  break; }
+                    case IF_STATE_UPSTREAM:   {                                                      break; }
+                    }
+                    break;
+                }
+                if (Dp->Flags & IFF_LOOPBACK) continue;
+            } else {
+                // New Interface. Only add valid up/downstream vif.
+                if ( (Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM) ) continue;
+                oDp=NULL;
+            }
+        }
+        if(Dp->state == IF_STATE_UPSTREAM) {
+            if (upsvifcount < MAX_UPS_VIFS -1)
+            {
+                my_log(LOG_DEBUG, 0, "Found upstream IF #%d, will assign as upstream Vif %d",
+                upsvifcount, Ix);
+                upStreamIfIdx[upsvifcount++] = Ix;
+            } else {
+                my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Max upstream Vif count is %d",
+                Ix, MAX_UPS_VIFS);
+            }
+        }
+        addVIF( Dp );
+        if ( join ) joinMcRoutersGroup(Dp);
+        vifcount++;
+    }
+
+    // All vifs created, check if there is an upstream and at least one downstream.
+    if ( upsvifcount == 0 || vifcount == upsvifcount ) {
+        my_log(LOG_ERR, 0, "There must be at least 1 Vif as upstream and 1 as dowstream.");
+    }
+}
 
 /**
 *   Internal function to parse phyint config

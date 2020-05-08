@@ -153,6 +153,18 @@ void initRouteTable(void) {
     }
 }
 
+void joinMcRoutersGroup(struct IfDesc *Dp) {
+    my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
+                 inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
+
+    //k_join(allrouters_group, Dp->InAdr.s_addr);
+    joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
+
+    my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
+                 inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
+    joinMcGroup( getMcGroupSock(), Dp, alligmp3_group );
+}
+
 /**
 *   Internal function to send join or leave requests for
 *   a specified route upstream...
@@ -228,7 +240,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
 /**
 *   Clear all routes from routing table, and alerts Leaves upstream.
 */
-void clearAllRoutes(void) {
+void clearRoutes(struct IfDesc *IfDp) {
     struct RouteTable   *croute, *remainroute;
 
     // Loop through all routes...
