@@ -35,8 +35,8 @@
 *   igmpproxy.h - Header file for common includes.
 */
 
+#include "config.h"
 #ifndef __FreeBSD__
-    #include "config.h"
     #include "os.h"
 #endif
 
@@ -63,7 +63,6 @@
 #include <arpa/inet.h>
 
 #ifdef __FreeBSD__
-    #include "config.h"
     #include "os.h"
 #endif
 
