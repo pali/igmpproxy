@@ -362,14 +362,12 @@ void createVifs(struct IfDescP *RebuildP) {
             }
         }
         if(Dp->state == IF_STATE_UPSTREAM) {
-            if (upsvifcount < MAX_UPS_VIFS -1)
-            {
-                my_log(LOG_DEBUG, 0, "Found upstream IF #%d, will assign as upstream Vif %d",
-                upsvifcount, Ix);
-                upStreamIfIdx[upsvifcount++] = Ix;
-            } else {
+            if (upsvifcount >= MAX_UPS_VIFS) {
                 my_log(LOG_ERR, 0, "Cannot set VIF #%d as upstream as well. Max upstream Vif count is %d",
                 Ix, MAX_UPS_VIFS);
+            } else {
+                my_log(LOG_DEBUG, 0, "Found upstream IF #%d, will assign as upstream Vif %d", upsvifcount, Ix);
+                upStreamIfIdx[upsvifcount++] = Ix;
             }
         }
         addVIF( Dp );
