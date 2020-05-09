@@ -161,7 +161,7 @@ struct IfDesc {
     unsigned int        robustness;
     unsigned char       threshold;   /* ttl limit */
     unsigned int        ratelimit;
-    unsigned int        index;
+    signed int          index;
 };
 
 struct IfDescP {
