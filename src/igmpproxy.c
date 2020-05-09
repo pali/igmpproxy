@@ -264,7 +264,7 @@ void igmpProxyRun(void) {
     struct Config *config = getCommonConfig();
     // Set some needed values.
     register int recvlen;
-    int     MaxFD, Rt, secs;
+    int     MaxFD, Rt;
     fd_set  ReadFDS;
     socklen_t dummy = 0;
     struct  timespec  curtime, lasttime, difftime, *timeout = &difftime;
@@ -289,6 +289,8 @@ void igmpProxyRun(void) {
             }
         }
 
+        if (config->rescanVif) (void)0;
+        
         // Timeout = 1s - difference between current and last time age_callout queue with .01s grace.
         // This will make sure age_callout_queue is run once every s (timer resolution) +- 0.01s.
         // If aging queues takes > .01s on very slow systems or when queue is very large,
