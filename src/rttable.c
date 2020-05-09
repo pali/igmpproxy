@@ -442,7 +442,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
 *   activated, it's reinstalled in the kernel. If
 *   the route is activated, no originAddr is needed.
 */
-int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
+int activateRoute(uint32_t group, uint32_t originAddr, signed upstrVif) {
     struct RouteTable*  croute;
     int result = 0;
 
