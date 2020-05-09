@@ -102,8 +102,7 @@ struct Config *getCommonConfig(void) {
 
 // Reloads the configuration file and removes interfaces which were removed from config.
 void reloadConfig() {
-    struct IfDesc *Dp;
-    struct vifconfig *OldConfPtr, *NewConfPtr, *TmpConfPtr;
+    struct vifconfig *OldConfPtr, *TmpConfPtr;
 
     // Load the new configuration keep reference to the old.
     OldConfPtr = vifconf;
