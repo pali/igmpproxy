@@ -1,3 +1,7 @@
+#define __BSD_VISIBLE 1
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <net/route.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip_mroute.h>
