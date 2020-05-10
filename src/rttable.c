@@ -158,11 +158,11 @@ void joinMcRoutersGroup(struct IfDesc *Dp) {
                  inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
 
     //k_join(allrouters_group, Dp->InAdr.s_addr);
-    joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
+    joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
 
     my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
                  inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-    joinMcGroup( getMcGroupSock(), Dp, alligmp3_group );
+    joinMcGroup(getMcGroupSock(), Dp, alligmp3_group);
 }
 
 /**
@@ -442,7 +442,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
 *   activated, it's reinstalled in the kernel. If
 *   the route is activated, no originAddr is needed.
 */
-int activateRoute(uint32_t group, uint32_t originAddr, signed upstrVif) {
+int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
     struct RouteTable*  croute;
     int result = 0;
 
