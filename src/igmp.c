@@ -166,7 +166,7 @@ void acceptIgmp(int recvlen) {
                         }
                     } else {
                         // Activate the route.
-                        signed vifindex = checkVIF->index;
+                        int vifindex = checkVIF->index;
                         my_log(LOG_DEBUG, 0, "Route activate request from %s to %s on VIF[%d]",
                             inetFmt(src,s1), inetFmt(dst,s2), vifindex);
                         activateRoute(dst, src, vifindex);
