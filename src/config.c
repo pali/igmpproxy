@@ -364,8 +364,8 @@ void createVifs(struct IfDescP *RebuildP) {
                     break;
                 case IF_STATE_UPSTREAM:
                     switch (Dp->state) {
-                    case IF_STATE_DISABLED:   { clearRoutes(oDp);  delVIF(oDp);                         continue; }
-                    case IF_STATE_DOWNSTREAM: { clearRoutes(oDp);  delVIF(oDp);  oDp=NULL;  join=true;  break; }
+                    case IF_STATE_DISABLED:   { clearRoutes();  delVIF(oDp);                            continue; }
+                    case IF_STATE_DOWNSTREAM: { clearRoutes();  delVIF(oDp);  oDp=NULL;  join=true;     break; }
                     case IF_STATE_UPSTREAM:   {                                                         break; }
                     }
                     break;
