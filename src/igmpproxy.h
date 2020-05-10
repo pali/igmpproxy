@@ -36,9 +36,7 @@
 */
 
 #include "config.h"
-#ifndef __FreeBSD__
-    #include "os.h"
-#endif
+#include "os.h"
 
 #include <errno.h>
 #include <stdarg.h>
@@ -61,10 +59,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#ifdef __FreeBSD__
-    #include "os.h"
-#endif
 
 /*
  * Limit on length of route data
@@ -229,7 +223,7 @@ int getVifIx( struct IfDesc *IfDp );
 /* config.c
  */
 char *configFilePath;
-void reloadConfig();
+void reloadConfig(void);
 int loadConfig(char *configFile);
 void configureVifs(void);
 void createVifs(struct IfDescP *RebuildP);
