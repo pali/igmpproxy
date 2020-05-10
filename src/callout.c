@@ -153,9 +153,9 @@ int timer_leftTimer(int timer_id) {
  */
 static void debugQueue(void) {
     struct timeOutQueue  *ptr; 
-    int i = 1;
+    int i;
 
-    for (ptr = queue; ptr; ptr = ptr->next, i++) {
+    for (i = 1, ptr = queue; ptr; ptr = ptr->next, i++) {
         my_log(LOG_DEBUG, 0, "(%d - Id:%d, Time:%d) ", i, ptr->id, ptr->time);
     }
 }
