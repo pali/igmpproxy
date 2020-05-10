@@ -323,7 +323,7 @@ void createVifs(struct IfDescP *RebuildP) {
         }
     }
 
-    for(Ix = 0; Dp = getIfByIx(Ix); Ix++) {
+    for(Ix = 0; (Dp = getIfByIx(Ix)); Ix++) {
         if (RebuildP == NULL) {
             // Only add vif for valid interfaces on start-up.
             if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) {
