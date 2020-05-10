@@ -71,10 +71,12 @@ void age_callout_queue(struct timespec curtime) {
     int i = 1;
  
     if (curtime.tv_sec == 0) clock_gettime (CLOCK_MONOTONIC, &curtime);
-    while (ptr && ((ptr->time <= curtime.tv_sec) || ( curtime.tv_nsec >= 500000000 && ptr->time <= curtime.tv_sec-1))) {
+    while (ptr && ((ptr->time <= curtime.tv_sec) || (curtime.tv_nsec >= 500000000 && ptr->time <= curtime.tv_sec-1))) {
         my_log(LOG_DEBUG, 0, "About to call timeout %d (#%d)", ptr->id, i);
         struct timeOutQueue *tmp = ptr;
-        if (ptr->func) ptr->func(ptr->data);
+        if (ptr->func) {
+            ptr->func(ptr->data);
+        }
         queue = ptr = ptr->next;
         free(tmp);
         i++;
@@ -109,13 +111,15 @@ int timer_setTimer(int delay, timer_f action, void *data) {
     if (!queue) queue = node;
     else {
         // chase the queue looking for the right place. 
-        for ( i++; ptr->next && node->time >= ptr->next->time; ptr = ptr->next ) i++;
-        if ( ptr == queue && node->time < ptr->time ) {
+        for (i++; ptr->next && node->time >= ptr->next->time; ptr = ptr->next, i++);
+        if (ptr == queue && node->time < ptr->time) {
            // Start of queue, insert.
-           queue = node; node->next = ptr;
+           queue = node;
+           node->next = ptr;
         } else if ( ptr->next ) {
            // Middle of queue, insert
-           node->next = ptr->next; ptr->next = node;
+           node->next = ptr->next;
+           ptr->next = node;
         } else {
            // End of queue, append.
            ptr->next = node;
@@ -134,8 +138,10 @@ int timer_leftTimer(int timer_id) {
     struct timespec curtime;
 
     if (!timer_id || !queue) return -1;
-    while (ptr && ptr->id != timer_id) ptr = ptr->next;
-    if ( ptr ){
+    while (ptr && ptr->id != timer_id) {
+        ptr = ptr->next;
+    }
+    if (ptr){
         clock_gettime (CLOCK_MONOTONIC, &curtime);
         return (ptr->time - curtime.tv_sec);
     }
@@ -146,10 +152,10 @@ int timer_leftTimer(int timer_id) {
  * debugging utility
  */
 static void debugQueue(void) {
-    struct timeOutQueue  *ptr; int i = 1;
+    struct timeOutQueue  *ptr; 
+    int i = 1;
 
-    for (ptr = queue; ptr; ptr = ptr->next) {
+    for (ptr = queue; ptr; ptr = ptr->next, i++) {
         my_log(LOG_DEBUG, 0, "(%d - Id:%d, Time:%d) ", i, ptr->id, ptr->time);
-        i++;
     }
 }
