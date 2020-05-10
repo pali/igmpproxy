@@ -100,7 +100,7 @@ void delVIF( struct IfDesc *IfDp )
 {
     struct vifctl VifCtl;
 
-    if ((signed int)-1 == IfDp->index)
+    if ((int)-1 == IfDp->index)
         return;
 
     VifCtl.vifc_vifi = IfDp->index;
