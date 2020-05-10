@@ -250,7 +250,7 @@ void igmpProxyCleanUp(void) {
     my_log( LOG_DEBUG, 0, "clean handler called" );
 
     free_all_callouts();    // No more timeouts.
-    clearRoutes(NULL);      // Remove all routes.
+    clearRoutes();      // Remove all routes.
     disableMRouter();       // Disable the multirout API
 }
 
