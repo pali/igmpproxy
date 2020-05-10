@@ -63,8 +63,10 @@ void rebuildIfVc () {
     createVifs(&OldIfDescP);
 
     // Free the old IfDesc Table.
-    if ( OldIfDescP.S != NULL ) {
-        for (struct IfDesc *Dp = TmpIfDescP.S; Dp < TmpIfDescP.E; Dp++) free(Dp->allowednets);
+    if (OldIfDescP.S != NULL) {
+        for (struct IfDesc *Dp = TmpIfDescP.S; Dp < TmpIfDescP.E; Dp++) {
+            free(Dp->allowednets);
+        }
         free(OldIfDescP.S);
     }
 }
@@ -260,7 +262,7 @@ struct IfDesc *getIfByAddress( uint32_t ipaddr ) {
 *   the supplied IP adress. The IP must match a interfaces
 *   subnet, or any configured allowed subnet on a interface.
 */
-struct IfDesc *getIfByVifIndex( signed vifindex ) {
+struct IfDesc *getIfByVifIndex( int vifindex ) {
     struct IfDesc       *Dp;
     if(vifindex>0) {
         for ( Dp = IfDescVc; Dp < IfDescEp; Dp++ ) {
