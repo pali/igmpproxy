@@ -38,10 +38,8 @@
 */
 
 /* getopt() and clock_getime() */
-#ifndef __FreeBSD__
-    #ifndef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 200112L
-    #endif
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200112L
 #endif
 
 #include "igmpproxy.h"
