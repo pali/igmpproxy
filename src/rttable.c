@@ -240,7 +240,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
 /**
 *   Clear all routes from routing table, and alerts Leaves upstream.
 */
-void clearRoutes(struct IfDesc *IfDp) {
+void clearRoutes(void) {
     struct RouteTable   *croute, *remainroute;
 
     // Loop through all routes...
