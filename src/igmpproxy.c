@@ -300,9 +300,10 @@ void igmpProxyRun(void) {
         if (curtime.tv_nsec >= lasttime.tv_nsec ) {
             timeout->tv_nsec = 999999999 - (curtime.tv_nsec - lasttime.tv_nsec);
         } else {
-            timeout->tv_nsec = 999999999 - (1000000000 - lasttime.tv_nsec + curtime.tv_nsec); difftime.tv_sec--;
+            timeout->tv_nsec = 999999999 - (1000000000 - lasttime.tv_nsec + curtime.tv_nsec);
+            difftime.tv_sec--;
         }
-        if ( difftime.tv_sec > 0 || timeout->tv_nsec < 10000000 ) {
+        if (difftime.tv_sec > 0 || timeout->tv_nsec < 10000000) {
             timeout->tv_nsec = 999999999; timeout->tv_sec = 0;
             lasttime = curtime;
             age_callout_queue(curtime);
