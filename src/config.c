@@ -106,22 +106,24 @@ void reloadConfig(void) {
 
     // Load the new configuration keep reference to the old.
     OldConfPtr = vifconf;
-    if ( ! loadConfig(configFilePath) ) my_log(LOG_ERR, 0, "reloadConfig: Unable to load config file.");
+    if (! loadConfig(configFilePath)) {
+        my_log(LOG_ERR, 0, "reloadConfig: Unable to load config file.");
+    }
 
     // Rebuild the interfaces config.
     rebuildIfVc();
 
     my_log(LOG_DEBUG, 0, "reloadConfig: Config Reloaded. OldConfPtr %x, NewConfPtr, %x", OldConfPtr, vifconf);
     // Free all the old mallocd subnetlists and vifconf list.
-    while ( OldConfPtr ) {
+    while (OldConfPtr) {
         TmpConfPtr=OldConfPtr->next; // Increment before free or pointers may be invalid.
         struct SubnetList *TmpNetPtr;
-        for ( ; OldConfPtr->allowednets;  ) {
+        while (OldConfPtr->allowednets) {
             TmpNetPtr = OldConfPtr->allowednets->next;
             free (OldConfPtr->allowednets);
             OldConfPtr->allowednets = TmpNetPtr;
         }
-        for ( ; OldConfPtr->allowedgroups; ) {
+        while (OldConfPtr->allowedgroups) {
             TmpNetPtr = OldConfPtr->allowedgroups->next;
             free (OldConfPtr->allowedgroups);
             OldConfPtr->allowedgroups = TmpNetPtr;
@@ -308,11 +310,15 @@ void createVifs(struct IfDescP *RebuildP) {
         // When rebuild, check if interfaces have dissapeared and call delVIF if necessary.
         for (oDp=RebuildP->S; oDp<RebuildP->E; oDp++) {
             for (Ix = 0; (Dp = getIfByIx(Ix)); Ix++) {
-                if (! strcmp (oDp->Name, Dp->Name)) break;
+                if (! strcmp (oDp->Name, Dp->Name)) {
+                    break;
+                }
             }
             if (Dp == NULL) {
                 my_log(LOG_DEBUG, 0, "Interface %s disappeared from system", oDp->Name);
-                if (oDp->index != -1) delVIF(oDp);
+                if (oDp->index != -1) {
+                    delVIF(oDp);
+                }
             }
         }
     }
@@ -320,7 +326,9 @@ void createVifs(struct IfDescP *RebuildP) {
     for(Ix = 0; Dp = getIfByIx(Ix); Ix++) {
         if (RebuildP == NULL) {
             // Only add vif for valid interfaces on start-up.
-            if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) continue;
+            if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) {
+                continue;
+            }
         } else {
             /* Need rebuild, check if interface is new or already exists (check table below).
                              old: disabled    new: disabled    -> do nothing
@@ -333,8 +341,10 @@ void createVifs(struct IfDescP *RebuildP) {
                              old: upstream    new: downstream  -> clear routes oldvif, delvif(old)),addvif(new), joinmcroutergroup
                              old: upstream    new: upstream    -> addvif(new,old)
             */
-            for ( oDp=RebuildP->S; oDp<RebuildP->E; oDp++ ) {
-                if ( ! strcmp (oDp->Name, Dp->Name) ) break;
+            for (oDp=RebuildP->S; oDp<RebuildP->E; oDp++) {
+                if (! strcmp (oDp->Name, Dp->Name)) {
+                    break;
+                }
             }
             if ( oDp < RebuildP->E ) {
                 switch (oDp->state) {
@@ -360,10 +370,14 @@ void createVifs(struct IfDescP *RebuildP) {
                     }
                     break;
                 }
-                if (Dp->Flags & IFF_LOOPBACK) continue;
+                if (Dp->Flags & IFF_LOOPBACK) {
+                    continue;
+                }
             } else {
                 // New Interface. Only add valid up/downstream vif.
-                if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) continue;
+                if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) {
+                    continue;
+                }
                 oDp=NULL;
             }
         }
@@ -376,8 +390,10 @@ void createVifs(struct IfDescP *RebuildP) {
                 upStreamIfIdx[upsvifcount++] = Ix;
             }
         }
-        addVIF( Dp );
-        if ( join ) joinMcRoutersGroup(Dp);
+        addVIF(Dp);
+        if (join) {
+            joinMcRoutersGroup(Dp);
+        }
         vifcount++;
     }
 
