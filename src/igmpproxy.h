@@ -197,7 +197,7 @@ void buildIfVc( void );
 struct IfDesc *getIfByName( const char *IfName );
 struct IfDesc *getIfByIx( unsigned Ix );
 struct IfDesc *getIfByAddress( uint32_t Ix );
-struct IfDesc *getIfByVifIndex( int vifindex );
+struct IfDesc *getIfByVifIndex( unsigned vifindex );
 int isAdressValidForIf(struct IfDesc* intrface, uint32_t ipaddr);
 
 /* mroute-api.c
