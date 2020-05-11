@@ -316,7 +316,7 @@ void createVifs(struct IfDescP *RebuildP) {
             }
             if (Dp == NULL) {
                 my_log(LOG_DEBUG, 0, "Interface %s disappeared from system", oDp->Name);
-                if (oDp->index != -1) {
+                if (oDp->index != (unsigned int)-1) {
                     delVIF(oDp);
                 }
             }
