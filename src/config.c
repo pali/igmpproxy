@@ -299,7 +299,6 @@ void configureVifs(void) {
 void createVifs(struct IfDescP *RebuildP) {
     struct IfDesc *Dp, *oDp = NULL;
     int    vifcount = 0, upsvifcount = 0, Ix = 0;
-    bool   join = false;
 
     // init array to "not set"
     for (Ix = 0; Ix < MAX_UPS_VIFS; Ix++) {
@@ -332,13 +331,13 @@ void createVifs(struct IfDescP *RebuildP) {
         } else {
             /* Need rebuild, check if interface is new or already exists (check table below).
                              old: disabled    new: disabled    -> do nothing
-                             old: disabled    new: downstream  -> addVIF(new), joinmcroutergroups
+                             old: disabled    new: downstream  -> addVIF(new)
                              old: disabled    new: upstream    -> addVIF(new)
                              old: downstream  new: disabled    -> delVIF(old)
                state table   old: downstream  new: downstream  -> addvif(new,old)
                              old: downstream  new: upstream    -> delvif(old), addvif(new)
                              old: upstream    new: disabled    -> clear routes oldvif, delVIF(old)
-                             old: upstream    new: downstream  -> clear routes oldvif, delvif(old)),addvif(new), joinmcroutergroup
+                             old: upstream    new: downstream  -> clear routes oldvif, delvif(old)),addvif(new)
                              old: upstream    new: upstream    -> addvif(new,old)
             */
             for (oDp=RebuildP->S; oDp<RebuildP->E; oDp++) {
@@ -350,23 +349,23 @@ void createVifs(struct IfDescP *RebuildP) {
                 switch (oDp->state) {
                 case IF_STATE_DISABLED:
                     switch (Dp->state) {
-                    case IF_STATE_DISABLED:   {                                                         continue; }
-                    case IF_STATE_DOWNSTREAM: {                                  oDp=NULL;  join=true;  break; }
-                    case IF_STATE_UPSTREAM:   {                                  oDp=NULL;              break; }
+                    case IF_STATE_DISABLED:   {                                          continue; }
+                    case IF_STATE_DOWNSTREAM: {                               oDp=NULL;  break; }
+                    case IF_STATE_UPSTREAM:   {                               oDp=NULL;  break; }
                     }
                     break;
                 case IF_STATE_DOWNSTREAM:
                     switch (Dp->state) {
-                    case IF_STATE_DISABLED:   {                    delVIF(oDp);                         continue; }
-                    case IF_STATE_DOWNSTREAM: {                                                         break; }
-                    case IF_STATE_UPSTREAM:   {                    delVIF(oDp);  oDp=NULL;              break; }
+                    case IF_STATE_DISABLED:   {                 delVIF(oDp);             continue; }
+                    case IF_STATE_DOWNSTREAM: {                                          break; }
+                    case IF_STATE_UPSTREAM:   {                 delVIF(oDp);  oDp=NULL;  break; }
                     }
                     break;
                 case IF_STATE_UPSTREAM:
                     switch (Dp->state) {
-                    case IF_STATE_DISABLED:   { clearRoutes();  delVIF(oDp);                            continue; }
-                    case IF_STATE_DOWNSTREAM: { clearRoutes();  delVIF(oDp);  oDp=NULL;  join=true;     break; }
-                    case IF_STATE_UPSTREAM:   {                                                         break; }
+                    case IF_STATE_DISABLED:   { clearRoutes();  delVIF(oDp);              continue; }
+                    case IF_STATE_DOWNSTREAM: { clearRoutes();  delVIF(oDp);  oDp=NULL;   break; }
+                    case IF_STATE_UPSTREAM:   {                                           break; }
                     }
                     break;
                 }
@@ -391,9 +390,6 @@ void createVifs(struct IfDescP *RebuildP) {
             }
         }
         addVIF(Dp);
-        if (join) {
-            joinMcRoutersGroup(Dp);
-        }
         vifcount++;
     }
 
