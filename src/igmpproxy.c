@@ -236,7 +236,7 @@ int igmpProxyInit(void) {
     // Initialize IGMP
     initIgmp();
     // Initialize Routing table
-    initRouteTable();
+    clearRoutes();
     // Initialize timer
     free_all_callouts();
 
