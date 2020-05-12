@@ -249,7 +249,7 @@ int loadConfig(char *configFile) {
 *   Appends extra VIF configuration from config file.
 */
 void configureVifs(void) {
-    unsinged Ix;
+    unsigned Ix;
     struct IfDesc *Dp;
     struct vifconfig *confPtr;
 
