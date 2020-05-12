@@ -68,7 +68,7 @@ struct RouteTable {
 
 
 // Keeper for the routing table...
-static struct RouteTable   *routing_table;
+static struct RouteTable   *routing_table = NULL;
 
 // Prototypes
 void logRouteTable(const char *header);
@@ -124,45 +124,6 @@ int getMcGroupSock(void) {
         mcGroupSock = openUdpSocket( INADDR_ANY, 0 );;
     }
     return mcGroupSock;
-}
-
-/**
-*   Initializes the routing table.
-*/
-void initRouteTable(void) {
-    unsigned Ix;
-    struct IfDesc *Dp;
-
-    // Clear routing table...
-    routing_table = NULL;
-
-    // Join the all routers group on downstream vifs...
-    for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
-        // If this is a downstream vif, we should join the All routers group...
-        if( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) && Dp->state == IF_STATE_DOWNSTREAM) {
-            my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
-                         inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-
-            //k_join(allrouters_group, Dp->InAdr.s_addr);
-            joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
-
-            my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
-                         inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-            joinMcGroup( getMcGroupSock(), Dp, alligmp3_group );
-        }
-    }
-}
-
-void joinMcRoutersGroup(struct IfDesc *Dp) {
-    my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
-                 inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-
-    //k_join(allrouters_group, Dp->InAdr.s_addr);
-    joinMcGroup(getMcGroupSock(), Dp, allrouters_group);
-
-    my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
-                 inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-    joinMcGroup(getMcGroupSock(), Dp, alligmp3_group);
 }
 
 /**
