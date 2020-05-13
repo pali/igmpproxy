@@ -218,7 +218,7 @@ void acceptIgmp(int recvlen) {
                 if (nsrcs == 0) {
                     acceptLeaveMessage(src, group, NULL, 0);
                     break;
-                }
+                } /* else fall through */
             case IGMP_ALLOW_NEW_SOURCES:
                 acceptGroupReport(src, group, grec->ig_sources, nsrcs, grec->ig_type);
                 break;
