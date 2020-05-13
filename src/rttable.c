@@ -187,6 +187,11 @@ static void JoinLeaveUpstreams(int cmd, uint32_t mcastaddr, uint32_t originAddr)
             }
         }
 
+        my_log(LOG_DEBUG, 0, "%s group %s upstream on IF address %s",
+                cmd == 'l' ? "Leaving" : "Joining",
+                inetFmt(mcastaddr, s1),
+                inetFmt(upstrIf->InAdr.s_addr, s2));
+
         joinleave( cmd, getMcGroupSock(), upstrIf, mcastaddr, originAddr );
     }
 }
@@ -200,15 +205,11 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join, struct in_
     if(join) {
         // Only join a group if there are listeners downstream...
         if(route->vifBits > 0) {
-            my_log(LOG_DEBUG, 0, "Joining group %s upstream on IF address %s",
-                    inetFmt(route->group, s1),
-                    inetFmt(upstrIf->InAdr.s_addr, s2));
-
             int u, v;
             for(u = 0; u < numOriginAddr; u++) {
                 for(v = 0; v < MAX_ORIGINS; v++) {
                     if(route->reqOriginAddr[v] == originAddr[u].s_addr) {
-                        // source are already joined
+                        // source is already joined
                         break;
                     } else if(route->reqOriginAddr[v] == 0) {
                         // save on first free place, then join for this source
@@ -235,10 +236,6 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join, struct in_
     } else {
         // Only leave if group is not left already...
         if(route->upstrState != ROUTESTATE_NOTJOINED) {
-            my_log(LOG_DEBUG, 0, "Leaving group %s upstream on IF address %s",
-                    inetFmt(route->group, s1),
-                    inetFmt(upstrIf->InAdr.s_addr, s2));
-
             int u, v;
             for(u = 0; u < numOriginAddr; u++) {
                 for(v = 0; v < MAX_ORIGINS; v++) {
