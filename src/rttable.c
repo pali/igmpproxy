@@ -51,6 +51,8 @@ struct RouteTable {
     uint32_t            group;          // The group to route
     uint32_t            originAddrs[MAX_ORIGINS]; // The origin adresses (only set on activated routes)
     uint32_t            vifBits;        // Bits representing recieving VIFs.
+    u_char              mode;           // IGMPv3 filter mode
+    uint32_t            reqOriginAddr[MAX_ORIGINS]; // IGMPv3 requested source
 
     // Keeps the upstream membership state...
     short               upstrState;     // Upstream membership state.
@@ -144,12 +146,57 @@ void initRouteTable(void) {
                          inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
 
             //k_join(allrouters_group, Dp->InAdr.s_addr);
-            joinMcGroup( getMcGroupSock(), Dp, allrouters_group );
+            joinMcGroup( getMcGroupSock(), Dp, allrouters_group, 0 );
 
             my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
                          inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-            joinMcGroup( getMcGroupSock(), Dp, alligmp3_group );
+            joinMcGroup( getMcGroupSock(), Dp, alligmp3_group, 0 );
         }
+    }
+}
+
+/**
+*   Internal function to send join or leave requests
+*   on all upstream interfaces...
+*/
+static void JoinLeaveUpstreams(int cmd, uint32_t mcastaddr, uint32_t originAddr) {
+    int i;
+    for(i=0; i<MAX_UPS_VIFS; i++)
+    {
+        if (-1 == upStreamIfIdx[i]) {
+            return;
+        }
+        // Get the upstream IF...
+        struct IfDesc *upstrIf = getIfByIx( upStreamIfIdx[i] );
+        if(upstrIf == NULL) {
+            my_log(LOG_ERR, 0 ,"FATAL: Unable to get Upstream IF.");
+            continue;
+        }
+
+        // Check if there is a white list for the upstram VIF
+        if (upstrIf->allowedgroups != NULL) {
+            struct SubnetList* sn;
+
+            // Check if this Request is legit to be forwarded to upstream
+            for(sn = upstrIf->allowedgroups; sn != NULL; sn = sn->next) {
+                if((mcastaddr & sn->subnet_mask) == sn->subnet_addr) {
+                    // Forward is OK...
+                    break;
+                }
+            }
+
+            if (sn == NULL) {
+                my_log(LOG_INFO, 0, "The group address %s may not be forwarded upstream. Ignoring.", inetFmt(mcastaddr, s1));
+                continue;
+            }
+        }
+
+        my_log(LOG_DEBUG, 0, "%s group %s upstream on IF address %s",
+                cmd == 'l' ? "Leaving" : "Joining",
+                inetFmt(mcastaddr, s1),
+                inetFmt(upstrIf->InAdr.s_addr, s2));
+
+        joinleave( cmd, getMcGroupSock(), upstrIf, mcastaddr, originAddr );
     }
 }
 
@@ -157,70 +204,76 @@ void initRouteTable(void) {
 *   Internal function to send join or leave requests for
 *   a specified route upstream...
 */
-static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
-    struct IfDesc*      upstrIf;
-    int i;
-
-    for(i=0; i<MAX_UPS_VIFS; i++)
-    {
-        if (-1 != upStreamIfIdx[i])
-        {
-            // Get the upstream IF...
-            upstrIf = getIfByIx( upStreamIfIdx[i] );
-            if(upstrIf == NULL) {
-                my_log(LOG_ERR, 0 ,"FATAL: Unable to get Upstream IF.");
-            }
-
-            // Check if there is a white list for the upstram VIF
-            if (upstrIf->allowedgroups != NULL) {
-              uint32_t           group = route->group;
-                struct SubnetList* sn;
-
-                // Check if this Request is legit to be forwarded to upstream
-                for(sn = upstrIf->allowedgroups; sn != NULL; sn = sn->next)
-                    if((group & sn->subnet_mask) == sn->subnet_addr)
-                        // Forward is OK...
+static void sendJoinLeaveUpstream(struct RouteTable* route, int join, struct in_addr *originAddr, u_short numOriginAddr ) {
+    // Send join or leave request...
+    if(join) {
+        // Only join a group if there are listeners downstream...
+        if(route->vifBits > 0) {
+            int u, v;
+            for(u = 0; u < numOriginAddr; u++) {
+                for(v = 0; v < MAX_ORIGINS; v++) {
+                    if(route->reqOriginAddr[v] == originAddr[u].s_addr) {
+                        // source is already joined
                         break;
-
-                if (sn == NULL) {
-                    my_log(LOG_INFO, 0, "The group address %s may not be forwarded upstream. Ignoring.", inetFmt(group, s1));
-                    return;
+                    } else if(route->reqOriginAddr[v] == 0) {
+                        // save on first free place, then join for this source
+                        route->reqOriginAddr[v] = originAddr[u].s_addr;
+                        JoinLeaveUpstreams('j', route->group, originAddr[u].s_addr);
+                        break;
+                    }
                 }
             }
 
-            // Send join or leave request...
-            if(join) {
-                // Only join a group if there are listeners downstream...
-                if(route->vifBits > 0) {
-                    my_log(LOG_DEBUG, 0, "Joining group %s upstream on IF address %s",
-                                 inetFmt(route->group, s1),
-                                 inetFmt(upstrIf->InAdr.s_addr, s2));
-
-                    //k_join(route->group, upstrIf->InAdr.s_addr);
-                    joinMcGroup( getMcGroupSock(), upstrIf, route->group );
-
-                    route->upstrState = ROUTESTATE_JOINED;
-                } else {
-                    my_log(LOG_DEBUG, 0, "No downstream listeners for group %s. No join sent.",
-                        inetFmt(route->group, s1));
-                }
-            } else {
-                // Only leave if group is not left already...
-                if(route->upstrState != ROUTESTATE_NOTJOINED) {
-                    my_log(LOG_DEBUG, 0, "Leaving group %s upstream on IF address %s",
-                                 inetFmt(route->group, s1),
-                                 inetFmt(upstrIf->InAdr.s_addr, s2));
-
-                    //k_leave(route->group, upstrIf->InAdr.s_addr);
-                    leaveMcGroup( getMcGroupSock(), upstrIf, route->group );
-
-                    route->upstrState = ROUTESTATE_NOTJOINED;
-                }
+            // join for all sources if no sources are specified
+            if(numOriginAddr == 0) {
+                //k_leave(route->group, upstrIf->InAdr.s_addr);
+                JoinLeaveUpstreams( 'j', route->group, 0 );
             }
+
+            route->upstrState = ROUTESTATE_JOINED;
+        } else {
+            my_log(LOG_DEBUG, 0, "No downstream listeners for group %s. No join sent.",
+                    inetFmt(route->group, s1));
+
+            return;
         }
-        else
-        {
-            i = MAX_UPS_VIFS;
+    } else {
+        // Only leave if group is not left already...
+        if(route->upstrState != ROUTESTATE_NOTJOINED) {
+            int u, v;
+            for(u = 0; u < numOriginAddr; u++) {
+                for(v = 0; v < MAX_ORIGINS; v++) {
+                    if(route->reqOriginAddr[v] == 0) {
+                        // reached end of source list
+                        break;
+                    } else if(route->reqOriginAddr[v] == originAddr[u].s_addr) {
+                        int w = v;
+                        while(w + 1 < MAX_ORIGINS && route->reqOriginAddr[w] != 0) {
+                            route->reqOriginAddr[w] = route->reqOriginAddr[w + 1];
+                            w++;
+                        }
+
+                        route->reqOriginAddr[w] = 0;
+                        
+                        // check if its the last source for this group
+                        if(route->reqOriginAddr[0] != 0) {
+                            JoinLeaveUpstreams( 'l', route->group, originAddr[u].s_addr );
+                        } else {
+                            JoinLeaveUpstreams( 'l', route->group, 0 );
+                            route->upstrState = ROUTESTATE_NOTJOINED;
+                            return;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // leave for all sources if no sources are specified
+            if(numOriginAddr == 0) {
+                //k_leave(route->group, upstrIf->InAdr.s_addr);
+                JoinLeaveUpstreams( 'l', route->group, 0 );
+                route->upstrState = ROUTESTATE_NOTJOINED;
+            }
         }
     }
 }
@@ -246,7 +299,7 @@ void clearAllRoutes(void) {
         }
 
         // Send Leave message upstream.
-        sendJoinLeaveUpstream(croute, 0);
+        sendJoinLeaveUpstream(croute, 0, NULL, 0);
 
         // Clear memory, and set pointer to next route...
         free(croute);
@@ -278,10 +331,11 @@ static struct RouteTable *findRoute(uint32_t group) {
 *   If the route already exists, the existing route
 *   is updated...
 */
-int insertRoute(uint32_t group, int ifx, uint32_t src) {
+int insertRoute(uint32_t group, int ifx, uint32_t src, struct in_addr *originAddr, u_short numOriginAddr, u_char mode) {
 
     struct Config *conf = getCommonConfig();
     struct RouteTable*  croute;
+    int sendJoin = 0;
 
     // Sanitycheck the group adress...
     if( ! IN_MULTICAST( ntohl(group) )) {
@@ -314,6 +368,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
         newroute->nextroute  = NULL;
         newroute->prevroute  = NULL;
         newroute->upstrVif   = -1;
+        newroute->mode       =  0;
 
         if(conf->fastUpstreamLeave) {
             // Init downstream hosts bit hash table
@@ -414,10 +469,33 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
         }
     }
 
+    switch(mode) {
+        case IGMP_ALLOW_NEW_SOURCES:
+        case IGMP_CHANGE_TO_INCLUDE_MODE:
+            if(croute->mode == IGMP_FILTER_MODE_INCLUDE) {
+                sendJoin = 1;
+            }
+        case IGMP_MODE_IS_INCLUDE:
+            // don't allow include mode when other downstream hosts have requested exclude mode
+            if(croute->mode == IGMP_FILTER_MODE_EXCLUDE) {
+                break;
+            }
+
+            croute->mode = IGMP_FILTER_MODE_INCLUDE;
+            break;
+        case IGMP_CHANGE_TO_EXCLUDE_MODE:
+            if(croute->mode == IGMP_FILTER_MODE_INCLUDE) {
+                sendJoin = 1;
+            }
+        case IGMP_MODE_IS_EXCLUDE:
+        default:
+            croute->mode = IGMP_FILTER_MODE_EXCLUDE;
+    }
+
     // Send join message upstream, if the route has no joined flag...
-    if(croute->upstrState != ROUTESTATE_JOINED) {
+    if(sendJoin || croute->upstrState != ROUTESTATE_JOINED) {
         // Send Join request upstream
-        sendJoinLeaveUpstream(croute, 1);
+        sendJoinLeaveUpstream(croute, 1, originAddr, numOriginAddr);
     }
 
     logRouteTable("Insert Route");
@@ -442,7 +520,7 @@ int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif) {
             inetFmt(group, s1),inetFmt(originAddr, s2));
 
         // Insert route, but no interfaces have yet requested it downstream.
-        insertRoute(group, -1, 0);
+        insertRoute(group, -1, 0, NULL, 0, 0);
 
         // Retrieve the route from table...
         croute = findRoute(group);
@@ -539,7 +617,7 @@ int numberOfInterfaces(struct RouteTable *croute) {
 *   Should be called when a leave message is received, to
 *   mark a route for the last member probe state.
 */
-void setRouteLastMemberMode(uint32_t group, uint32_t src) {
+void setRouteLastMemberMode(uint32_t group, uint32_t src, struct in_addr *originAddr, u_short numOriginAddr ) {
     struct Config       *conf = getCommonConfig();
     struct RouteTable   *croute;
     int                 routeStateCheck = 1;
@@ -563,8 +641,9 @@ void setRouteLastMemberMode(uint32_t group, uint32_t src) {
             // Send a leave message right away but only when the route is not active anymore on any downstream host
             // It is possible that there are still some interfaces active but no downstream host in hash table due to hash collision
             if (routeStateCheck && numberOfInterfaces(croute) <= 1) {
+                croute->mode = 0;
                 my_log(LOG_DEBUG, 0, "quickleave is enabled and this was the last downstream host, leaving group %s now", inetFmt(croute->group, s1));
-                sendJoinLeaveUpstream(croute, 0);
+                sendJoinLeaveUpstream(croute, 0, originAddr, numOriginAddr);
             } else {
                 my_log(LOG_DEBUG, 0, "quickleave is enabled but there are still some downstream hosts left, not leaving group %s", inetFmt(croute->group, s1));
             }
@@ -628,7 +707,7 @@ static int removeRoute(struct RouteTable*  croute) {
     if(croute->upstrState == ROUTESTATE_JOINED || 
        (croute->upstrState == ROUTESTATE_CHECK_LAST_MEMBER && !conf->fastUpstreamLeave)) 
     {
-        sendJoinLeaveUpstream(croute, 0);
+        sendJoinLeaveUpstream(croute, 0, NULL, 0);
     }
 
     // Update pointers...
@@ -827,7 +906,7 @@ int interfaceInRoute(int32_t group, int Ix) {
     struct RouteTable*  croute;
     croute = findRoute(group);
     if (croute != NULL) {
-        my_log(LOG_DEBUG, 0, "Interface id %d is in group $d", Ix, group);
+        my_log(LOG_DEBUG, 0, "Interface id %d is in group %s", Ix, inetFmt(group, s1));
         return BIT_TST(croute->vifBits, Ix);
     } else {
         return 0;

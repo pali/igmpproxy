@@ -37,7 +37,6 @@
 */
 
 #include "igmpproxy.h"
-#include "igmpv3.h"
 
 // Globals
 uint32_t     allhosts_group;            /* All hosts addr in net order */
@@ -71,8 +70,9 @@ void initIgmp(void) {
      */
     ip->ip_v   = IPVERSION;
     ip->ip_hl  = (sizeof(struct ip) + 4) >> 2; /* +4 for Router Alert option */
-    ip->ip_tos = 0xc0;      /* Internet Control */
-    ip->ip_ttl = MAXTTL;    /* applies to unicasts only */
+    ip->ip_tos = 0xc0;          /* Internet Control */
+    ip->ip_off = htons(IP_DF);  /* set Don't Fragment flag */
+    ip->ip_ttl = MAXTTL;        /* applies to unicasts only */
     ip->ip_p   = IPPROTO_IGMP;
 
     allhosts_group   = htonl(INADDR_ALLHOSTS_GROUP);
@@ -107,8 +107,8 @@ void acceptIgmp(int recvlen) {
     register uint32_t src, dst, group;
     struct ip *ip;
     struct igmp *igmp;
-    struct igmpv3_report *igmpv3;
-    struct igmpv3_grec *grec;
+    struct igmp_report *igmpv3;
+    struct igmp_grouprec *grec;
     int ipdatalen, iphdrlen, ngrec, nsrcs, i;
 
     if (recvlen < (int)sizeof(struct ip)) {
@@ -120,13 +120,6 @@ void acceptIgmp(int recvlen) {
     ip        = (struct ip *)recv_buf;
     src       = ip->ip_src.s_addr;
     dst       = ip->ip_dst.s_addr;
-
-    /* filter local multicast 239.255.255.250 */
-    if (dst == htonl(0xEFFFFFFA))
-    {
-        my_log(LOG_NOTICE, 0, "The IGMP message was local multicast. Ignoring.");
-        return;
-    }
 
     /*
      * this is most likely a message from the kernel indicating that
@@ -192,7 +185,7 @@ void acceptIgmp(int recvlen) {
 
     igmp = (struct igmp *)(recv_buf + iphdrlen);
     if ((ipdatalen < IGMP_MINLEN) ||
-        (igmp->igmp_type == IGMP_V3_MEMBERSHIP_REPORT && ipdatalen <= IGMPV3_MINLEN)) {
+        (igmp->igmp_type == IGMP_V3_MEMBERSHIP_REPORT && ipdatalen <= IGMP_V3_REPORT_MINLEN)) {
         my_log(LOG_WARNING, 0,
             "received IP data field too short (%u bytes) for IGMP, from %s",
             ipdatalen, inetFmt(src, s1));
@@ -207,47 +200,51 @@ void acceptIgmp(int recvlen) {
     case IGMP_V1_MEMBERSHIP_REPORT:
     case IGMP_V2_MEMBERSHIP_REPORT:
         group = igmp->igmp_group.s_addr;
-        acceptGroupReport(src, group);
+        acceptGroupReport(src, group, NULL, 0, 0);
         return;
 
     case IGMP_V3_MEMBERSHIP_REPORT:
-        igmpv3 = (struct igmpv3_report *)(recv_buf + iphdrlen);
-        grec = &igmpv3->igmp_grec[0];
-        ngrec = ntohs(igmpv3->igmp_ngrec);
+        igmpv3 = (struct igmp_report *)(recv_buf + iphdrlen);
+        grec = &igmpv3->ir_groups[0];
+        ngrec = ntohs(igmpv3->ir_numgrps);
         while (ngrec--) {
             if ((uint8_t *)igmpv3 + ipdatalen < (uint8_t *)grec + sizeof(*grec))
                 break;
-            group = grec->grec_mca.s_addr;
-            nsrcs = ntohs(grec->grec_nsrcs);
-            switch (grec->grec_type) {
-            case IGMPV3_MODE_IS_INCLUDE:
-            case IGMPV3_CHANGE_TO_INCLUDE:
+            group = grec->ig_group.s_addr;
+            nsrcs = ntohs(grec->ig_numsrc);
+            switch (grec->ig_type) {
+            case IGMP_MODE_IS_INCLUDE:
+            case IGMP_CHANGE_TO_INCLUDE_MODE:
                 if (nsrcs == 0) {
-                    acceptLeaveMessage(src, group);
+                    acceptLeaveMessage(src, group, NULL, 0);
                     break;
-                } /* else fall through */
-            case IGMPV3_MODE_IS_EXCLUDE:
-            case IGMPV3_CHANGE_TO_EXCLUDE:
-            case IGMPV3_ALLOW_NEW_SOURCES:
-                acceptGroupReport(src, group);
+                }
+            case IGMP_ALLOW_NEW_SOURCES:
+                acceptGroupReport(src, group, grec->ig_sources, nsrcs, grec->ig_type);
                 break;
-            case IGMPV3_BLOCK_OLD_SOURCES:
+            case IGMP_MODE_IS_EXCLUDE:
+            case IGMP_CHANGE_TO_EXCLUDE_MODE:
+                acceptGroupReport(src, group, NULL, 0, grec->ig_type);
                 break;
+            case IGMP_BLOCK_OLD_SOURCES:
+                acceptLeaveMessage(src, group, grec->ig_sources, nsrcs);
+                break;
+
             default:
                 my_log(LOG_INFO, 0,
                     "ignoring unknown IGMPv3 group record type %x from %s to %s for %s",
-                    grec->grec_type, inetFmt(src, s1), inetFmt(dst, s2),
+                    grec->ig_type, inetFmt(src, s1), inetFmt(dst, s2),
                     inetFmt(group, s3));
                 break;
             }
-            grec = (struct igmpv3_grec *)
-                (&grec->grec_src[nsrcs] + grec->grec_auxwords * 4);
+            grec = (struct igmp_grouprec *)
+                (&grec->ig_sources[nsrcs] + grec->ig_datalen * 4);
         }
         return;
 
     case IGMP_V2_LEAVE_GROUP:
         group = igmp->igmp_group.s_addr;
-        acceptLeaveMessage(src, group);
+        acceptLeaveMessage(src, group, NULL, 0);
         return;
 
     case IGMP_MEMBERSHIP_QUERY:
@@ -269,13 +266,14 @@ void acceptIgmp(int recvlen) {
  */
 static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
     struct ip *ip;
-    struct igmp *igmp;
+    struct igmpv3 *igmp;
+    struct Config  *conf = getCommonConfig();
     extern int curttl;
 
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
     ip->ip_dst.s_addr       = dst;
-    ip_set_len(ip, IP_HEADER_RAOPT_LEN + IGMP_MINLEN + datalen);
+    ip_set_len(ip, IP_HEADER_RAOPT_LEN + IGMP_V3_QUERY_MINLEN + datalen);
 
     if (IN_MULTICAST(ntohl(dst))) {
         ip->ip_ttl = curttl;
@@ -289,13 +287,16 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
     ((unsigned char*)send_buf+MIN_IP_HEADER_LEN)[2] = 0x00;
     ((unsigned char*)send_buf+MIN_IP_HEADER_LEN)[3] = 0x00;
 
-    igmp                    = (struct igmp *)(send_buf + IP_HEADER_RAOPT_LEN);
+    igmp                    = (struct igmpv3 *)(send_buf + IP_HEADER_RAOPT_LEN);
     igmp->igmp_type         = type;
     igmp->igmp_code         = code;
     igmp->igmp_group.s_addr = group;
     igmp->igmp_cksum        = 0;
+    igmp->igmp_misc         = conf->robustnessValue & 0x7;
+    igmp->igmp_qqi          = conf->queryInterval;
+    igmp->igmp_numsrc       = 0;
     igmp->igmp_cksum        = inetChksum((unsigned short *)igmp,
-                                         IP_HEADER_RAOPT_LEN + datalen);
+                                IGMP_V3_QUERY_MINLEN + datalen);
 
 }
 
@@ -326,7 +327,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
 #endif
     sdst.sin_addr.s_addr = dst;
     if (sendto(MRouterFD, send_buf,
-               IP_HEADER_RAOPT_LEN + IGMP_MINLEN + datalen, 0,
+               IP_HEADER_RAOPT_LEN + IGMP_V3_QUERY_MINLEN + datalen, 0,
                (struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
         if (errno == ENETDOWN)
             my_log(LOG_ERR, errno, "Sender VIF was down.");

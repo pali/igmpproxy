@@ -1,12 +1,13 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/ip.h>
-#include <netinet/igmp.h>
+#include "igmp.h"
 
 #define IGMP_MEMBERSHIP_QUERY IGMP_HOST_MEMBERSHIP_QUERY
 #define IGMP_V1_MEMBERSHIP_REPORT IGMP_v1_HOST_MEMBERSHIP_REPORT
 #define IGMP_V2_MEMBERSHIP_REPORT IGMP_v2_HOST_MEMBERSHIP_REPORT
 #define IGMP_V2_LEAVE_GROUP IGMP_HOST_LEAVE_MESSAGE
+#define IGMP_V3_MEMBERSHIP_REPORT IGMP_v3_HOST_MEMBERSHIP_REPORT
 
 #define IPOPT_RA                148             /* router alert */
 

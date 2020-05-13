@@ -54,7 +54,7 @@ typedef struct {
 *   Handles incoming membership reports, and
 *   appends them to the routing table.
 */
-void acceptGroupReport(uint32_t src, uint32_t group) {
+void acceptGroupReport(uint32_t src, uint32_t group, struct in_addr *originAddr, u_short numOriginAddr, u_char mode) {
     struct IfDesc  *sourceVif;
 
     // Sanitycheck the group adress...
@@ -77,6 +77,12 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
         return;
     }
 
+    /* filter local multicast 239.255.255.250 */
+    if (group == htonl(0xEFFFFFFA)) {
+        my_log(LOG_NOTICE, 0, "The IGMP message was local multicast. Ignoring.");
+        return;
+    }
+
     // We have a IF so check that it's an downstream IF.
     if(sourceVif->state == IF_STATE_DOWNSTREAM) {
 
@@ -86,7 +92,7 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
         // If we don't have a whitelist we insertRoute and done
         if(sourceVif->allowedgroups == NULL)
         {
-            insertRoute(group, sourceVif->index, src);
+            insertRoute(group, sourceVif->index, src, originAddr, numOriginAddr, mode);
             return;
         }
         // Check if this Request is legit on this interface
@@ -95,10 +101,10 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
             if((group & sn->subnet_mask) == sn->subnet_addr)
             {
                 // The membership report was OK... Insert it into the route table..
-                insertRoute(group, sourceVif->index, src);
+                insertRoute(group, sourceVif->index, src, originAddr, numOriginAddr, mode);
                 return;
         }
-    my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
+        my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
     } else {
         // Log the state of the interface the report was received on.
         my_log(LOG_INFO, 0, "Mebership report was received on %s. Ignoring.",
@@ -109,7 +115,7 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
 /**
 *   Recieves and handles a group leave message.
 */
-void acceptLeaveMessage(uint32_t src, uint32_t group) {
+void acceptLeaveMessage(uint32_t src, uint32_t group, struct in_addr *originAddr, u_short numOriginAddr ) {
     struct IfDesc   *sourceVif;
 
     my_log(LOG_DEBUG, 0,
@@ -138,7 +144,7 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
         gvDesc = (GroupVifDesc*) malloc(sizeof(GroupVifDesc));
 
         // Tell the route table that we are checking for remaining members...
-        setRouteLastMemberMode(group, src);
+        setRouteLastMemberMode(group, src, originAddr, numOriginAddr);
 
         // Call the group spesific membership querier...
         gvDesc->group = group;
@@ -193,7 +199,7 @@ void sendGroupSpecificMemberQuery(void *argument) {
                             conf->lastMemberQueryInterval * IGMP_TIMER_SCALE,
                             gvDesc->group, 0);
 
-                    my_log(LOG_DEBUG, 0, "Sent membership query from %s to %s. Delay: %d",
+                    my_log(LOG_DEBUG, 0, "Sent group specific membership query from %s to %s. Delay: %d",
                             inetFmt(Dp->InAdr.s_addr,s1), inetFmt(gvDesc->group,s2),
                             conf->lastMemberQueryInterval);
                 }
@@ -224,7 +230,7 @@ void sendGeneralMembershipQuery(void) {
                          conf->queryResponseInterval * IGMP_TIMER_SCALE, 0, 0);
 
                 my_log(LOG_DEBUG, 0,
-                    "Sent membership query from %s to %s. Delay: %d",
+                    "Sent general membership query from %s to %s. Delay: %d",
                     inetFmt(Dp->InAdr.s_addr,s1),
                     inetFmt(allhosts_group,s2),
                     conf->queryResponseInterval);
