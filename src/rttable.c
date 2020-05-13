@@ -155,116 +155,124 @@ void initRouteTable(void) {
     }
 }
 
+static void JoinLeaveUpstreams(int cmd, uint32_t mcastaddr, uint32_t originAddr) {
+    int i;
+    for(i=0; i<MAX_UPS_VIFS; i++)
+    {
+        if (-1 == upStreamIfIdx[i]) {
+            return;
+        }
+        // Get the upstream IF...
+        struct IfDesc *upstrIf = getIfByIx( upStreamIfIdx[i] );
+        if(upstrIf == NULL) {
+            my_log(LOG_ERR, 0 ,"FATAL: Unable to get Upstream IF.");
+            continue;
+        }
+
+        // Check if there is a white list for the upstram VIF
+        if (upstrIf->allowedgroups != NULL) {
+            struct SubnetList* sn;
+
+            // Check if this Request is legit to be forwarded to upstream
+            for(sn = upstrIf->allowedgroups; sn != NULL; sn = sn->next) {
+                if((mcastaddr & sn->subnet_mask) == sn->subnet_addr) {
+                    // Forward is OK...
+                    break;
+                }
+            }
+
+            if (sn == NULL) {
+                my_log(LOG_INFO, 0, "The group address %s may not be forwarded upstream. Ignoring.", inetFmt(mcastaddr, s1));
+                continue;
+            }
+        }
+
+        joinleave( cmd, getMcGroupSock(), upstrIf, mcastaddr, originAddr );
+    }
+}
+
 /**
 *   Internal function to send join or leave requests for
 *   a specified route upstream...
 */
 static void sendJoinLeaveUpstream(struct RouteTable* route, int join, struct in_addr *originAddr, u_short numOriginAddr ) {
-    struct IfDesc*      upstrIf;
-    int i;
+    // Send join or leave request...
+    if(join) {
+        // Only join a group if there are listeners downstream...
+        if(route->vifBits > 0) {
+            my_log(LOG_DEBUG, 0, "Joining group %s upstream on IF address %s",
+                    inetFmt(route->group, s1),
+                    inetFmt(upstrIf->InAdr.s_addr, s2));
 
-    for(i=0; i<MAX_UPS_VIFS; i++)
-    {
-        if (-1 != upStreamIfIdx[i])
-        {
-            // Get the upstream IF...
-            upstrIf = getIfByIx( upStreamIfIdx[i] );
-            if(upstrIf == NULL) {
-                my_log(LOG_ERR, 0 ,"FATAL: Unable to get Upstream IF.");
-                continue;
-            }
-
-            // Check if there is a white list for the upstram VIF
-            if (upstrIf->allowedgroups != NULL) {
-              uint32_t           group = route->group;
-                struct SubnetList* sn;
-
-                // Check if this Request is legit to be forwarded to upstream
-                for(sn = upstrIf->allowedgroups; sn != NULL; sn = sn->next) {
-                    if((group & sn->subnet_mask) == sn->subnet_addr) {
-                        // Forward is OK...
+            int u, v;
+            for(u = 0; u < numOriginAddr; u++) {
+                for(v = 0; v < MAX_ORIGINS; v++) {
+                    if(route->reqOriginAddr[v] == originAddr[u].s_addr) {
+                        // source are already joined
+                        break;
+                    } else if(route->reqOriginAddr[v] == 0) {
+                        // save on first free place, then join for this source
+                        route->reqOriginAddr[v] = originAddr[u].s_addr;
+                        JoinLeaveUpstreams('j', route->group, originAddr[u].s_addr);
                         break;
                     }
                 }
-
-                if (sn == NULL) {
-                    my_log(LOG_INFO, 0, "The group address %s may not be forwarded upstream. Ignoring.", inetFmt(group, s1));
-                    continue;
-                }
             }
 
-            // Send join or leave request...
-            if(join) {
-                // Only join a group if there are listeners downstream...
-                if(route->vifBits > 0) {
-                    my_log(LOG_DEBUG, 0, "Joining group %s upstream on IF address %s",
-                            inetFmt(route->group, s1),
-                            inetFmt(upstrIf->InAdr.s_addr, s2));
-
-                    int u, v;
-                    for(u = 0; u < numOriginAddr; u++) {
-                        for(v = 0; v < MAX_ORIGINS; v++) {
-                            if(route->reqOriginAddr[v] == originAddr[u].s_addr) {
-                                break;
-                            } else if(route->reqOriginAddr[v] == 0) {
-                                route->reqOriginAddr[v] = originAddr[u].s_addr;
-                                joinleave( 'j', getMcGroupSock(), upstrIf, route->group, originAddr[u].s_addr );
-                                break;
-                            }
-                        }
-                    }
-
-                    if(numOriginAddr == 0) {
-                        //k_leave(route->group, upstrIf->InAdr.s_addr);
-                        joinleave( 'j', getMcGroupSock(), upstrIf, route->group, 0 );
-                    }
-
-                    route->upstrState = ROUTESTATE_JOINED;
-                } else {
-                    my_log(LOG_DEBUG, 0, "No downstream listeners for group %s. No join sent.",
-                            inetFmt(route->group, s1));
-
-                    continue;
-                }
-            } else {
-                // Only leave if group is not left already...
-                if(route->upstrState != ROUTESTATE_NOTJOINED) {
-                    my_log(LOG_DEBUG, 0, "Leaving group %s upstream on IF address %s",
-                            inetFmt(route->group, s1),
-                            inetFmt(upstrIf->InAdr.s_addr, s2));
-
-                    int u, v;
-                    for(u = 0; u < numOriginAddr; u++) {
-                        for(v = 0; v < MAX_ORIGINS; v++) {
-                            if(route->reqOriginAddr[v] == 0) {
-                                break;
-                            } else if(route->reqOriginAddr[v] == originAddr[u].s_addr) {
-                                int w = v;
-                                while(w + 1 < MAX_ORIGINS && route->reqOriginAddr[w] != 0) {
-                                    route->reqOriginAddr[w] = route->reqOriginAddr[w + 1];
-                                    w++;
-                                }
-
-                                route->reqOriginAddr[w] = 0;
-                                joinleave( 'l', getMcGroupSock(), upstrIf, route->group, originAddr[u].s_addr );
-                                break;
-                            }
-                        }
-                    }
-
-                    if(numOriginAddr == 0 || route->reqOriginAddr[0] == 0) {
-                        //k_leave(route->group, upstrIf->InAdr.s_addr);
-                        joinleave( 'l', getMcGroupSock(), upstrIf, route->group, 0 );
-                        route->upstrState = ROUTESTATE_NOTJOINED;
-                    }
-                } else {
-                    continue;
-                }
+            // join for all sources if no sources are specified
+            if(numOriginAddr == 0) {
+                //k_leave(route->group, upstrIf->InAdr.s_addr);
+                JoinLeaveUpstreams( 'j', route->group, 0 );
             }
+
+            route->upstrState = ROUTESTATE_JOINED;
+        } else {
+            my_log(LOG_DEBUG, 0, "No downstream listeners for group %s. No join sent.",
+                    inetFmt(route->group, s1));
+
+            return;
         }
-        else
-        {
-            i = MAX_UPS_VIFS;
+    } else {
+        // Only leave if group is not left already...
+        if(route->upstrState != ROUTESTATE_NOTJOINED) {
+            my_log(LOG_DEBUG, 0, "Leaving group %s upstream on IF address %s",
+                    inetFmt(route->group, s1),
+                    inetFmt(upstrIf->InAdr.s_addr, s2));
+
+            int u, v;
+            for(u = 0; u < numOriginAddr; u++) {
+                for(v = 0; v < MAX_ORIGINS; v++) {
+                    if(route->reqOriginAddr[v] == 0) {
+                        // reached end of source list
+                        break;
+                    } else if(route->reqOriginAddr[v] == originAddr[u].s_addr) {
+                        int w = v;
+                        while(w + 1 < MAX_ORIGINS && route->reqOriginAddr[w] != 0) {
+                            route->reqOriginAddr[w] = route->reqOriginAddr[w + 1];
+                            w++;
+                        }
+
+                        route->reqOriginAddr[w] = 0;
+                        
+                        // check if its the last source for this group
+                        if(route->reqOriginAddr[0] != 0) {
+                            JoinLeaveUpstreams( 'l', route->group, originAddr[u].s_addr );
+                        } else {
+                            JoinLeaveUpstreams( 'l', route->group, 0 );
+                            route->upstrState = ROUTESTATE_NOTJOINED;
+                            return;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // leave for all sources if no sources are specified
+            if(numOriginAddr == 0) {
+                //k_leave(route->group, upstrIf->InAdr.s_addr);
+                JoinLeaveUpstreams( 'l', route->group, 0 );
+                route->upstrState = ROUTESTATE_NOTJOINED;
+            }
         }
     }
 }
