@@ -155,6 +155,10 @@ void initRouteTable(void) {
     }
 }
 
+/**
+*   Internal function to send join or leave requests
+*   on all upstream interfaces...
+*/
 static void JoinLeaveUpstreams(int cmd, uint32_t mcastaddr, uint32_t originAddr) {
     int i;
     for(i=0; i<MAX_UPS_VIFS; i++)
