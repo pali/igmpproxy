@@ -474,7 +474,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src, struct in_addr *originAdd
         case IGMP_CHANGE_TO_INCLUDE_MODE:
             if(croute->mode == IGMP_FILTER_MODE_INCLUDE) {
                 sendJoin = 1;
-            }
+            } /* else fall through */
         case IGMP_MODE_IS_INCLUDE:
             // don't allow include mode when other downstream hosts have requested exclude mode
             if(croute->mode == IGMP_FILTER_MODE_EXCLUDE) {
@@ -486,7 +486,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src, struct in_addr *originAdd
         case IGMP_CHANGE_TO_EXCLUDE_MODE:
             if(croute->mode == IGMP_FILTER_MODE_INCLUDE) {
                 sendJoin = 1;
-            }
+            } /* else fall through */
         case IGMP_MODE_IS_EXCLUDE:
         default:
             croute->mode = IGMP_FILTER_MODE_EXCLUDE;
