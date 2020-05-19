@@ -150,7 +150,7 @@ struct IfDesc {
     struct in_addr      InAdr;          /* == 0 for non IP interfaces */
     short               Flags;
     short               state;
-	struct SubnetList*  allowednets;
+    struct SubnetList*  allowednets;
     struct SubnetList*  deniednets;
     struct SubnetList*  allowedgroups;
     struct SubnetList*  deniedgroups;
