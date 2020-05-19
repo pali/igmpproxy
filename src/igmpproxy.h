@@ -150,8 +150,10 @@ struct IfDesc {
     struct in_addr      InAdr;          /* == 0 for non IP interfaces */
     short               Flags;
     short               state;
-    struct SubnetList*  allowednets;
+	struct SubnetList*  allowednets;
+    struct SubnetList*  deniednets;
     struct SubnetList*  allowedgroups;
+    struct SubnetList*  deniedgroups;
     unsigned int        robustness;
     unsigned char       threshold;   /* ttl limit */
     unsigned int        ratelimit;
@@ -189,6 +191,18 @@ struct Config {
 
 // Holds the indeces of the upstream IF...
 extern int upStreamIfIdx[MAX_UPS_VIFS];
+
+// Group specific query structs.
+typedef struct {
+    uint32_t        group;
+    struct IfDesc  *sourceVif;
+    short           started;
+} GroupVifDesc;
+
+struct gvDescL {
+    GroupVifDesc     *gvDesc;
+    struct gvDescL   *next;
+};
 
 /* ifvc.c
  */

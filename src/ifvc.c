@@ -50,25 +50,34 @@ struct IfDescP IfDescP = { NULL, NULL, 0 };
  *          For example: /etc/ppp/ip-up & ip-down can touch a file /tmp/ppp_changed
  *          So I can check if the file exist then run me and delete the file.
  ***************************************************/
-void rebuildIfVc () {
+void rebuildIfVc() {
     // Build new IfDesc Table. Keep Copy of Old.
-    struct IfDescP OldIfDescP=IfDescP, TmpIfDescP=IfDescP;
+    struct IfDescP OldIfDescP = IfDescP;
     buildIfVc();
 
     // Call configureVifs to link the new IfDesc table.
     configureVifs();
 
-    // Call createvifs with pointer to old IfDesc table for relinking vifs and removing or adding interfaces if required.
+    // Call createvifs with pointers  IfDesc tables for relinking vifs and removing or adding interfaces if required.
     my_log (LOG_DEBUG,0,"RebuildIfVc: creating vifs, Old IfDescP: %x, New: %x", OldIfDescP.S, IfDescP.S);
     createVifs(&OldIfDescP);
 
-    // Free the old IfDesc Table.
-    if (OldIfDescP.S != NULL) {
-        for (struct IfDesc *Dp = TmpIfDescP.S; Dp < TmpIfDescP.E; Dp++) {
-            free(Dp->allowednets);
+    // Free the old IfDesc Table and linked subnet lists.
+    struct IfDesc *Dp;
+    for (Dp = OldIfDescP.S; Dp < OldIfDescP.E; Dp++) {
+        int i;
+        for (i = 1; i <= 4; i++) {
+            struct SubnetList *TmpNetPtr, *currsubnet;
+            currsubnet = i == 1 ? Dp->allowednets :
+                         i == 2 ? Dp->deniednets :
+                         i == 3 ? Dp->allowedgroups :
+                                  Dp->deniedgroups;
+            for (TmpNetPtr = currsubnet ? currsubnet->next : NULL; currsubnet; currsubnet = TmpNetPtr, TmpNetPtr = currsubnet->next) {
+                free(currsubnet);  // Alloced by builfIfVc and allocSubnet().
+            }
         }
-        free(OldIfDescP.S);
     }
+    free(OldIfDescP.S);   // Alloced by buildIfVc()
 }
 
 /*

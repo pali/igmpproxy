@@ -43,13 +43,6 @@
 // Prototypes...
 void sendGroupSpecificMemberQuery(void *argument);
 
-typedef struct {
-    uint32_t      group;
-    // uint32_t      vifAddr;
-    short       started;
-} GroupVifDesc;
-
-
 /**
 *   Handles incoming membership reports, and
 *   appends them to the routing table.

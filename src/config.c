@@ -47,9 +47,11 @@ struct vifconfig {
 
     // Keep allowed nets for VIF.
     struct SubnetList*  allowednets;
+    struct SubnetList*  deniednets;
 
     // Allowed Groups
     struct SubnetList*  allowedgroups;
+    struct SubnetList*  deniedgroups;
 
     // Next config in list...
     struct vifconfig*   next;
@@ -114,22 +116,10 @@ void reloadConfig(void) {
     rebuildIfVc();
 
     my_log(LOG_DEBUG, 0, "reloadConfig: Config Reloaded. OldConfPtr %x, NewConfPtr, %x", OldConfPtr, vifconf);
-    // Free all the old mallocd subnetlists and vifconf list.
-    while (OldConfPtr) {
-        TmpConfPtr=OldConfPtr->next; // Increment before free or pointers may be invalid.
-        struct SubnetList *TmpNetPtr;
-        while (OldConfPtr->allowednets) {
-            TmpNetPtr = OldConfPtr->allowednets->next;
-            free (OldConfPtr->allowednets);
-            OldConfPtr->allowednets = TmpNetPtr;
-        }
-        while (OldConfPtr->allowedgroups) {
-            TmpNetPtr = OldConfPtr->allowedgroups->next;
-            free (OldConfPtr->allowedgroups);
-            OldConfPtr->allowedgroups = TmpNetPtr;
-        }
-        free (OldConfPtr);
-        OldConfPtr = TmpConfPtr;
+
+    // Free all the old mallocd vifconf list.
+    for (TmpConfPtr = OldConfPtr->next; OldConfPtr; OldConfPtr = TmpConfPtr, TmpConfPtr = OldConfPtr->next) {
+        free (OldConfPtr);   // Alloced by parsePhyintToken()
     }
 }
 
@@ -299,86 +289,103 @@ void configureVifs(void) {
 void createVifs(struct IfDescP *RebuildP) {
     struct IfDesc *Dp, *oDp = NULL;
     int    vifcount = 0, upsvifcount = 0, Ix = 0;
+    struct gvDescL *gvDescL = NULL, *TmpgvDescL = NULL, *AddgvDescL = NULL;
 
-    // init array to "not set"
-    for (Ix = 0; Ix < MAX_UPS_VIFS; Ix++) {
-        upStreamIfIdx[Ix] = -1;
-    }
-
-    if (RebuildP != NULL) {
+    if (RebuildP) {
         // When rebuild, check if interfaces have dissapeared and call delVIF if necessary.
         for (oDp=RebuildP->S; oDp<RebuildP->E; oDp++) {
-            for (Ix = 0; (Dp = getIfByIx(Ix)); Ix++) {
-                if (! strcmp (oDp->Name, Dp->Name)) {
-                    break;
-                }
-            }
-            if (Dp == NULL) {
+            if (! (Dp = getIfByName(oDp->Name, NULL))) {
                 my_log(LOG_DEBUG, 0, "Interface %s disappeared from system", oDp->Name);
                 if (oDp->index != (unsigned int)-1) {
+                    AddgvDescL = clearRoutes(oDp, RebuildP);
+                    // For any dissappaerd downstream vif we may have a list of groups to be queried after we are done.
+                    if (AddgvDescL) {
+                        if (! gvDescL) {
+                            gvDescL = AddgvDescL;
+                        } else {
+                            for (TmpgvDescL = gvDescL; TmpgvDescL && TmpgvDescL->next; TmpgvDescL = TmpgvDescL->next);
+                            TmpgvDescL->next = AddgvDescL;
+                        }
+                    }
                     delVIF(oDp);
                 }
             }
         }
     }
 
-    for(Ix = 0; (Dp = getIfByIx(Ix)); Ix++) {
-        if (RebuildP == NULL) {
+    // Loop through all new interfaces and check what has changed.
+    for(Ix = 0; (Dp = getIfByIx(Ix, NULL)); Ix++) {
+        AddgvDescL = NULL;
+        if (! RebuildP) {
             // Only add vif for valid interfaces on start-up.
             if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) {
                 continue;
             }
-        } else {
+        } else if ((oDp = getIfByName(Dp->Name, RebuildP))) {
             /* Need rebuild, check if interface is new or already exists (check table below).
                              old: disabled    new: disabled    -> do nothing
                              old: disabled    new: downstream  -> addVIF(new)
                              old: disabled    new: upstream    -> addVIF(new)
-                             old: downstream  new: disabled    -> delVIF(old)
+                             old: downstream  new: disabled    -> clear routes oldvif, delVIF(old)
                state table   old: downstream  new: downstream  -> addvif(new,old)
-                             old: downstream  new: upstream    -> delvif(old), addvif(new)
+                             old: downstream  new: upstream    -> clear routes oldvif, delvif(old), addvif(new)
                              old: upstream    new: disabled    -> clear routes oldvif, delVIF(old)
                              old: upstream    new: downstream  -> clear routes oldvif, delvif(old)),addvif(new)
                              old: upstream    new: upstream    -> addvif(new,old)
             */
-            for (oDp=RebuildP->S; oDp<RebuildP->E; oDp++) {
-                if (! strcmp (oDp->Name, Dp->Name)) {
-                    break;
+            if (oDp->state != IF_STATE_UPSTREAM && Dp->state == IF_STATE_UPSTREAM) {
+                // If vif transitions to upstream set relevant routes to not joined.
+                clearRoutes(Dp, NULL);
+            }
+
+            switch (oDp->state) {
+            case IF_STATE_DISABLED:
+                switch (Dp->state) {
+                case IF_STATE_DISABLED:   {                                                                    continue; }
+                case IF_STATE_DOWNSTREAM: {                                                         oDp=NULL;  break; }
+                case IF_STATE_UPSTREAM:   {                                                         oDp=NULL;  break; }
+                }
+                break;
+            case IF_STATE_DOWNSTREAM:
+                switch (Dp->state) {
+                case IF_STATE_DISABLED:   { AddgvDescL = clearRoutes(oDp, RebuildP);  delVIF(oDp);             break; }
+                case IF_STATE_DOWNSTREAM: {                                                                    break; }
+                case IF_STATE_UPSTREAM:   { AddgvDescL = clearRoutes(oDp, RebuildP);  delVIF(oDp);  oDp=NULL;  break; }
+                }
+                break;
+            case IF_STATE_UPSTREAM:
+                switch (Dp->state) {
+                case IF_STATE_DISABLED:   { clearRoutes(oDp, RebuildP);               delVIF(oDp);             continue; }
+                case IF_STATE_DOWNSTREAM: { clearRoutes(oDp, RebuildP);               delVIF(oDp);  oDp=NULL;  break; }
+                case IF_STATE_UPSTREAM:   {                                                                    break; }
+                }
+                break;
+            }
+
+            // For any removed downstream vif we may have a list of groups to be queried after we are done.
+            if (AddgvDescL) {
+                if (! gvDescL) {
+                    gvDescL = AddgvDescL;
+                } else {
+                    for (TmpgvDescL = gvDescL; TmpgvDescL && TmpgvDescL->next; TmpgvDescL = TmpgvDescL->next);
+                    TmpgvDescL->next = AddgvDescL;
                 }
             }
-            if ( oDp < RebuildP->E ) {
-                switch (oDp->state) {
-                case IF_STATE_DISABLED:
-                    switch (Dp->state) {
-                    case IF_STATE_DISABLED:   {                                          continue; }
-                    case IF_STATE_DOWNSTREAM: {                               oDp=NULL;  break; }
-                    case IF_STATE_UPSTREAM:   {                               oDp=NULL;  break; }
-                    }
-                    break;
-                case IF_STATE_DOWNSTREAM:
-                    switch (Dp->state) {
-                    case IF_STATE_DISABLED:   {                 delVIF(oDp);             continue; }
-                    case IF_STATE_DOWNSTREAM: {                                          break; }
-                    case IF_STATE_UPSTREAM:   {                 delVIF(oDp);  oDp=NULL;  break; }
-                    }
-                    break;
-                case IF_STATE_UPSTREAM:
-                    switch (Dp->state) {
-                    case IF_STATE_DISABLED:   { clearRoutes();  delVIF(oDp);              continue; }
-                    case IF_STATE_DOWNSTREAM: { clearRoutes();  delVIF(oDp);  oDp=NULL;   break; }
-                    case IF_STATE_UPSTREAM:   {                                           break; }
-                    }
-                    break;
-                }
-                if (Dp->Flags & IFF_LOOPBACK) {
-                    continue;
-                }
-            } else {
-                // New Interface. Only add valid up/downstream vif.
-                if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) {
-                    continue;
-                }
-                oDp=NULL;
+
+            // Do not call addvif for loopback or if switched from downstream to disabled.
+            if ((Dp->Flags & IFF_LOOPBACK) || (oDp && oDp->state == IF_STATE_DOWNSTREAM && Dp->state == IF_STATE_DISABLED)) {
+                continue;
             }
+        } else {
+            // New Interface. Only add valid up/downstream vif.
+            if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) {
+                continue;
+            }
+            if (Dp->state == IF_STATE_UPSTREAM) {
+                // Set relevant routes to not joined.
+                clearRoutes(Dp, NULL);
+            }
+            oDp=NULL;
         }
         if(Dp->state == IF_STATE_UPSTREAM) {
             if (upsvifcount >= MAX_UPS_VIFS) {
@@ -386,16 +393,35 @@ void createVifs(struct IfDescP *RebuildP) {
                 Ix, MAX_UPS_VIFS);
             } else {
                 my_log(LOG_DEBUG, 0, "Found upstream IF #%d, will assign as upstream Vif %d", upsvifcount, Ix);
-                upStreamIfIdx[upsvifcount++] = Ix;
+                upsvifcount++;
             }
         }
-        addVIF(Dp);
+        addVIF(Dp, oDp);
         vifcount++;
     }
 
     // All vifs created, check if there is an upstream and at least one downstream.
     if (upsvifcount == 0 || vifcount == upsvifcount) {
         my_log(LOG_ERR, 0, "There must be at least 1 Vif as upstream and 1 as dowstream.");
+    }
+
+    // If we have a lists of groups that have been set to check last member start the group specific querier.
+    while (gvDescL) {
+        struct gvDescL *FgvDescL = gvDescL;
+
+        my_log(LOG_DEBUG, 0, "createVifs: Starting group specific query for %s", inetFmt(gvDescL->gvDesc->group,s1));
+        sendGroupSpecificMemberQuery(gvDescL->gvDesc);
+
+        // The list may have duplicates, remove them
+        for (TmpgvDescL = gvDescL; TmpgvDescL && TmpgvDescL->next; TmpgvDescL = TmpgvDescL->next) {
+            if (TmpgvDescL->next->gvDesc->group == gvDescL->gvDesc->group) {
+                TmpgvDescL->next = TmpgvDescL->next->next;
+                free(TmpgvDescL->next->gvDesc);  // Alloced by clearRoutes()
+                free(TmpgvDescL->next);          // Alloced by clearRoutes()
+            }
+        }
+        gvDescL = gvDescL->next;
+        free(FgvDescL);   // Alloced by clearRoutes()
     }
 }
 

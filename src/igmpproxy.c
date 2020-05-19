@@ -276,7 +276,7 @@ void igmpProxyRun(void) {
     lasttime = curtime;
 
     // Loop until the end...
-    for (;;) {
+    while (true) {
 
         // Process signaling...
         if (sighandled) {

@@ -40,11 +40,11 @@ static int id = 0;
 static struct timeOutQueue  *queue = NULL; /* pointer to the beginning of timeout queue */
 
 struct timeOutQueue {
-    struct timeOutQueue    *next;   // Next event in queue
     int                     id;
     timer_f                 func;   // function to call
     void                    *data;  // Data for function
     long                    time;   // Time for event
+    struct timeOutQueue     *next;  // Next event in queue
 };
 
 // Method for dumping the Queue to the log.
@@ -56,10 +56,8 @@ static void debugQueue(void);
 void free_all_callouts(void) {
     struct timeOutQueue *p;
 
-    while (queue) {
-        p = queue;
-        queue = queue->next;
-        free(p);
+    for (p = queue ? queue->next : NULL; queue; queue = p, p = queue->next) {
+        free(queue);   // Alloced by timer_setTimer()
     }
 }
 
@@ -78,7 +76,7 @@ void age_callout_queue(struct timespec curtime) {
             ptr->func(ptr->data);
         }
         queue = ptr = ptr->next;
-        free(tmp);
+        free(tmp);  // Alloced by timer_setTimer()
         i++;
     }
 }
@@ -94,9 +92,9 @@ int timer_setTimer(int delay, timer_f action, void *data) {
     struct timespec curtime;
     int i = 1;
 
-    // create a node.
+    // create a node. Freed by free_all_callouts() and age_callout_queue().
     node = (struct timeOutQueue *)malloc(sizeof(struct timeOutQueue));
-    if (node == 0) {
+    if (! node) {
         my_log(LOG_WARNING, 0, "Malloc Failed in timer_settimer\n");
         return -1;
     }
@@ -104,24 +102,20 @@ int timer_setTimer(int delay, timer_f action, void *data) {
     node->func = action;
     node->data = data;
     node->time = curtime.tv_sec + delay;
-    node->next = NULL;
     node->id   = ++id;
 
-    // if the queue is empty, insert the node and return.
-    if (!queue) queue = node;
-    else {
+    if (! queue) {
+        // if the queue is empty, insert the node and return.
+        queue = node;
+    } else {
         // chase the queue looking for the right place. 
         for (i++; ptr->next && node->time >= ptr->next->time; ptr = ptr->next, i++);
         if (ptr == queue && node->time < ptr->time) {
            // Start of queue, insert.
            queue = node;
            node->next = ptr;
-        } else if ( ptr->next ) {
-           // Middle of queue, insert
-           node->next = ptr->next;
-           ptr->next = node;
         } else {
-           // End of queue, append.
+           node->next = ptr->next;
            ptr->next = node;
         }
     }
@@ -134,16 +128,15 @@ int timer_setTimer(int delay, timer_f action, void *data) {
 *   returns the time until the timer is scheduled
 */
 int timer_leftTimer(int timer_id) {
-    struct timeOutQueue *ptr = queue;
+    struct timeOutQueue *ptr;
     struct timespec curtime;
 
     if (!timer_id || !queue) return -1;
-    while (ptr && ptr->id != timer_id) {
-        ptr = ptr->next;
-    }
-    if (ptr){
-        clock_gettime (CLOCK_MONOTONIC, &curtime);
-        return (ptr->time - curtime.tv_sec);
+    for (ptr = queue; ptr; ptr = ptr->next) {
+        if (ptr->id == timer_id) {
+            clock_gettime(CLOCK_MONOTONIC, &curtime);
+            return (ptr->time - curtime.tv_sec);
+        }
     }
     return -1;
 }
