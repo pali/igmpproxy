@@ -283,7 +283,7 @@ int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
 
 /* rttable.c
  */
-void clearRoutes(void);
+struct gvDescL *clearRoutes(void);
 int insertRoute(uint32_t group, int ifx, uint32_t src);
 int activateRoute(uint32_t group, uint32_t originAddr, int upstrVif);
 void ageActiveRoutes(void);
@@ -294,6 +294,7 @@ int getMcGroupSock(void);
 
 /* request.c
  */
+void sendGroupSpecificMemberQuery(void *argument);
 void acceptGroupReport(uint32_t src, uint32_t group);
 void acceptLeaveMessage(uint32_t src, uint32_t group);
 void sendGeneralMembershipQuery(void);

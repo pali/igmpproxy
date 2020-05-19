@@ -146,7 +146,7 @@ int timer_leftTimer(int timer_id) {
  * debugging utility
  */
 static void debugQueue(void) {
-    struct timeOutQueue  *ptr; 
+    struct timeOutQueue  *ptr;
     int i;
 
     for (i = 1, ptr = queue; ptr; ptr = ptr->next, i++) {

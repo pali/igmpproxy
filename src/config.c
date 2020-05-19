@@ -275,7 +275,7 @@ void configureVifs(void) {
                     vifLast->next = confPtr->allowednets;
 
                     Dp->allowedgroups = confPtr->allowedgroups;
-					Dp->deniednets = confPtr->deniednets;
+                    Dp->deniednets = confPtr->deniednets;
                     Dp->allowedgroups = confPtr->allowedgroups;
                     Dp->deniedgroups = confPtr->deniedgroups;
 
