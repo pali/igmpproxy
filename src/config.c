@@ -294,10 +294,10 @@ void createVifs(struct IfDescP *RebuildP) {
     if (RebuildP) {
         // When rebuild, check if interfaces have dissapeared and call delVIF if necessary.
         for (oDp=RebuildP->S; oDp<RebuildP->E; oDp++) {
-            if (! (Dp = getIfByName(oDp->Name, NULL))) {
+            if (! (Dp = getIfByName(oDp->Name))) {
                 my_log(LOG_DEBUG, 0, "Interface %s disappeared from system", oDp->Name);
                 if (oDp->index != (unsigned int)-1) {
-                    AddgvDescL = clearRoutes(oDp, RebuildP);
+                    AddgvDescL = clearRoutes();
                     // For any dissappaerd downstream vif we may have a list of groups to be queried after we are done.
                     if (AddgvDescL) {
                         if (! gvDescL) {
@@ -314,14 +314,14 @@ void createVifs(struct IfDescP *RebuildP) {
     }
 
     // Loop through all new interfaces and check what has changed.
-    for(Ix = 0; (Dp = getIfByIx(Ix, NULL)); Ix++) {
+    for(Ix = 0; (Dp = getIfByIx(Ix)); Ix++) {
         AddgvDescL = NULL;
         if (! RebuildP) {
             // Only add vif for valid interfaces on start-up.
             if ((Dp->Flags & IFF_LOOPBACK) || (Dp->state != IF_STATE_DOWNSTREAM && Dp->state != IF_STATE_UPSTREAM)) {
                 continue;
             }
-        } else if ((oDp = getIfByName(Dp->Name, RebuildP))) {
+        } else if ((oDp = getIfByName(Dp->Name))) {
             /* Need rebuild, check if interface is new or already exists (check table below).
                              old: disabled    new: disabled    -> do nothing
                              old: disabled    new: downstream  -> addVIF(new)
@@ -335,7 +335,7 @@ void createVifs(struct IfDescP *RebuildP) {
             */
             if (oDp->state != IF_STATE_UPSTREAM && Dp->state == IF_STATE_UPSTREAM) {
                 // If vif transitions to upstream set relevant routes to not joined.
-                clearRoutes(Dp, NULL);
+                clearRoutes();
             }
 
             switch (oDp->state) {
@@ -348,15 +348,15 @@ void createVifs(struct IfDescP *RebuildP) {
                 break;
             case IF_STATE_DOWNSTREAM:
                 switch (Dp->state) {
-                case IF_STATE_DISABLED:   { AddgvDescL = clearRoutes(oDp, RebuildP);  delVIF(oDp);             break; }
+                case IF_STATE_DISABLED:   { AddgvDescL = clearRoutes();  delVIF(oDp);             break; }
                 case IF_STATE_DOWNSTREAM: {                                                                    break; }
-                case IF_STATE_UPSTREAM:   { AddgvDescL = clearRoutes(oDp, RebuildP);  delVIF(oDp);  oDp=NULL;  break; }
+                case IF_STATE_UPSTREAM:   { AddgvDescL = clearRoutes();  delVIF(oDp);  oDp=NULL;  break; }
                 }
                 break;
             case IF_STATE_UPSTREAM:
                 switch (Dp->state) {
-                case IF_STATE_DISABLED:   { clearRoutes(oDp, RebuildP);               delVIF(oDp);             continue; }
-                case IF_STATE_DOWNSTREAM: { clearRoutes(oDp, RebuildP);               delVIF(oDp);  oDp=NULL;  break; }
+                case IF_STATE_DISABLED:   { clearRoutes();               delVIF(oDp);             continue; }
+                case IF_STATE_DOWNSTREAM: { clearRoutes();               delVIF(oDp);  oDp=NULL;  break; }
                 case IF_STATE_UPSTREAM:   {                                                                    break; }
                 }
                 break;
@@ -383,7 +383,7 @@ void createVifs(struct IfDescP *RebuildP) {
             }
             if (Dp->state == IF_STATE_UPSTREAM) {
                 // Set relevant routes to not joined.
-                clearRoutes(Dp, NULL);
+                clearRoutes();
             }
             oDp=NULL;
         }
@@ -396,7 +396,7 @@ void createVifs(struct IfDescP *RebuildP) {
                 upsvifcount++;
             }
         }
-        addVIF(Dp, oDp);
+        addVIF(Dp);
         vifcount++;
     }
 
@@ -454,7 +454,9 @@ struct vifconfig *parsePhyintToken(void) {
     tmpPtr->threshold = 1;
     tmpPtr->state = commonConfig.defaultInterfaceState;
     tmpPtr->allowednets = NULL;
+    tmpPtr->deniednets = NULL;
     tmpPtr->allowedgroups = NULL;
+    tmpPtr->deniedgroups = NULL;
 
     // Make a copy of the token to store the IF name
     tmpPtr->name = strdup( token );

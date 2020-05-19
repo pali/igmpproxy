@@ -103,6 +103,7 @@ int timer_setTimer(int delay, timer_f action, void *data) {
     node->data = data;
     node->time = curtime.tv_sec + delay;
     node->id   = ++id;
+    node->next = NULL;
 
     if (! queue) {
         // if the queue is empty, insert the node and return.

@@ -201,7 +201,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
 /**
 *   Clear all routes from routing table, and alerts Leaves upstream.
 */
-void clearRoutes(void) {
+struct gvDescL *clearRoutes(void) {
     struct RouteTable   *croute, *remainroute;
 
     // Loop through all routes...
@@ -228,6 +228,8 @@ void clearRoutes(void) {
 
     // Send a notice that the routing table is empty...
     my_log(LOG_NOTICE, 0, "All routes removed. Routing table is empty.");
+
+    return 0;
 }
 
 /**
