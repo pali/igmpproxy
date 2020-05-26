@@ -61,23 +61,20 @@ int     igmpProxyInit(void);
 void    igmpProxyCleanUp(void);
 void    igmpProxyRun(void);
 
-// Global vars...
-static int sighandled = 0;
-#define GOT_SIGINT  0x01
-#define GOT_SIGHUP  0x02
-#define GOT_SIGUSR1 0x04
-#define GOT_SIGUSR2 0x08
-
 // Holds the indeces of the upstream IF...
 int     upStreamIfIdx[MAX_UPS_VIFS];
+
+// Global Variables / Config / Signal Handling / Timekeeping / Socket.
+unsigned int sighandled = 0;
+char *configFilePath;
+struct timespec  curtime, lasttime, diftime, *timeout = &diftime, utcoff;
 
 /**
 *   Program main method. Is invoked when the program is started
 *   on commandline. The number of commandline arguments, and a
 *   pointer to the arguments are received on the line...
 */
-int main( int ArgCn, char *ArgVc[] ) {
-
+int main(int ArgCn, char *ArgVc[]) {
     int c;
     bool NotAsDaemon = false;
 
@@ -92,6 +89,8 @@ int main( int ArgCn, char *ArgVc[] ) {
         case 'd':
             Log2Stderr = true;
             NotAsDaemon = true;
+            time_t rawtime = time(NULL);
+            utcoff.tv_sec = timegm(localtime(&rawtime)) - rawtime;
             break;
         case 'v':
             if (LogLevel == LOG_INFO)
@@ -113,7 +112,7 @@ int main( int ArgCn, char *ArgVc[] ) {
         fputs("You must specify the configuration file.\n", stderr);
         exit(1);
     }
-    char *configFilePath = ArgVc[optind];
+    configFilePath = ArgVc[optind];
 
     // Chech that we are root
     if (geteuid() != 0) {
@@ -126,41 +125,37 @@ int main( int ArgCn, char *ArgVc[] ) {
     // Write debug notice with file path...
     my_log(LOG_DEBUG, 0, "Searching for config file at '%s'" , configFilePath);
 
-    do {
+    // Loads the config file...
+    if (! loadConfig(configFilePath)) {
+        my_log(LOG_ERR, 0, "Unable to load config file...");
+        exit(1);
+    }
 
-        // Loads the config file...
-        if( ! loadConfig( configFilePath ) ) {
-            my_log(LOG_ERR, 0, "Unable to load config file...");
-            break;
+    // Initializes the deamon.
+    if (!igmpProxyInit()) {
+        my_log(LOG_ERR, 0, "Unable to initialize IGMPproxy.");
+        exit(1);
+    }
+
+    if (! NotAsDaemon) {
+        // Only daemon goes past this line...
+        if (fork()) {
+            exit(0);
         }
 
-        // Initializes the deamon.
-        if ( !igmpProxyInit() ) {
-            my_log(LOG_ERR, 0, "Unable to initialize IGMPproxy.");
-            break;
+        // Detach daemon from terminal
+        if (close(0) < 0 || close(1) < 0 || close(2) < 0
+            || open("/dev/null", 0) != 0 || dup2(0, 1) < 0 || dup2(0, 2) < 0
+            || setpgid(0, 0) < 0) {
+            my_log( LOG_ERR, errno, "failed to detach daemon" );
         }
+    }
 
-        if ( !NotAsDaemon ) {
+    // Go to the main loop.
+    igmpProxyRun();
 
-            // Only daemon goes past this line...
-            if (fork()) exit(0);
-
-            // Detach daemon from terminal
-            if ( close( 0 ) < 0 || close( 1 ) < 0 || close( 2 ) < 0
-                || open( "/dev/null", 0 ) != 0 || dup2( 0, 1 ) < 0 || dup2( 0, 2 ) < 0
-                || setpgid( 0, 0 ) < 0
-            ) {
-                my_log( LOG_ERR, errno, "failed to detach daemon" );
-            }
-        }
-
-        // Go to the main loop.
-        igmpProxyRun();
-
-        // Clean up
-        igmpProxyCleanUp();
-
-    } while ( false );
+    // Clean up
+    igmpProxyCleanUp();
 
     // Inform that we are exiting.
     my_log(LOG_INFO, 0, "Shutdown complete....");
@@ -187,10 +182,10 @@ int igmpProxyInit(void) {
     // Configures IF states and settings
     configureVifs();
 
-    switch ( Err = enableMRouter() ) {
+    switch (Err = enableMRouter()) {
     case 0: break;
-    case EADDRINUSE: my_log( LOG_ERR, EADDRINUSE, "MC-Router API already in use" ); break;
-    default: my_log( LOG_ERR, Err, "MRT_INIT failed" );
+    case EADDRINUSE: my_log(LOG_ERR, EADDRINUSE, "MC-Router API already in use"); break;
+    default: my_log(LOG_ERR, Err, "MRT_INIT failed");
     }
 
     /* create VIFs for all IP, non-loop interfaces
@@ -237,8 +232,6 @@ int igmpProxyInit(void) {
     initIgmp();
     // Initialize Routing table
     initRouteTable();
-    // Initialize timer
-    callout_init();
 
     return 1;
 }
@@ -249,7 +242,7 @@ int igmpProxyInit(void) {
 void igmpProxyCleanUp(void) {
     my_log( LOG_DEBUG, 0, "clean handler called" );
 
-    free_all_callouts();    // No more timeouts.
+    timer_freeQueue();    // No more timeouts.
     clearAllRoutes();       // Remove all routes.
     disableMRouter();       // Disable the multirout API
 }
@@ -258,28 +251,20 @@ void igmpProxyCleanUp(void) {
 *   Main daemon loop.
 */
 void igmpProxyRun(void) {
-    // Get the config.
-    struct Config *config = getCommonConfig();
-    // Set some needed values.
-    register int recvlen;
-    int     MaxFD, Rt, secs;
+    register int fastage = 0, recvlen, Rt;
     fd_set  ReadFDS;
     socklen_t dummy = 0;
-    struct  timespec  curtime, lasttime, difftime, tv;
-    // The timeout is a pointer in order to set it to NULL if nessecary.
-    struct  timespec  *timeout = &tv;
-
-    // Initialize timer vars
-    difftime.tv_nsec = 0;
-    clock_gettime(CLOCK_MONOTONIC, &curtime);
-    lasttime = curtime;
 
     // First thing we send a membership query in downstream VIF's...
     sendGeneralMembershipQuery();
 
-    // Loop until the end...
-    for (;;) {
+    // Initialize timer vars
+    diftime.tv_nsec = 0;
+    clock_gettime(CLOCK_MONOTONIC, &curtime);
+    lasttime = curtime;
 
+    // Loop until the end...
+    while (true) {
         // Process signaling...
         if (sighandled) {
             if (sighandled & GOT_SIGINT) {
@@ -289,79 +274,42 @@ void igmpProxyRun(void) {
             }
         }
 
-        /* aimwang: call rebuildIfVc */
-        if (config->rescanVif)
-            rebuildIfVc();
-
-        // Prepare timeout...
-        secs = timer_nextTimer();
-        if(secs == -1) {
-            timeout = NULL;
-        } else {
-            timeout->tv_nsec = 0;
-            timeout->tv_sec = (secs > 3) ? 3 : secs; // aimwang: set max timeout
+        // Timeout = 1s - difference between current and last time timer_ageQueue() with .01s grace.
+        // This will make sure queue aging is run once every s (timer resolution) +- 0.01s.
+        // If timer_ageQueue returns the nr of ns until next timer use that as the base for timeout.
+        // Using this algorithm a timer will never overshoot more than t_age_queue + t_handle_sig. 
+        clock_gettime(CLOCK_MONOTONIC, &curtime);
+        diftime.tv_sec  = curtime.tv_nsec >= lasttime.tv_nsec ? curtime.tv_sec  - lasttime.tv_sec  : curtime.tv_sec - lasttime.tv_sec - 1;
+        diftime.tv_nsec = curtime.tv_nsec >= lasttime.tv_nsec ? curtime.tv_nsec - lasttime.tv_nsec : 1000000000 - lasttime.tv_nsec + curtime.tv_nsec;
+        if (diftime.tv_sec > 0 || (! fastage && diftime.tv_nsec > 990000000) || (fastage && diftime.tv_nsec > fastage)) {
+            lasttime = curtime;
+            fastage = timer_ageQueue();
+            diftime.tv_sec = diftime.tv_nsec = 0;
         }
-
-        // Prepare for select.
-        MaxFD = MRouterFD;
-
-        FD_ZERO( &ReadFDS );
-        FD_SET( MRouterFD, &ReadFDS );
+        timeout->tv_nsec = (fastage ? fastage : 999999999) - diftime.tv_nsec;
 
         // wait for input
-        Rt = pselect( MaxFD +1, &ReadFDS, NULL, NULL, timeout, NULL );
+        FD_ZERO(&ReadFDS);
+        FD_SET(MRouterFD, &ReadFDS);
+        Rt = pselect(MRouterFD + 1, &ReadFDS, NULL, NULL, timeout, NULL);
 
         // log and ignore failures
-        if( Rt < 0 ) {
+        if (Rt < 0) {
             my_log( LOG_WARNING, errno, "select() failure" );
             continue;
-        }
-        else if( Rt > 0 ) {
-
+        } else if (Rt > 0) {
             // Read IGMP request, and handle it...
-            if( FD_ISSET( MRouterFD, &ReadFDS ) ) {
-
-                recvlen = recvfrom(MRouterFD, recv_buf, RECV_BUF_SIZE,
-                                   0, NULL, &dummy);
+            if (FD_ISSET( MRouterFD, &ReadFDS)) {
+                recvlen = recvfrom(MRouterFD, recv_buf, RECV_BUF_SIZE, 0, NULL, &dummy);
                 if (recvlen < 0) {
-                    if (errno != EINTR) my_log(LOG_ERR, errno, "recvfrom");
+                    if (errno != EINTR) {
+                        my_log(LOG_ERR, errno, "recvfrom");
+                    }
                     continue;
                 }
-
                 acceptIgmp(recvlen);
             }
         }
-
-        // At this point, we can handle timeouts...
-        do {
-            /*
-             * If the select timed out, then there's no other
-             * activity to account for and we don't need to
-             * call gettimeofday.
-             */
-            if (Rt == 0) {
-                curtime.tv_sec = lasttime.tv_sec + secs;
-                curtime.tv_nsec = lasttime.tv_nsec;
-                Rt = -1; /* don't do this next time through the loop */
-            } else {
-                clock_gettime(CLOCK_MONOTONIC, &curtime);
-            }
-            difftime.tv_sec = curtime.tv_sec - lasttime.tv_sec;
-            difftime.tv_nsec += curtime.tv_nsec - lasttime.tv_nsec;
-            while (difftime.tv_nsec > 1000000000) {
-                difftime.tv_sec++;
-                difftime.tv_nsec -= 1000000000;
-            }
-            if (difftime.tv_nsec < 0) {
-                difftime.tv_sec--;
-                difftime.tv_nsec += 1000000000;
-            }
-            lasttime = curtime;
-            if (secs == 0 || difftime.tv_sec > 0)
-                age_callout_queue(difftime.tv_sec);
-            secs = -1;
-        } while (difftime.tv_sec > 0);
-
     }
 
 }

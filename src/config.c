@@ -47,9 +47,11 @@ struct vifconfig {
 
     // Keep allowed nets for VIF.
     struct SubnetList*  allowednets;
+    struct SubnetList*  deniednets;
 
     // Allowed Groups
     struct SubnetList*  allowedgroups;
+    struct SubnetList*  deniedgroups;
 
     // Next config in list...
     struct vifconfig*   next;
@@ -226,31 +228,26 @@ void configureVifs(void) {
     }
 
     // Loop through all VIFs...
-    for ( Ix = 0; (Dp = getIfByIx(Ix)); Ix++ ) {
-        if ( Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK) ) {
-
+    for (Ix = 0; (Dp = getIfByIx(Ix)); Ix++) {
+        if (Dp->InAdr.s_addr && ! (Dp->Flags & IFF_LOOPBACK)) {
             // Now try to find a matching config...
-            for( confPtr = vifconf; confPtr; confPtr = confPtr->next) {
-
+            for (confPtr = vifconf; confPtr; confPtr = confPtr->next) {
                 // I the VIF names match...
-                if(strcmp(Dp->Name, confPtr->name)==0) {
+                if (strcmp(Dp->Name, confPtr->name) == 0) {
                     struct SubnetList *vifLast;
 
                     my_log(LOG_DEBUG, 0, "Found config for %s", Dp->Name);
 
-
                     // Set the VIF state
                     Dp->state = confPtr->state;
-
                     Dp->threshold = confPtr->threshold;
                     Dp->ratelimit = confPtr->ratelimit;
 
-                    // Go to last allowed net on VIF...
-                    for(vifLast = Dp->allowednets; vifLast->next; vifLast = vifLast->next);
-
-                    // Insert the configured nets...
+                    // Go to last allowed net on VIF and insert configured nets.
+                    for (vifLast = Dp->allowednets; vifLast->next; vifLast = vifLast->next);
                     vifLast->next = confPtr->allowednets;
 
+                    // Link the black- and whitelists.
                     Dp->allowedgroups = confPtr->allowedgroups;
 
                     break;
@@ -290,7 +287,9 @@ struct vifconfig *parsePhyintToken(void) {
     tmpPtr->threshold = 1;
     tmpPtr->state = commonConfig.defaultInterfaceState;
     tmpPtr->allowednets = NULL;
+    tmpPtr->deniednets = NULL;
     tmpPtr->allowedgroups = NULL;
+    tmpPtr->deniedgroups = NULL;
 
     // Make a copy of the token to store the IF name
     tmpPtr->name = strdup( token );

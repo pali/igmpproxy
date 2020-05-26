@@ -80,7 +80,6 @@
 #define BIT_CLR(X,n)     ((X) &= ~(1 << (n)))
 #define BIT_TST(X,n)     ((X) & 1 << (n))
 
-
 //#################################################################################
 //  Globals
 //#################################################################################
@@ -97,7 +96,21 @@ extern char     s2[];
 extern char		s3[];
 extern char		s4[];
 
+/**
+*   Signal Handling.
+*/
+extern unsigned int sighandled;
+extern unsigned int sigstatus;     // 0 = no signal, 1 = SIGHUP, 2 = SIGUSR1, 3 = SIGUSR2, 4 = Timed Reload, 5 = Timed Rebuild
+#define GOT_SIGINT  0x01
+#define GOT_SIGHUP  0x02
+#define GOT_SIGUSR1 0x04
+#define GOT_SIGUSR2 0x08
+#define GOT_SIGURG  0x10
 
+/**
+*   Timekeeping
+*/
+extern struct timespec curtime, lasttime, diftime, utcoff;
 
 //#################################################################################
 //  Lib function prototypes.
@@ -275,17 +288,16 @@ void acceptGroupReport(uint32_t src, uint32_t group);
 void acceptLeaveMessage(uint32_t src, uint32_t group);
 void sendGeneralMembershipQuery(void);
 
-/* callout.c 
+/**
+*   callout.c
 */
 typedef void (*timer_f)(void *);
 
-void callout_init(void);
-void free_all_callouts(void);
-void age_callout_queue(int);
-int timer_nextTimer(void);
-int timer_setTimer(int, timer_f, void *);
-int timer_clearTimer(int);
-int timer_leftTimer(int);
+void timer_freeQueue(void);
+unsigned int timer_ageQueue();
+unsigned int timer_setTimer(int delay, const char name[32], timer_f action, void *);
+struct timespec timer_getTime(unsigned long timer_id);
+void *timer_clearTimer(unsigned long timer_id);
 
 /* confread.c
  */
