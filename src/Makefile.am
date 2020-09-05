@@ -20,5 +20,4 @@ igmpproxy_SOURCES = \
 	os-qnxnto.h \
 	request.c \
 	rttable.c \
-	syslog.c \
-	udpsock.c
+	syslog.c
