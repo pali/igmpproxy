@@ -10,7 +10,6 @@ igmpproxy_SOURCES = \
 	igmpproxy.h \
 	kern.c \
 	lib.c \
-	mcgroup.c \
 	mroute-api.c \
 	os-dragonfly.h \
 	os-freebsd.h \

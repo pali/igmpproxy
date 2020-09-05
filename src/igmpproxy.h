@@ -242,16 +242,8 @@ void k_hdr_include(int hdrincl);
 void k_set_ttl(int t);
 void k_set_loop(int l);
 void k_set_if(uint32_t ifa);
-/*
-void k_join(uint32_t grp, uint32_t ifa);
-void k_leave(uint32_t grp, uint32_t ifa);
-*/
-
-/* mcgroup.c
- */
-int joinMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
-int leaveMcGroup( int UdpSock, struct IfDesc *IfDp, uint32_t mcastaddr );
-
+void k_join(struct IfDesc *ifd, uint32_t grp);
+void k_leave(struct IfDesc *ifd, uint32_t grp);
 
 /* rttable.c
  */

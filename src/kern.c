@@ -111,29 +111,38 @@ void k_set_if(uint32_t ifa) {
             inetFmt(ifa, s1));
 }
 
-/*
-void k_join(uint32_t grp, uint32_t ifa) {
+void k_join(struct IfDesc *ifd, uint32_t grp) {
     struct ip_mreq mreq;
 
     mreq.imr_multiaddr.s_addr = grp;
-    mreq.imr_interface.s_addr = ifa;
+    mreq.imr_interface.s_addr = ifd->InAdr.s_addr;
+
+    my_log(LOG_NOTICE, 0, "Joining group %s on interface %s", inetFmt(grp, s1), ifd->Name);
 
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                   (char *)&mreq, sizeof(mreq)) < 0)
+                   (char *)&mreq, sizeof(mreq)) < 0) {
+        int mcastGroupExceeded = (errno == ENOBUFS);
         my_log(LOG_WARNING, errno, "can't join group %s on interface %s",
-            inetFmt(grp, s1), inetFmt(ifa, s2));
+            inetFmt(grp, s1), ifd->Name);
+        if (mcastGroupExceeded) {
+            my_log(LOG_WARNING, 0, "Maximum number of multicast groups were exceeded");
+#ifdef __linux__
+            my_log(LOG_WARNING, 0, "Check settings of '/sbin/sysctl net.ipv4.igmp_max_memberships'");
+#endif
+        }
+    }
 }
 
-
-void k_leave(uint32_t grp, uint32_t ifa) {
+void k_leave(struct IfDesc *ifd, uint32_t grp) {
     struct ip_mreq mreq;
 
     mreq.imr_multiaddr.s_addr = grp;
-    mreq.imr_interface.s_addr = ifa;
+    mreq.imr_interface.s_addr = ifd->InAdr.s_addr;
+
+    my_log(LOG_NOTICE, 0, "Leaving group %s on interface %s", inetFmt(grp, s1), ifd->Name);
 
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_DROP_MEMBERSHIP,
                    (char *)&mreq, sizeof(mreq)) < 0)
         my_log(LOG_WARNING, errno, "can't leave group %s on interface %s",
-            inetFmt(grp, s1), inetFmt(ifa, s2));
+            inetFmt(grp, s1), ifd->Name);
 }
-*/

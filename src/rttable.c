@@ -130,12 +130,11 @@ void initRouteTable(void) {
             my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
                          inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
 
-            //k_join(allrouters_group, Dp->InAdr.s_addr);
-            joinMcGroup( MRouterFD, Dp, allrouters_group );
+            k_join(Dp, allrouters_group);
 
             my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
                          inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-            joinMcGroup( MRouterFD, Dp, alligmp3_group );
+            k_join(Dp, alligmp3_group);
         }
     }
 }
@@ -183,8 +182,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
                                  inetFmt(route->group, s1),
                                  inetFmt(upstrIf->InAdr.s_addr, s2));
 
-                    //k_join(route->group, upstrIf->InAdr.s_addr);
-                    joinMcGroup( MRouterFD, upstrIf, route->group );
+                    k_join(upstrIf, route->group);
 
                     route->upstrState = ROUTESTATE_JOINED;
                 } else {
@@ -198,8 +196,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
                                  inetFmt(route->group, s1),
                                  inetFmt(upstrIf->InAdr.s_addr, s2));
 
-                    //k_leave(route->group, upstrIf->InAdr.s_addr);
-                    leaveMcGroup( MRouterFD, upstrIf, route->group );
+                    k_leave(upstrIf, route->group);
 
                     route->upstrState = ROUTESTATE_NOTJOINED;
                 }
