@@ -6,5 +6,6 @@ Supported operating systems:
  - NetBSD
  - OpenBSD
  - DragonFly BSD
+ - macOS (build only!)
 
 This software is released under the GNU GPL license v2 or later. See details in COPYING.
