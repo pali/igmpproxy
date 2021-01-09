@@ -37,23 +37,25 @@
 int LogLevel = LOG_WARNING;
 bool Log2Stderr = false;
 
-void my_log( int Severity, int Errno, const char *FmtSt, ... )
-{
+void my_log( int Severity, int Errno, const char *FmtSt, ... ) {
+    struct timespec logtime;
     char LogMsg[ 128 ];
-
     va_list ArgPt;
     unsigned Ln;
+
     va_start( ArgPt, FmtSt );
     Ln = vsnprintf( LogMsg, sizeof( LogMsg ), FmtSt, ArgPt );
-    if( Errno > 0 )
-        snprintf( LogMsg + Ln, sizeof( LogMsg ) - Ln,
-                "; Errno(%d): %s", Errno, strerror(Errno) );
+    if( Errno > 0 ) {
+        snprintf( LogMsg + Ln, sizeof( LogMsg ) - Ln, "; Errno(%d): %s", Errno, strerror(Errno) );
+    }
     va_end( ArgPt );
 
     if (Severity <= LogLevel) {
-        if (Log2Stderr)
-            fprintf(stderr, "%s\n", LogMsg);
-        else {
+        if (Log2Stderr) {
+            clock_gettime(CLOCK_REALTIME, &logtime);
+            long sec = logtime.tv_sec + utcoff.tv_sec, nsec = logtime.tv_nsec;
+            fprintf(stderr, "%02ld:%02ld:%02ld:%04ld %s\n", sec % 86400 / 3600, sec % 3600 / 60, sec % 3600 % 60, nsec / 100000, LogMsg);
+		} else {
             syslog(Severity, "%s", LogMsg);
         }
     }

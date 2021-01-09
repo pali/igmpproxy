@@ -202,7 +202,9 @@ void sendGroupSpecificMemberQuery(void *argument) {
     }
 
     // Set timeout for next round...
-    timer_setTimer(conf->lastMemberQueryInterval, sendGroupSpecificMemberQuery, gvDesc);
+    char msg[40] = "Query: ";
+    strcat(msg, inetFmt(gvDesc->group, s1));
+    timer_setTimer(conf->lastMemberQueryInterval, msg, sendGroupSpecificMemberQuery, gvDesc);
 }
 
 
@@ -233,17 +235,17 @@ void sendGeneralMembershipQuery(void) {
     }
 
     // Install timer for aging active routes.
-    timer_setTimer(conf->queryResponseInterval, (timer_f)ageActiveRoutes, NULL);
+    timer_setTimer(conf->queryResponseInterval, "Age Active Routes", (timer_f)ageActiveRoutes, NULL);
 
     // Install timer for next general query...
     if(conf->startupQueryCount>0) {
         // Use quick timer...
-        timer_setTimer(conf->startupQueryInterval, (timer_f)sendGeneralMembershipQuery, NULL);
+        timer_setTimer(conf->startupQueryInterval, "General Query", (timer_f)sendGeneralMembershipQuery, NULL);
         // Decrease startup counter...
         conf->startupQueryCount--;
     }
     else {
         // Use slow timer...
-        timer_setTimer(conf->queryInterval, (timer_f)sendGeneralMembershipQuery, NULL);
+        timer_setTimer(conf->queryInterval, "General Query", (timer_f)sendGeneralMembershipQuery, NULL);
     }
 }
