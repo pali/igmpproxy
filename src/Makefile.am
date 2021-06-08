@@ -10,7 +10,6 @@ igmpproxy_SOURCES = \
 	igmpproxy.h \
 	kern.c \
 	lib.c \
-	mcgroup.c \
 	mroute-api.c \
 	os-dragonfly.h \
 	os-freebsd.h \
@@ -20,5 +19,4 @@ igmpproxy_SOURCES = \
 	os-qnxnto.h \
 	request.c \
 	rttable.c \
-	syslog.c \
-	udpsock.c
+	syslog.c
