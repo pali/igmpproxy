@@ -111,29 +111,81 @@ void k_set_if(uint32_t ifa) {
             inetFmt(ifa, s1));
 }
 
-/*
-void k_join(uint32_t grp, uint32_t ifa) {
-    struct ip_mreq mreq;
+int k_joinleave(int cmd, struct IfDesc *ifd, uint32_t grp, uint32_t originAddr)
+{
+    int ret ;
 
-    mreq.imr_multiaddr.s_addr = grp;
-    mreq.imr_interface.s_addr = ifa;
+    if(originAddr == 0) {
+        struct ip_mreq mreq;
+        memset(&mreq, 0, sizeof(mreq));
+        mreq.imr_multiaddr.s_addr = grp;
+        mreq.imr_interface.s_addr = ifd->InAdr.s_addr;
 
-    if (setsockopt(MRouterFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                   (char *)&mreq, sizeof(mreq)) < 0)
+        switch(cmd)
+        {
+            case 'j':
+                ret = setsockopt(MRouterFD, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                    (char *)&mreq, sizeof(mreq));
+                break;
+            case 'l':
+                ret = setsockopt(MRouterFD, IPPROTO_IP, IP_DROP_MEMBERSHIP,
+                    (char *)&mreq, sizeof(mreq));
+                break;
+            default:
+                ret = -1;
+                break;
+        }
+    }
+    else {
+        struct ip_mreq_source mreq_source;
+        memset(&mreq_source, 0, sizeof(mreq_source));
+        mreq_source.imr_multiaddr.s_addr = grp;
+        mreq_source.imr_interface.s_addr = ifd->InAdr.s_addr;
+        mreq_source.imr_sourceaddr.s_addr = originAddr;
+        
+        switch(cmd)
+        {
+            case 'j':
+                ret = setsockopt(MRouterFD, IPPROTO_IP, IP_ADD_SOURCE_MEMBERSHIP,
+                    (char *)&mreq_source, sizeof(mreq_source));
+                break;
+            case 'l':
+                ret = setsockopt(MRouterFD, IPPROTO_IP, IP_DROP_SOURCE_MEMBERSHIP,
+                    (char *)&mreq_source, sizeof(mreq_source));
+                break;
+            default:
+                ret = -1;
+                break;
+        }
+    }
+
+    return ret;
+}
+
+void k_join(struct IfDesc *ifd, uint32_t grp, uint32_t originAddr) {
+
+    my_log(LOG_NOTICE, 0, "Joining group %s on interface %s from %s",
+        inetFmt(grp, s1), ifd->Name, originAddr != 0 ?  inetFmt( originAddr, s2 ) : "<any>");
+
+    if (k_joinleave('j', ifd, grp, originAddr) < 0) {
+        int mcastGroupExceeded = (errno == ENOBUFS);
         my_log(LOG_WARNING, errno, "can't join group %s on interface %s",
-            inetFmt(grp, s1), inetFmt(ifa, s2));
+            inetFmt(grp, s1), ifd->Name);
+        if (mcastGroupExceeded) {
+            my_log(LOG_WARNING, 0, "Maximum number of multicast groups were exceeded");
+#ifdef __linux__
+            my_log(LOG_WARNING, 0, "Check settings of '/sbin/sysctl net.ipv4.igmp_max_memberships'");
+#endif
+        }
+    }
 }
 
+void k_leave(struct IfDesc *ifd, uint32_t grp, uint32_t originAddr) {
 
-void k_leave(uint32_t grp, uint32_t ifa) {
-    struct ip_mreq mreq;
+    my_log(LOG_NOTICE, 0, "Leaving group %s on interface %s from %s",
+        inetFmt(grp, s1), ifd->Name, originAddr != 0 ?  inetFmt( originAddr, s2 ) : "<any>");
 
-    mreq.imr_multiaddr.s_addr = grp;
-    mreq.imr_interface.s_addr = ifa;
-
-    if (setsockopt(MRouterFD, IPPROTO_IP, IP_DROP_MEMBERSHIP,
-                   (char *)&mreq, sizeof(mreq)) < 0)
+    if (k_joinleave('l', ifd, grp, originAddr) < 0)
         my_log(LOG_WARNING, errno, "can't leave group %s on interface %s",
-            inetFmt(grp, s1), inetFmt(ifa, s2));
+            inetFmt(grp, s1), ifd->Name);
 }
-*/

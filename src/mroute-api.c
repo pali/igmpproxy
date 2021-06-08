@@ -40,14 +40,9 @@
 
 #include "igmpproxy.h"
 
-// MAX_MC_VIFS from mclab.h must have same value as MAXVIFS from mroute.h
-#if MAX_MC_VIFS != MAXVIFS
-# error "constants don't match, correct mclab.h"
-#endif
-
 // need an IGMP socket as interface for the mrouted API
 // - receives the IGMP messages
-int         MRouterFD;          /* socket for all network I/O  */
+int         MRouterFD = -1;     /* socket for all network I/O  */
 char        *recv_buf;          /* input packet buffer         */
 char        *send_buf;          /* output packet buffer        */
 
@@ -83,14 +78,13 @@ int enableMRouter(void)
 */
 void disableMRouter(void)
 {
-    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DONE, NULL, 0 )
-         || close( MRouterFD )
-    ) {
-        MRouterFD = 0;
-        my_log( LOG_ERR, errno, "MRT_DONE/close" );
-    }
+    if ( setsockopt( MRouterFD, IPPROTO_IP, MRT_DONE, NULL, 0 ) < 0 )
+        my_log( LOG_WARNING, errno, "MRT_DONE" );
 
-    MRouterFD = 0;
+    if ( close( MRouterFD ) < 0 )
+        my_log( LOG_WARNING, errno, "IGMP socket close" );
+
+    MRouterFD = -1;
 }
 
 /*

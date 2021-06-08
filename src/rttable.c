@@ -77,9 +77,6 @@ void logRouteTable(const char *header);
 int internAgeRoute(struct RouteTable *croute);
 int internUpdateKernelRoute(struct RouteTable *route, int activate);
 
-// Socket for sending join or leave requests.
-int mcGroupSock = 0;
-
 
 /**
 *   Functions for downstream hosts hash table
@@ -119,16 +116,6 @@ static inline int testNoDownstreamHost(struct Config *conf, struct RouteTable *c
 }
 
 /**
-*   Function for retrieving the Multicast Group socket.
-*/
-int getMcGroupSock(void) {
-    if( ! mcGroupSock ) {
-        mcGroupSock = openUdpSocket( INADDR_ANY, 0 );;
-    }
-    return mcGroupSock;
-}
-
-/**
 *   Initializes the routing table.
 */
 void initRouteTable(void) {
@@ -145,12 +132,11 @@ void initRouteTable(void) {
             my_log(LOG_DEBUG, 0, "Joining all-routers group %s on vif %s",
                          inetFmt(allrouters_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
 
-            //k_join(allrouters_group, Dp->InAdr.s_addr);
-            joinMcGroup( getMcGroupSock(), Dp, allrouters_group, 0 );
+            k_join(Dp, allrouters_group, 0);
 
             my_log(LOG_DEBUG, 0, "Joining all igmpv3 multicast routers group %s on vif %s",
                          inetFmt(alligmp3_group,s1),inetFmt(Dp->InAdr.s_addr,s2));
-            joinMcGroup( getMcGroupSock(), Dp, alligmp3_group, 0 );
+            k_join(Dp, alligmp3_group, 0);
         }
     }
 }
@@ -196,7 +182,7 @@ static void JoinLeaveUpstreams(int cmd, uint32_t mcastaddr, uint32_t originAddr)
                 inetFmt(mcastaddr, s1),
                 inetFmt(upstrIf->InAdr.s_addr, s2));
 
-        joinleave( cmd, getMcGroupSock(), upstrIf, mcastaddr, originAddr );
+        k_joinleave(cmd, upstrIf, mcastaddr, originAddr);
     }
 }
 
@@ -345,9 +331,8 @@ int insertRoute(uint32_t group, int ifx, uint32_t src, struct in_addr *originAdd
     }
 
     // Santiycheck the VIF index...
-    //if(ifx < 0 || ifx >= MAX_MC_VIFS) {
-    if(ifx >= MAX_MC_VIFS) {
-        my_log(LOG_WARNING, 0, "The VIF Ix %d is out of range (0-%d). Table insert failed.",ifx,MAX_MC_VIFS);
+    if(ifx >= MAXVIFS) {
+        my_log(LOG_WARNING, 0, "The VIF Ix %d is out of range (0-%d). Table insert failed.", ifx, MAXVIFS-1);
         return 0;
     }
 
