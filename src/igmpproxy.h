@@ -49,6 +49,9 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <time.h>
+#include <grp.h>
+#include <limits.h>
+#include <pwd.h>
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -178,6 +181,8 @@ struct Config {
     // Set if not detect new interface for down stream.
     unsigned short	defaultInterfaceState;	// 0: disable, 2: downstream
     //~ aimwang added done
+    char                chroot[PATH_MAX];
+    char                user[LOGIN_NAME_MAX];
 };
 
 // Holds the indeces of the upstream IF...

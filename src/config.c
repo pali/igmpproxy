@@ -196,6 +196,31 @@ int loadConfig(char *configFile) {
             // Read next token...
             token = nextConfigToken();
             continue;
+        }
+        else if(strcmp("chroot", token)==0) {
+            // path is in next token
+            token = nextConfigToken();
+
+            if (snprintf(commonConfig.chroot, sizeof(commonConfig.chroot), "%s",
+              token) >= (int)sizeof(commonConfig.chroot))
+                my_log(LOG_ERR, 0, "Config: chroot is truncated");
+
+            my_log(LOG_DEBUG, 0, "Config: chroot set to %s",
+              commonConfig.chroot);
+            token = nextConfigToken();
+            continue;
+        }
+        else if(strcmp("user", token)==0) {
+            // username is in next token
+            token = nextConfigToken();
+
+            if (snprintf(commonConfig.user, sizeof(commonConfig.user), "%s",
+              token) >= (int)sizeof(commonConfig.user))
+                my_log(LOG_ERR, 0, "Config: user is truncated");
+
+            my_log(LOG_DEBUG, 0, "Config: user set to %s", commonConfig.user);
+            token = nextConfigToken();
+            continue;
         } else {
             // Unparsable token... Exit...
             closeConfigFile();

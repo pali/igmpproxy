@@ -41,7 +41,29 @@ aliases not in use should be configured as disabled.
 Any line in the configuration file starting with
 .B #
 is treated as a comment. Keywords and parameters can be distributed over many lines.
-The configuration file has two main keywords:
+The configuration file has four main keywords:
+
+.B chroot
+.I directory
+.RS
+Changes the apparent root directory to the given path after startup, thus
+denying
+.B igmpproxy
+access to files and commands outside that environmental directory tree.
+.RE
+
+
+.B user
+.I username
+.RS
+Specifies the userid to which
+.B igmpproxy
+will change after startup.
+.B igmpproxy
+must be started as root, but it will drop root privileges to the specified
+user.
+.RE
+
 
 .B quickleave
 .RS 
