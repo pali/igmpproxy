@@ -370,6 +370,10 @@ matrix:
            DIST=precise
       addons:
         apt:
+          sources:
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-updates main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-security main restricted universe multiverse'
           packages:
             - libc6-dev:i386
             - gcc-multilib
@@ -383,6 +387,10 @@ matrix:
            DIST=trusty
       addons:
         apt:
+          sources:
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-updates main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-security main restricted universe multiverse'
           packages:
             - libc6-dev:i386
             - gcc-multilib
@@ -423,6 +431,10 @@ matrix:
            NOOPT=1
       addons:
         apt:
+          sources:
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-updates main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-security main restricted universe multiverse'
           packages:
             - libc6-dev:i386
             - gcc-multilib
@@ -482,6 +494,10 @@ matrix:
            DIST=precise
       addons:
         apt:
+          sources:
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-updates main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-security main restricted universe multiverse'
           packages:
             - libc6-dev:i386
             - gcc-multilib
@@ -535,6 +551,10 @@ matrix:
            NOOPT=1
       addons:
         apt:
+          sources:
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-updates main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-security main restricted universe multiverse'
           packages:
             - libc6-dev:i386
             - gcc-multilib
@@ -594,6 +614,10 @@ matrix:
            DIST=precise
       addons:
         apt:
+          sources:
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-updates main restricted universe multiverse'
+            - sourceline: 'deb http://old-releases.ubuntu.com/ubuntu/ precise-security main restricted universe multiverse'
           packages:
             - tcc
     - compiler: tcc
