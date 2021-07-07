@@ -91,6 +91,8 @@ static void initCommonConfig(void) {
     // aimwang: default value
     commonConfig.defaultInterfaceState = IF_STATE_DISABLED;
     commonConfig.rescanVif = 0;
+
+    commonConfig.filter = NULL;
 }
 
 /**
@@ -219,6 +221,25 @@ int loadConfig(char *configFile) {
                 my_log(LOG_ERR, 0, "Config: user is truncated");
 
             my_log(LOG_DEBUG, 0, "Config: user set to %s", commonConfig.user);
+            token = nextConfigToken();
+            continue;
+        } else if(strcmp("filter", token)==0) {
+            token = nextConfigToken();
+            my_log(LOG_DEBUG, 0, "Config: IF: Got filter token %s.", token);
+
+            struct filter *filter =
+              (struct filter*) malloc(sizeof(struct filter));
+            if(filter == NULL)
+                my_log(LOG_ERR, 0, "Out of memory.");
+
+            if (inet_aton(token, &filter->addr) != 0) {
+                filter->next = commonConfig.filter;
+                commonConfig.filter = filter;
+            } else {
+                free(filter);
+                my_log(LOG_ERR, 0, "Config: IF: invalid address %s.", token);
+            }
+
             token = nextConfigToken();
             continue;
         } else {

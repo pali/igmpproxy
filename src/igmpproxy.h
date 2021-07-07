@@ -160,6 +160,12 @@ struct IfDesc {
     unsigned int        index;
 };
 
+// Store multicast address filter
+struct filter {
+    struct in_addr      addr;
+    struct filter       *next;
+};
+
 // Keeps common configuration settings
 struct Config {
     unsigned int        robustnessValue;
@@ -183,6 +189,8 @@ struct Config {
     //~ aimwang added done
     char                chroot[PATH_MAX];
     char                user[LOGIN_NAME_MAX];
+
+    struct filter       *filter;
 };
 
 // Holds the indeces of the upstream IF...

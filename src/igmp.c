@@ -121,11 +121,15 @@ void acceptIgmp(int recvlen) {
     src       = ip->ip_src.s_addr;
     dst       = ip->ip_dst.s_addr;
 
-    /* filter local multicast 239.255.255.250 */
-    if (dst == htonl(0xEFFFFFFA))
-    {
-        my_log(LOG_NOTICE, 0, "The IGMP message was local multicast. Ignoring.");
-        return;
+    /* Filter traffic */
+    struct filter *filter = getCommonConfig()->filter;
+    while (filter != NULL) {
+        if (dst == filter->addr.s_addr) {
+            my_log(LOG_NOTICE, 0, "IGMP message to %s is filtered",
+              inet_ntoa(filter->addr));
+            return;
+        }
+        filter = filter->next;
     }
 
     /*

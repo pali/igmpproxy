@@ -41,7 +41,7 @@ aliases not in use should be configured as disabled.
 Any line in the configuration file starting with
 .B #
 is treated as a comment. Keywords and parameters can be distributed over many lines.
-The configuration file has four main keywords:
+The configuration file has five main keywords:
 
 .B chroot
 .I directory
@@ -75,6 +75,17 @@ is not noticed at all by clients on the downstream networks. If it's vital
 that the daemon should act exactly as a real multicast client on the upstream
 interface, this function should not be used. Disabling this function increases
 the risk of bandwidth saturation.
+
+
+.RE
+.B filter
+.I IP-address
+.RS
+Filters traffic to the given IP-address. SSDP / UPNP (239.255.255.250) comes to
+mind, which should be handled locally and not be forwarded to the upstream
+router. This avoids UPnP pollution in double-NAT setups, and open ports
+disclosure in an uncontrolled environment. Use of this option is not necessary
+on a multicast router without NAT. This option can be used multiple times.
 .RE
 
 
