@@ -145,6 +145,7 @@ struct SubnetList {
     uint32_t            subnet_addr;
     uint32_t            subnet_mask;
     struct SubnetList   *next;
+    bool                allow;
 };
 
 struct IfDesc {

@@ -121,13 +121,6 @@ void acceptIgmp(int recvlen) {
     src       = ip->ip_src.s_addr;
     dst       = ip->ip_dst.s_addr;
 
-    /* filter local multicast 239.255.255.250 */
-    if (dst == htonl(0xEFFFFFFA))
-    {
-        my_log(LOG_NOTICE, 0, "The IGMP message was local multicast. Ignoring.");
-        return;
-    }
-
     /*
      * this is most likely a message from the kernel indicating that
      * a new src grp pair message has arrived and so, it would be

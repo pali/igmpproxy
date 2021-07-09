@@ -161,6 +161,26 @@ You may also specify whitelist entries for the upstream interface. Only igmp mem
 for explicitly whitelisted multicast groups will be sent out on the upstream interface. This
 is useful if you want to use multicast groups only between your downstream interfaces, like SSDP
 from a UPnP server.
+
+This option can be combined with
+.B blacklist
+for fine-grained control.
+.RE
+
+.B blacklist
+.I networkaddr
+.RS
+Defines a blacklist for multicast groups. Similar to
+.B whitelist
+except that if a blacklist entry is defined, all igmp membership reports for
+that multicast group will be ignored and therefore not be served by igmpproxy.
+
+Each time a multicast group is forwarded or requested, whitelist and blacklist
+entries are evaluated in sequential order, from first to last. The last matching
+entry decides what action is taken; if no entry matches the multicast group, the
+default action is to serve. Note that, if at least one whitelist entry is
+defined before any blacklist entry, all igmp membership reports for not
+explicitly whitelisted multicast groups will be ignored.
 .RE
 
 .SH EXAMPLE

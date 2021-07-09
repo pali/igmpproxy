@@ -83,22 +83,33 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
         my_log(LOG_DEBUG, 0, "Should insert group %s (from: %s) to route table. Vif Ix : %d",
             inetFmt(group,s1), inetFmt(src,s2), sourceVif->index);
 
-        // If we don't have a whitelist we insertRoute and done
+        // If we don't have a black- and whitelist we insertRoute and done
         if(sourceVif->allowedgroups == NULL)
         {
             insertRoute(group, sourceVif->index, src);
             return;
         }
+
         // Check if this Request is legit on this interface
-        struct SubnetList *sn;
-        for(sn = sourceVif->allowedgroups; sn != NULL; sn = sn->next)
+        bool                 allow_list = false;
+        struct SubnetList   *match = NULL;
+        struct SubnetList   *sn;
+
+        for(sn = sourceVif->allowedgroups; sn != NULL; sn = sn->next) {
+            // Check if there is a whitelist
+            if (sn->allow)
+                allow_list = true;
             if((group & sn->subnet_mask) == sn->subnet_addr)
-            {
-                // The membership report was OK... Insert it into the route table..
-                insertRoute(group, sourceVif->index, src);
-                return;
+                match = sn;
         }
-    my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
+
+        if((!allow_list && match == NULL) ||
+          (allow_list && match != NULL && match->allow)) {
+            // The membership report was OK... Insert it into the route table..
+            insertRoute(group, sourceVif->index, src);
+            return;
+        }
+        my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
     } else {
         // Log the state of the interface the report was received on.
         my_log(LOG_INFO, 0, "Mebership report was received on %s. Ignoring.",

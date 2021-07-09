@@ -351,10 +351,26 @@ struct vifconfig *parsePhyintToken(void) {
 
             *agrpPtr = parseSubnetAddress(token);
             if(*agrpPtr == NULL) {
-                parseError = 1;
-                my_log(LOG_WARNING, 0, "Unable to parse subnet address.");
-                break;
+                free(tmpPtr->name);
+                free(tmpPtr);
+                my_log(LOG_ERR, 0, "Unable to parse subnet address.");
             } else {
+                (*agrpPtr)->allow = true;
+                agrpPtr = &(*agrpPtr)->next;
+            }
+        }
+        else if(strcmp("blacklist", token)==0) {
+            // Blacklist
+            token = nextConfigToken();
+            my_log(LOG_DEBUG, 0, "Config: IF: Got blacklist token %s.", token);
+
+            *agrpPtr = parseSubnetAddress(token);
+            if(*agrpPtr == NULL) {
+                free(tmpPtr->name);
+                free(tmpPtr);
+                my_log(LOG_ERR, 0, "Unable to parse subnet address.");
+            } else {
+                (*agrpPtr)->allow = false;
                 agrpPtr = &(*agrpPtr)->next;
             }
         }
