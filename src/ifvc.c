@@ -201,8 +201,10 @@ void rebuildIfVc () {
 **
 */
 void buildIfVc(void) {
-    struct ifreq IfVc[ sizeof( IfDescVc ) / sizeof( IfDescVc[ 0 ] )  ];
+    struct ifreq IfVc[ MAX_IF * 2 ]; /* allocate in double in order to get as much information as possible */
     struct ifreq *IfEp;
+    struct IfDesc *dp;
+    struct SubnetList *allowednet, *currsubnet;
     struct Config *config = getCommonConfig();
 
     int Sock;
@@ -246,6 +248,19 @@ void buildIfVc(void) {
             if (IfNext < IfPt + 1)
                 IfNext = IfPt + 1;
 
+            /* don't retrieve any further info if MAX_IF is reached
+             */
+            if ( IfDescEp >= &IfDescVc[ MAX_IF ] ) {
+                my_log(LOG_DEBUG, 0, "Too many interfaces, skipping all since %s", IfPt->ifr_name);
+                break;
+            }
+
+            /* don't retrieve any info from non-IPv4 interfaces
+             */
+            if ( IfPt->ifr_addr.sa_family != AF_INET ) {
+                my_log(LOG_DEBUG, 0, "Interface is not AF_INET, skipping %s (family %d)", IfPt->ifr_name, IfPt->ifr_addr.sa_family);
+                continue;
+            }
             strncpy( IfDescEp->Name, IfPt->ifr_name, sizeof( IfDescEp->Name ) );
 
             // Currently don't set any allowed nets...
@@ -253,14 +268,6 @@ void buildIfVc(void) {
 
             // Set the index to -1 by default.
             IfDescEp->index = (unsigned int)-1;
-
-            /* don't retrieve more info for non-IP interfaces
-             */
-            if ( IfPt->ifr_addr.sa_family != AF_INET ) {
-                IfDescEp->InAdr.s_addr = 0;  /* mark as non-IP interface */
-                IfDescEp++;
-                continue;
-            }
 
             // Get the interface adress...
             IfDescEp->InAdr.s_addr = s_addr_from_sockaddr(&IfPt->ifr_addr);
@@ -273,6 +280,21 @@ void buildIfVc(void) {
                 my_log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", IfReq.ifr_name);
             mask = s_addr_from_sockaddr(&IfReq.ifr_addr); // Do not use ifr_netmask as it is not available on freebsd
             subnet = addr & mask;
+
+            dp = getIfByName(IfPt->ifr_name, 1);
+            if (dp != NULL && dp->allowednets != NULL) {
+                allowednet = (struct SubnetList *)malloc(sizeof(struct SubnetList));
+                if (allowednet == NULL) my_log(LOG_ERR, 0, "Out of memory !");
+                allowednet->next = NULL;
+                allowednet->subnet_mask = mask;
+                allowednet->subnet_addr = subnet;
+                currsubnet = dp->allowednets;
+                while (currsubnet->next != NULL)
+                    currsubnet = currsubnet->next;
+                currsubnet->next = allowednet;
+                continue;
+            }
+
 
             /* get if flags
             **
@@ -333,13 +355,16 @@ void buildIfVc(void) {
 **          - NULL if no interface 'IfName' exists
 **
 */
-struct IfDesc *getIfByName( const char *IfName ) {
+struct IfDesc *getIfByName( const char *IfName, int iponly ) {
     struct IfDesc *Dp;
 
-    for ( Dp = IfDescVc; Dp < IfDescEp; Dp++ )
-        if ( ! strcmp( IfName, Dp->Name ) )
-            return Dp;
-
+    for ( Dp = IfDescVc; Dp < IfDescEp; Dp++ ) {
+        if (iponly && Dp->InAdr.s_addr == 0)
+            continue;
+         if ( ! strcmp( IfName, Dp->Name ) )
+             return Dp;
+    }
+    
     return NULL;
 }
 
