@@ -266,6 +266,8 @@ int interfaceInRoute(int32_t group, int Ix);
  */
 void acceptGroupReport(uint32_t src, uint32_t group);
 void acceptLeaveMessage(uint32_t src, uint32_t group);
+void acceptMembershipQuery(uint32_t src);
+void doSendGeneralMembershipQuery(void);
 void sendGeneralMembershipQuery(void);
 
 /* callout.c 
