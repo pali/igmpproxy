@@ -84,6 +84,9 @@ static void initCommonConfig(void) {
     // If 1, a leave message is sent upstream on leave messages from downstream.
     commonConfig.fastUpstreamLeave = 0;
 
+    // If 1, IGMPv3 queries are send instead of IGMPv1/2
+    commonConfig.useIgmpv3 = 0;
+
     // Default size of hash table is 32 bytes (= 256 bits) and can store
     // up to the 256 non-collision hosts, approximately half of /24 subnet
     commonConfig.downstreamHostsHashTableSize = 32;
@@ -219,6 +222,15 @@ int loadConfig(char *configFile) {
                 my_log(LOG_ERR, 0, "Config: user is truncated");
 
             my_log(LOG_DEBUG, 0, "Config: user set to %s", commonConfig.user);
+            token = nextConfigToken();
+            continue;
+        }
+        else if(strcmp("igmpv3", token)==0) {
+            // got an igmpv3 token
+            my_log(LOG_DEBUG, 0, "Config: IGMPv3 mode enabled.");
+            commonConfig.useIgmpv3 = 1;
+
+            // Read next token...
             token = nextConfigToken();
             continue;
         } else {

@@ -78,6 +78,15 @@ the risk of bandwidth saturation.
 .RE
 
 
+.B igmpv3
+.RS
+Enables IGMPv3 queries. On default settings, IGMPv1/2 queries are send out.
+With this setting, you can enable IGMPv3 frames for sending queries. This is needed
+for IGMPv3 capable hosts to send IGMPv3 reports. When a IGMPv3 capable host receives
+a IGMPv1/2 query, it answers with a IGMPv1/2 report.
+.RE
+
+
 .B phyint 
 .I interface
 .I role 
@@ -186,6 +195,9 @@ explicitly whitelisted multicast groups will be ignored.
 .SH EXAMPLE
 ## Enable quickleave
 quickleave
+.br
+## Enable IGMPv3 queries instead of IGMPv1/2
+igmpv3
 .br
 ## Define settings for eth0 (upstream)
 .br
