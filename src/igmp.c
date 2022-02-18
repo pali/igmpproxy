@@ -260,16 +260,22 @@ void acceptIgmp(int recvlen) {
  * Construct an IGMP message in the output packet buffer.  The caller may
  * have already placed data in that buffer, of length 'datalen'.
  */
-static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
+static int buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
     struct ip *ip;
     struct igmpv3 *igmp;
     struct  Config  *conf = getCommonConfig();
     extern int curttl;
+    int query_minlen = IGMP_MINLEN;
 
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
     ip->ip_dst.s_addr       = dst;
-    ip_set_len(ip, IP_HEADER_RAOPT_LEN + IGMP_V3_QUERY_MINLEN + datalen);
+
+    if(conf->useIgmpv3) {
+        query_minlen = IGMP_V3_QUERY_MINLEN;
+    }
+    
+    ip_set_len(ip, IP_HEADER_RAOPT_LEN + query_minlen + datalen);
 
     if (IN_MULTICAST(ntohl(dst))) {
         ip->ip_ttl = curttl;
@@ -288,12 +294,19 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
     igmp->igmp_code         = code;
     igmp->igmp_group.s_addr = group;
     igmp->igmp_cksum        = 0;
-    igmp->igmp_misc         = conf->robustnessValue & 0x7;
-    igmp->igmp_qqi          = conf->queryInterval;
-    igmp->igmp_numsrc       = 0;
-    igmp->igmp_cksum        = inetChksum((unsigned short *)igmp,
-                                IGMP_V3_QUERY_MINLEN + datalen);
 
+    if(conf->useIgmpv3) {
+        igmp->igmp_misc         = conf->robustnessValue & 0x7;
+        igmp->igmp_qqi          = conf->queryInterval;
+        igmp->igmp_numsrc       = 0;
+        igmp->igmp_cksum        = inetChksum((unsigned short *)igmp,
+                                            IGMP_V3_QUERY_MINLEN + datalen);
+    } else {
+        igmp->igmp_cksum        = inetChksum((unsigned short *)igmp,
+                                            IP_HEADER_RAOPT_LEN + datalen);
+    }
+
+    return IP_HEADER_RAOPT_LEN + query_minlen + datalen;
 }
 
 /*
@@ -305,9 +318,9 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
  */
 void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen, int ifidx) {
     struct sockaddr_in sdst;
-    int setloop = 0, setigmpsource = 0;
+    int setloop = 0, setigmpsource = 0, sendlen = 0;
 
-    buildIgmp(src, dst, type, code, group, datalen);
+    sendlen = buildIgmp(src, dst, type, code, group, datalen);
 
     if (IN_MULTICAST(ntohl(dst))) {
         k_set_if(src, ifidx);
@@ -324,8 +337,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
     sdst.sin_len = sizeof(sdst);
 #endif
     sdst.sin_addr.s_addr = dst;
-    if (sendto(MRouterFD, send_buf,
-               IP_HEADER_RAOPT_LEN + IGMP_V3_QUERY_MINLEN + datalen, 0,
+    if (sendto(MRouterFD, send_buf, sendlen, 0,
                (struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
         if (errno == ENETDOWN)
             my_log(LOG_ERR, errno, "Sender VIF was down.");
