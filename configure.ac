@@ -1,5 +1,5 @@
 AC_PREREQ([2.63])
-AC_INIT([igmpproxy], [0.3])
+AC_INIT([igmpproxy], [0.4])
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([src/igmpproxy.c])
 AC_CONFIG_HEADERS([config.h])
