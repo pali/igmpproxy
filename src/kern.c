@@ -100,22 +100,32 @@ void k_set_loop(int l) {
                    (char *)&loop, sizeof(loop)) < 0)
         my_log(LOG_WARNING, errno, "setsockopt IP_MULTICAST_LOOP %u", loop);
 }
+void k_set_if(uint32_t ifa, int ifidx) {
+#ifdef HAVE_STRUCT_IP_MREQN
+    struct ip_mreqn ifsel;
+    ifsel.imr_address.s_addr = ifa;
+    ifsel.imr_ifindex = ifidx;
+#else
+    struct in_addr ifsel;
+    ifsel.s_addr = ifa;
+#endif
 
-void k_set_if(uint32_t ifa) {
-    struct in_addr adr;
-
-    adr.s_addr = ifa;
     if (setsockopt(MRouterFD, IPPROTO_IP, IP_MULTICAST_IF,
-                   (char *)&adr, sizeof(adr)) < 0)
+                   (char *)&ifsel, sizeof(ifsel)) < 0)
         my_log(LOG_WARNING, errno, "setsockopt IP_MULTICAST_IF %s",
             inetFmt(ifa, s1));
 }
 
 void k_join(struct IfDesc *ifd, uint32_t grp) {
+#ifdef HAVE_STRUCT_IP_MREQN
+    struct ip_mreqn mreq;
+    mreq.imr_address.s_addr = ifd->InAdr.s_addr;
+    mreq.imr_ifindex = ifd->ifIndex;
+#else
     struct ip_mreq mreq;
-
-    mreq.imr_multiaddr.s_addr = grp;
     mreq.imr_interface.s_addr = ifd->InAdr.s_addr;
+#endif
+    mreq.imr_multiaddr.s_addr = grp;
 
     my_log(LOG_NOTICE, 0, "Joining group %s on interface %s", inetFmt(grp, s1), ifd->Name);
 
@@ -134,10 +144,15 @@ void k_join(struct IfDesc *ifd, uint32_t grp) {
 }
 
 void k_leave(struct IfDesc *ifd, uint32_t grp) {
+#ifdef HAVE_STRUCT_IP_MREQN
+    struct ip_mreqn mreq;
+    mreq.imr_address.s_addr = ifd->InAdr.s_addr;
+    mreq.imr_ifindex = ifd->ifIndex;
+#else
     struct ip_mreq mreq;
-
-    mreq.imr_multiaddr.s_addr = grp;
     mreq.imr_interface.s_addr = ifd->InAdr.s_addr;
+#endif
+    mreq.imr_multiaddr.s_addr = grp;
 
     my_log(LOG_NOTICE, 0, "Leaving group %s on interface %s", inetFmt(grp, s1), ifd->Name);
 

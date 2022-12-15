@@ -131,11 +131,17 @@ void addVIF( struct IfDesc *IfDp )
     VifDp->IfDp = IfDp;
 
     VifCtl.vifc_vifi  = VifDp - VifDescVc;
-    VifCtl.vifc_flags = 0;        /* no tunnel, no source routing, register ? */
     VifCtl.vifc_threshold  = VifDp->IfDp->threshold;    // Packet TTL must be at least 1 to pass them
     VifCtl.vifc_rate_limit = VifDp->IfDp->ratelimit;    // Ratelimit
 
+#ifdef VIFF_USE_IFINDEX
+    VifCtl.vifc_flags = VIFF_USE_IFINDEX;
+    VifCtl.vifc_lcl_ifindex = VifDp->IfDp->ifIndex;
+#else
+    VifCtl.vifc_flags = 0;
     VifCtl.vifc_lcl_addr.s_addr = VifDp->IfDp->InAdr.s_addr;
+#endif
+
     VifCtl.vifc_rmt_addr.s_addr = INADDR_ANY;
 
     // Set the index...
