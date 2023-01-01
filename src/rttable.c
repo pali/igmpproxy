@@ -817,7 +817,7 @@ int interfaceInRoute(int32_t group, int Ix) {
     struct RouteTable*  croute;
     croute = findRoute(group);
     if (croute != NULL) {
-        my_log(LOG_DEBUG, 0, "Interface id %d is in group $d", Ix, group);
+        my_log(LOG_DEBUG, 0, "Interface id %d is in group %d", Ix, group);
         return BIT_TST(croute->vifBits, Ix);
     } else {
         return 0;
