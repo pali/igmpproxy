@@ -189,7 +189,7 @@ int loadConfig(char *configFile) {
             continue;
         }
         else if(strcmp("rescanvif", token)==0) {
-            // Got a defaultdown token...
+            // Got a rescanvif token...
             my_log(LOG_DEBUG, 0, "Config: Need detect new interface.");
             commonConfig.rescanVif = 1;
 
