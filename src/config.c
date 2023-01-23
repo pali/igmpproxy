@@ -225,10 +225,18 @@ int loadConfig(char *configFile) {
             token = nextConfigToken();
             continue;
         }
-        else if(strcmp("igmpv3", token)==0) {
-            // got an igmpv3 token
-            my_log(LOG_DEBUG, 0, "Config: IGMPv3 mode enabled.");
-            commonConfig.useIgmpv3 = 1;
+        else if(strcmp("proto", token)==0) {
+            // IGMP protocol version to use is in next token
+            token = nextConfigToken();
+
+            if (strcmp("igmpv3", token) == 0) {
+                my_log(LOG_DEBUG, 0, "Config: IGMPv3 mode enabled.");
+                commonConfig.useIgmpv3 = 1;
+            }
+            else if (strcmp("igmpv2", token) == 0) {
+                my_log(LOG_DEBUG, 0, "Config: IGMPv2 mode enabled.");
+                commonConfig.useIgmpv3 = 0;
+            }
 
             // Read next token...
             token = nextConfigToken();

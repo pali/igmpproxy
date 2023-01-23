@@ -78,12 +78,14 @@ the risk of bandwidth saturation.
 .RE
 
 
-.B igmpv3
+.B proto
+.I protover
 .RS
-Enables IGMPv3 queries. On default settings, IGMPv1/2 queries are send out.
-With this setting, you can enable IGMPv3 frames for sending queries. This is needed
-for IGMPv3 capable hosts to send IGMPv3 reports. When a IGMPv3 capable host receives
-a IGMPv1/2 query, it answers with a IGMPv1/2 report.
+Specifies IGMP protocol version. On default or whith 'proto igmpv2', IGMPv1/2
+queries are send out. With 'proto igmpv3', you can enable IGMPv3 frames for
+sending queries. This is needed for IGMPv3 capable hosts to send IGMPv3 reports.
+When a IGMPv3 capable host receives a IGMPv1/2 query, it answers with a IGMPv1/2
+report.
 .RE
 
 
