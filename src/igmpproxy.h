@@ -175,6 +175,8 @@ struct Config {
     unsigned int        lastMemberQueryCount;
     // Set if upstream leave messages should be sent instantly..
     unsigned short      fastUpstreamLeave;
+    // Set if IGMPv3 should be used for IGMP queries
+    unsigned short      useIgmpv3;
     // Size in bytes of hash table of downstream hosts used for fast leave
     unsigned int        downstreamHostsHashTableSize;
     //~ aimwang added
