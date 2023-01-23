@@ -269,7 +269,7 @@ static void buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t g
     ip                      = (struct ip *)send_buf;
     ip->ip_src.s_addr       = src;
     ip->ip_dst.s_addr       = dst;
-    ip_set_len(ip, IP_HEADER_RAOPT_LEN + IGMPV3_MINLEN + datalen);
+    ip_set_len(ip, IP_HEADER_RAOPT_LEN + IGMP_V3_QUERY_MINLEN + datalen);
 
     if (IN_MULTICAST(ntohl(dst))) {
         ip->ip_ttl = curttl;
@@ -325,7 +325,7 @@ void sendIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, in
 #endif
     sdst.sin_addr.s_addr = dst;
     if (sendto(MRouterFD, send_buf,
-               IP_HEADER_RAOPT_LEN + IGMPV3_MINLEN + datalen, 0,
+               IP_HEADER_RAOPT_LEN + IGMP_V3_QUERY_MINLEN + datalen, 0,
                (struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
         if (errno == ENETDOWN)
             my_log(LOG_ERR, errno, "Sender VIF was down.");

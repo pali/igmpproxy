@@ -8,6 +8,7 @@
 #include <linux/mroute.h>
 
 #define IGMP_V3_MEMBERSHIP_REPORT 0x22
+#define IGMP_V3_QUERY_MINLEN IGMPV3_MINLEN
 
 #define INADDR_ALLIGMPV3_GROUP ((in_addr_t) 0xe0000016)
 
