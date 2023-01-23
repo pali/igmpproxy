@@ -24,7 +24,7 @@
 /*
  * IGMP v3 query format.
  */
-struct igmpv3 {
+struct igmpv3_query {
 	u_int8_t		igmp_type;	/* version & type of IGMP message  */
 	u_int8_t		igmp_code;	/* subtype for routing msgs        */
 	u_int16_t		igmp_cksum;	/* IP-style checksum               */
@@ -33,7 +33,7 @@ struct igmpv3 {
 	u_int8_t		igmp_misc;	/* reserved/suppress/robustness    */
 	u_int8_t		igmp_qqi;	/* querier's query interval        */
 	u_int16_t		igmp_numsrc;	/* number of sources               */
-	/*struct in_addr	igmp_sources[1];*/ /* source addresses */
+	struct in_addr	igmp_sources[0]; /* source addresses */
 };
 
 struct igmpv3_grec {

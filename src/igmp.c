@@ -262,7 +262,7 @@ void acceptIgmp(int recvlen) {
  */
 static int buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t group, int datalen) {
     struct ip *ip;
-    struct igmpv3 *igmp;
+    struct igmpv3_query *igmp;
     struct  Config  *conf = getCommonConfig();
     extern int curttl;
     int query_minlen = IGMP_MINLEN;
@@ -289,7 +289,7 @@ static int buildIgmp(uint32_t src, uint32_t dst, int type, int code, uint32_t gr
     ((unsigned char*)send_buf+MIN_IP_HEADER_LEN)[2] = 0x00;
     ((unsigned char*)send_buf+MIN_IP_HEADER_LEN)[3] = 0x00;
 
-    igmp                    = (struct igmpv3 *)(send_buf + IP_HEADER_RAOPT_LEN);
+    igmp                    = (struct igmpv3_query *)(send_buf + IP_HEADER_RAOPT_LEN);
     igmp->igmp_type         = type;
     igmp->igmp_code         = code;
     igmp->igmp_group.s_addr = group;
