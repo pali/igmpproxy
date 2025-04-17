@@ -704,13 +704,15 @@ int internAgeRoute(struct RouteTable*  croute) {
 
             // No activity was registered within the timelimit, so remove the route.
             removeRoute(croute);
+            croute = NULL;
         }
         // Tell that the route was updated...
         result = 1;
     }
 
     // The aging vif bits must be reset for each round...
-    BIT_ZERO(croute->ageVifBits);
+    if (croute != NULL)
+        BIT_ZERO(croute->ageVifBits);
 
     return result;
 }
