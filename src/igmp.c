@@ -94,7 +94,7 @@ static const char *igmpPacketKind(unsigned int type, unsigned int code) {
     case IGMP_V2_LEAVE_GROUP:        return "Leave message     ";
 
     default:
-        sprintf(unknown, "unk: 0x%02x/0x%02x    ", type, code);
+        snprintf(unknown, sizeof unknown, "unk: 0x%02x/0x%02x    ", type, code);
         return unknown;
     }
 }
