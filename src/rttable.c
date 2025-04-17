@@ -49,8 +49,8 @@ struct RouteTable {
     struct RouteTable   *nextroute;     // Pointer to the next group in line.
     struct RouteTable   *prevroute;     // Pointer to the previous group in line.
     uint32_t            group;          // The group to route
-    uint32_t            originAddrs[MAX_ORIGINS]; // The origin adresses (only set on activated routes)
-    uint32_t            vifBits;        // Bits representing recieving VIFs.
+    uint32_t            originAddrs[MAX_ORIGINS]; // The origin addresses (only set on activated routes)
+    uint32_t            vifBits;        // Bits representing receiving VIFs.
 
     // Keeps the upstream membership state...
     short               upstrState;     // Upstream membership state.
@@ -59,7 +59,7 @@ struct RouteTable {
     // These parameters contain aging details.
     uint32_t            ageVifBits;     // Bits representing aging VIFs.
     int                 ageValue;       // Downcounter for death.
-    int                 ageActivity;    // Records any acitivity that notes there are still listeners.
+    int                 ageActivity;    // Records any activity that notes there are still listeners.
 
     // Keeps downstream hosts information
     uint32_t            downstreamHostsHashSeed;
@@ -157,7 +157,7 @@ static void sendJoinLeaveUpstream(struct RouteTable* route, int join) {
                 my_log(LOG_ERR, 0 ,"FATAL: Unable to get Upstream IF.");
             }
 
-            // Check if there is a black- or whitelist for the upstram VIF
+            // Check if there is a black- or whitelist for the upstream VIF
             if (upstrIf->allowedgroups != NULL) {
                 bool                 allow_list = false;
                 struct SubnetList   *match = NULL;
@@ -274,7 +274,7 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
     struct Config *conf = getCommonConfig();
     struct RouteTable*  croute;
 
-    // Sanitycheck the group adress...
+    // Sanitycheck the group address...
     if( ! IN_MULTICAST( ntohl(group) )) {
         my_log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group. Table insert failed.",
             inetFmt(group, s1));

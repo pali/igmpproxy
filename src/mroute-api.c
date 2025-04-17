@@ -73,7 +73,7 @@ int enableMRouter(void)
 }
 
 /*
-** Diable the mrouted API and relases by this the lock.
+** Disable the mrouted API and releases by this the lock.
 **
 */
 void disableMRouter(void)
@@ -242,7 +242,7 @@ int delMRoute( struct MRouteDesc *Dp )
 /*
 ** Returns for the virtual interface index for '*IfDp'
 **
-** returns: - the vitrual interface index if the interface is registered
+** returns: - the virtual interface index if the interface is registered
 **          - -1 if no virtual interface exists for the interface
 **
 */

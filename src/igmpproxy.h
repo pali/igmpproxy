@@ -187,7 +187,7 @@ struct Config {
     char                user[LOGIN_NAME_MAX];
 };
 
-// Holds the indeces of the upstream IF...
+// Holds the indices of the upstream IF...
 extern int upStreamIfIdx[MAX_UPS_VIFS];
 
 /* ifvc.c
