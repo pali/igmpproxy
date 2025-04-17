@@ -34,7 +34,7 @@
 /**
 *   request.c
 *
-*   Functions for recieveing and processing IGMP requests.
+*   Functions for receiving and processing IGMP requests.
 *
 */
 
@@ -57,7 +57,7 @@ typedef struct {
 void acceptGroupReport(uint32_t src, uint32_t group) {
     struct IfDesc  *sourceVif;
 
-    // Sanitycheck the group adress...
+    // Sanitycheck the group address...
     if(!IN_MULTICAST( ntohl(group) )) {
         my_log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group.",
             inetFmt(group, s1));
@@ -112,13 +112,13 @@ void acceptGroupReport(uint32_t src, uint32_t group) {
         my_log(LOG_INFO, 0, "The group address %s may not be requested from this interface. Ignoring.", inetFmt(group, s1));
     } else {
         // Log the state of the interface the report was received on.
-        my_log(LOG_INFO, 0, "Mebership report was received on %s. Ignoring.",
+        my_log(LOG_INFO, 0, "Membership report was received on %s. Ignoring.",
             sourceVif->state==IF_STATE_UPSTREAM?"the upstream interface":"a disabled interface");
     }
 }
 
 /**
-*   Recieves and handles a group leave message.
+*   Receives and handles a group leave message.
 */
 void acceptLeaveMessage(uint32_t src, uint32_t group) {
     struct IfDesc   *sourceVif;
@@ -127,7 +127,7 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
         "Got leave message from %s to %s. Starting last member detection.",
         inetFmt(src, s1), inetFmt(group, s2));
 
-    // Sanitycheck the group adress...
+    // Sanitycheck the group address...
     if(!IN_MULTICAST( ntohl(group) )) {
         my_log(LOG_WARNING, 0, "The group address %s is not a valid Multicast group.",
             inetFmt(group, s1));
@@ -151,7 +151,7 @@ void acceptLeaveMessage(uint32_t src, uint32_t group) {
         // Tell the route table that we are checking for remaining members...
         setRouteLastMemberMode(group, src);
 
-        // Call the group spesific membership querier...
+        // Call the group specific membership querier...
         gvDesc->group = group;
         // gvDesc->vifAddr = sourceVif->InAdr.s_addr;
         gvDesc->started = 0;

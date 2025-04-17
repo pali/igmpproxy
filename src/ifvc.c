@@ -111,7 +111,7 @@ void rebuildIfVc () {
             continue;
         }
 
-        // Get the interface adress...
+        // Get the interface address...
         Dp->InAdr.s_addr = s_addr_from_sockaddr(&IfPt->ifr_addr);
         addr = Dp->InAdr.s_addr;
 
@@ -161,7 +161,7 @@ void rebuildIfVc () {
             Dp->state         = IF_STATE_DOWNSTREAM;
         }
 
-        // when IF become enabeld from downstream, addVIF to enable its VIF
+        // when IF become enabled from downstream, addVIF to enable its VIF
         if (Dp->state == IF_STATE_HIDDEN) {
             my_log(LOG_NOTICE, 0, "%s [Hidden -> Downstream]", Dp->Name);
             Dp->state = IF_STATE_DOWNSTREAM;
@@ -267,7 +267,7 @@ void buildIfVc(void) {
                 continue;
             }
 
-            // Get the interface adress...
+            // Get the interface address...
             IfDescEp->InAdr.s_addr = s_addr_from_sockaddr(&IfPt->ifr_addr);
             addr = IfDescEp->InAdr.s_addr;
 
@@ -367,7 +367,7 @@ struct IfDesc *getIfByIx( unsigned Ix ) {
 
 /**
 *   Returns a pointer to the IfDesc whose subnet matches
-*   the supplied IP adress. The IP must match a interfaces
+*   the supplied IP address. The IP must match a interfaces
 *   subnet, or any configured allowed subnet on a interface.
 */
 struct IfDesc *getIfByAddress( uint32_t ipaddr ) {
@@ -393,7 +393,7 @@ struct IfDesc *getIfByAddress( uint32_t ipaddr ) {
 
 /**
 *   Returns a pointer to the IfDesc whose subnet matches
-*   the supplied IP adress. The IP must match a interfaces
+*   the supplied IP address. The IP must match a interfaces
 *   subnet, or any configured allowed subnet on a interface.
 */
 struct IfDesc *getIfByVifIndex( unsigned vifindex ) {

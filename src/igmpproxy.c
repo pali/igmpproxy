@@ -68,7 +68,7 @@ static int sighandled = 0;
 #define GOT_SIGUSR1 0x04
 #define GOT_SIGUSR2 0x08
 
-// Holds the indeces of the upstream IF...
+// Holds the indices of the upstream IF...
 int     upStreamIfIdx[MAX_UPS_VIFS];
 
 /**
@@ -118,7 +118,7 @@ int main( int ArgCn, char *ArgVc[] ) {
     }
     char *configFilePath = ArgVc[optind];
 
-    // Chech that we are root
+    // Check that we are root
     if (geteuid() != 0) {
        fprintf(stderr, "igmpproxy: must be root\n");
        exit(1);
@@ -137,7 +137,7 @@ int main( int ArgCn, char *ArgVc[] ) {
             break;
         }
 
-        // Initializes the deamon.
+        // Initializes the daemon.
         if ( !igmpProxyInit() ) {
             my_log(LOG_ERR, 0, "Unable to initialize IGMPproxy.");
             break;
@@ -243,7 +243,7 @@ int igmpProxyInit(void) {
                 if(Dp->state == IF_STATE_UPSTREAM) {
                     if (upsvifcount < MAX_UPS_VIFS -1)
                     {
-                        my_log(LOG_DEBUG, 0, "Found upstrem IF #%d, will assing as upstream Vif %d",
+                        my_log(LOG_DEBUG, 0, "Found upstrem IF #%d, will assign as upstream Vif %d",
                             upsvifcount, Ix);
                         upStreamIfIdx[upsvifcount++] = Ix;
                     } else {
@@ -297,7 +297,7 @@ void igmpProxyRun(void) {
     fd_set  ReadFDS;
     socklen_t dummy = 0;
     struct  timespec  curtime, lasttime, difftime, tv;
-    // The timeout is a pointer in order to set it to NULL if nessecary.
+    // The timeout is a pointer in order to set it to NULL if necessary.
     struct  timespec  *timeout = &tv;
 
     // Initialize timer vars

@@ -173,7 +173,7 @@ int timer_setTimer(int delay, timer_f action, void *data) {
                 debugQueue();
                 return node->id;
             } else {
-                // Continur to check nodes.
+                // Continue to check nodes.
                 delay -= ptr->time; node->time = delay;
                 prev = ptr;
                 ptr = ptr->next;
