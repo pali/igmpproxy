@@ -309,8 +309,10 @@ int insertRoute(uint32_t group, int ifx, uint32_t src) {
             // Init downstream hosts bit hash table
             zeroDownstreamHosts(conf, newroute);
 
-            // Add downstream host
-            setDownstreamHost(conf, newroute, src);
+            // Passive routes have no downstream host yet.
+            // A real report may use source 0, so test the VIF, not src.
+            if(ifx >= 0)
+                setDownstreamHost(conf, newroute, src);
         }
 
         // The group is not joined initially.
