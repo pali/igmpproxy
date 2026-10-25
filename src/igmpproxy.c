@@ -285,6 +285,54 @@ void igmpProxyCleanUp(void) {
     disableMRouter();       // Disable the multirout API
 }
 
+/* Keep the second-resolution callout queue on real monotonic time. A short
+ * interface-rescan timeout must not age it by the next timer's full delay.
+ * Catch up after callbacks before accepting input that may create new timers.
+ */
+static void ageCallouts(struct timespec *lasttime, long *remainder) {
+    struct timespec now;
+    time_t elapsed;
+    long nsec;
+
+    for (;;) {
+        if (clock_gettime(CLOCK_MONOTONIC, &now) < 0)
+            my_log(LOG_ERR, errno, "clock_gettime");
+        elapsed = now.tv_sec - lasttime->tv_sec;
+        nsec = now.tv_nsec - lasttime->tv_nsec + *remainder;
+        if (nsec >= 1000000000L) {
+            elapsed++;
+            nsec -= 1000000000L;
+        } else if (nsec < 0) {
+            elapsed--;
+            nsec += 1000000000L;
+        }
+        *lasttime = now;
+        *remainder = nsec;
+        if (elapsed == 0 && timer_nextTimer() != 0)
+            break;
+        age_callout_queue(elapsed);
+    }
+}
+
+static struct timespec *nextTimeout(struct timespec *tv, int rescan,
+                                    long remainder) {
+    int secs = timer_nextTimer();
+
+    if (secs < 0 && !rescan)
+        return NULL;
+    tv->tv_sec = secs < 0 ? 3 : secs;
+    tv->tv_nsec = 0;
+    if (secs > 0 && remainder) {
+        tv->tv_sec--;
+        tv->tv_nsec = 1000000000L - remainder;
+    }
+    if (rescan && tv->tv_sec >= 3) {
+        tv->tv_sec = 3;
+        tv->tv_nsec = 0;
+    }
+    return tv;
+}
+
 /**
 *   Main daemon loop.
 */
@@ -293,17 +341,16 @@ void igmpProxyRun(void) {
     struct Config *config = getCommonConfig();
     // Set some needed values.
     register int recvlen;
-    int     MaxFD, Rt, secs;
+    int     MaxFD, Rt, select_errno;
     fd_set  ReadFDS;
     socklen_t dummy = 0;
-    struct  timespec  curtime, lasttime, difftime, tv;
-    // The timeout is a pointer in order to set it to NULL if nessecary.
-    struct  timespec  *timeout = &tv;
+    struct  timespec  lasttime, tv;
+    struct  timespec  *timeout;
+    long remainder = 0;
 
     // Initialize timer vars
-    difftime.tv_nsec = 0;
-    clock_gettime(CLOCK_MONOTONIC, &curtime);
-    lasttime = curtime;
+    if (clock_gettime(CLOCK_MONOTONIC, &lasttime) < 0)
+        my_log(LOG_ERR, errno, "clock_gettime");
 
     // First thing we send a membership query in downstream VIF's...
     sendGeneralMembershipQuery();
@@ -320,18 +367,14 @@ void igmpProxyRun(void) {
             }
         }
 
+        ageCallouts(&lasttime, &remainder);
+
         /* aimwang: call rebuildIfVc */
         if (config->rescanVif)
             rebuildIfVc();
 
         // Prepare timeout...
-        secs = timer_nextTimer();
-        if(secs == -1) {
-            timeout = NULL;
-        } else {
-            timeout->tv_nsec = 0;
-            timeout->tv_sec = (secs > 3) ? 3 : secs; // aimwang: set max timeout
-        }
+        timeout = nextTimeout(&tv, config->rescanVif, remainder);
 
         // Prepare for select.
         MaxFD = MRouterFD;
@@ -341,10 +384,17 @@ void igmpProxyRun(void) {
 
         // wait for input
         Rt = pselect( MaxFD +1, &ReadFDS, NULL, NULL, timeout, NULL );
+        select_errno = errno;
+
+        /* Advance old timers before acceptIgmp() can schedule new ones.
+         * EINTR and receive errors must not suspend the callout clock.
+         */
+        ageCallouts(&lasttime, &remainder);
 
         // log and ignore failures
         if( Rt < 0 ) {
-            my_log( LOG_WARNING, errno, "select() failure" );
+            if (select_errno != EINTR)
+                my_log( LOG_WARNING, select_errno, "select() failure" );
             continue;
         }
         else if( Rt > 0 ) {
@@ -362,36 +412,6 @@ void igmpProxyRun(void) {
                 acceptIgmp(recvlen);
             }
         }
-
-        // At this point, we can handle timeouts...
-        do {
-            /*
-             * If the select timed out, then there's no other
-             * activity to account for and we don't need to
-             * call gettimeofday.
-             */
-            if (Rt == 0) {
-                curtime.tv_sec = lasttime.tv_sec + secs;
-                curtime.tv_nsec = lasttime.tv_nsec;
-                Rt = -1; /* don't do this next time through the loop */
-            } else {
-                clock_gettime(CLOCK_MONOTONIC, &curtime);
-            }
-            difftime.tv_sec = curtime.tv_sec - lasttime.tv_sec;
-            difftime.tv_nsec += curtime.tv_nsec - lasttime.tv_nsec;
-            while (difftime.tv_nsec > 1000000000) {
-                difftime.tv_sec++;
-                difftime.tv_nsec -= 1000000000;
-            }
-            if (difftime.tv_nsec < 0) {
-                difftime.tv_sec--;
-                difftime.tv_nsec += 1000000000;
-            }
-            lasttime = curtime;
-            if (secs == 0 || difftime.tv_sec > 0)
-                age_callout_queue(difftime.tv_sec);
-            secs = -1;
-        } while (difftime.tv_sec > 0);
 
     }
 
