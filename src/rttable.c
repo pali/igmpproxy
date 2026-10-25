@@ -724,6 +724,7 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate) {
     struct   IfDesc     *Dp;
     unsigned            Ix;
     int i;
+    int result = 1;
 
     for (i = 0; i < MAX_ORIGINS; i++) {
         if (route->originAddrs[i] == 0 || route->upstrVif == -1) {
@@ -756,14 +757,16 @@ int internUpdateKernelRoute(struct RouteTable *route, int activate) {
         // Do the actual Kernel route update...
         if(activate) {
             // Add route in kernel...
-            addMRoute( &mrDesc );
+            if (addMRoute( &mrDesc ))
+                result = 0;
         } else {
             // Delete the route from Kernel...
-            delMRoute( &mrDesc );
+            if (delMRoute( &mrDesc ))
+                result = 0;
         }
     }
 
-    return 1;
+    return result;
 }
 
 /**

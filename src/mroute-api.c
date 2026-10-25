@@ -233,6 +233,10 @@ int delMRoute( struct MRouteDesc *Dp )
 
     rc = setsockopt( MRouterFD, IPPROTO_IP, MRT_DEL_MFC,
                     (void *)&CtlReq, sizeof( CtlReq ) );
+    /* Passive routes may never have installed a kernel MFC. */
+    if (rc && errno == ENOENT)
+        return 0;
+
     if (rc)
         my_log( LOG_WARNING, errno, "MRT_DEL_MFC" );
 
